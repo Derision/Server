@@ -197,6 +197,7 @@ void MapOpcodes() {
 	ConnectedOpcodes[OP_GuildPeace] = &Client::Handle_OP_GuildPeace;
 	ConnectedOpcodes[OP_GuildWar] = &Client::Handle_OP_GuildWar;
 	ConnectedOpcodes[OP_GuildLeader] = &Client::Handle_OP_GuildLeader;
+	ConnectedOpcodes[OP_GuildPromote] = &Client::Handle_OP_GuildPromote;
 	ConnectedOpcodes[OP_GuildDemote] = &Client::Handle_OP_GuildDemote;
 	ConnectedOpcodes[OP_GuildInvite] = &Client::Handle_OP_GuildInvite;
 	ConnectedOpcodes[OP_GuildRemove] = &Client::Handle_OP_GuildRemove;
@@ -459,7 +460,7 @@ int Client::HandlePacket(const EQApplicationPacket *app)
 			char buffer[64];
 			app->build_header_dump(buffer);
 			mlog(CLIENT__NET_ERR, "Unhandled incoming opcode: %s", buffer);
-			if(app->size<1000)
+			if(app->size<10000)
 				DumpPacket(app->pBuffer, app->size);
 			else{
 				cout << "Dump limited to 1000 characters:\n";
@@ -821,6 +822,7 @@ void Client::Handle_Connect_OP_WorldObjectsSent(const EQApplicationPacket *app)
 	safe_delete(outapp);
 
 	if(IsInAGuild()) {
+		SendGuildRanksAndPermissions();
 		SendGuildMembers();
 		SendGuildURL();
 		SendGuildChannel();
@@ -3990,7 +3992,7 @@ void Client::Handle_OP_SetGuildMOTD(const EQApplicationPacket *app)
 		Message(13, "You are not in a guild!");
 		return;
 	}
-	if(!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_MOTD)) {
+	if(!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_CHANGE_MOTD)) {
 		Message(13, "You do not have permissions to edit your guild's MOTD.");
 		return;
 	}
@@ -4045,8 +4047,9 @@ void Client::Handle_OP_GuildManageBanker(const EQApplicationPacket *app)
 	}
 
 	if(IsCurrentlyAnAlt != NewAltStatus)
-	{
-		bool IsAllowed = !strncasecmp(GetName(), gmb->member, strlen(GetName())) || (GuildRank() >= GUILD_OFFICER);
+	{ 
+		bool IsAllowed = guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_CHANGE_ALT_FLAG);
+		//bool IsAllowed = !strncasecmp(GetName(), gmb->member, strlen(GetName())) || (GuildRank() >= GUILD_OFFICER);
 
 		if(!IsAllowed)
 		{
@@ -4143,6 +4146,55 @@ void Client::Handle_OP_GuildLeader(const EQApplicationPacket *app)
 	return;
 }
 
+void Client::Handle_OP_GuildPromote(const EQApplicationPacket *app)
+{
+	// New OPCode for RoF
+	mlog(GUILDS__IN_PACKETS, "Received OP_GuildPromote");
+	mpkt(GUILDS__IN_PACKET_TRACE, app);
+
+	VERIFY_PACKET_LENGTH(OP_GuildPromote, app, GuildPromote_Struct);
+
+	if (!IsInAGuild())
+		Message(0, "Error: You arent in a guild!");
+	else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_DEMOTE))
+		Message(0, "You dont have permission to invite.");
+	else if (!worldserver.Connected())
+		Message(0, "Error: World server disconnected");
+	else
+	{
+		GuildPromote_Struct *gps = (GuildPromote_Struct *)app->pBuffer;
+
+		CharGuildInfo gci;
+		if(!guild_mgr.GetCharInfo(gps->Target, gci)) {
+			Message(0, "Unable to find '%s'", gps->Target);
+			return;
+		}
+		if(gci.guild_id != GuildID()) {
+			Message(0, "You aren't in the same guild, what do you think you are doing?");
+			return;
+		}
+		// Internally we can only promote from Member to Officer.
+		if(gci.rank == 1) {
+			Message(0, "%s cannot be promoted any further!", gps->Target);
+			return;
+		}
+		int8 rank = gci.rank - 1;
+
+
+		mlog(GUILDS__ACTIONS, "Promoting %s (%d) from rank %s (%d) to %s (%d) in %s (%d)",
+			gps->Target, gci.char_id,
+			guild_mgr.GetRankName(GuildID(), gci.rank), gci.rank,
+			guild_mgr.GetRankName(GuildID(), rank), rank,
+			guild_mgr.GetGuildName(GuildID()), GuildID());
+
+		if(!guild_mgr.SetGuildRank(gci.char_id, rank)) {
+			Message(13, "Error while setting rank %d on '%s'.", rank, gps->Target);
+			return;
+		}
+		Message(0, "Successfully promoted %s to rank %s", gps->Target, guild_mgr.GetRankName(GuildID(), rank));
+	}
+}
+
 void Client::Handle_OP_GuildDemote(const EQApplicationPacket *app)
 {
 	mlog(GUILDS__IN_PACKETS, "Received OP_GuildDemote");
@@ -4155,8 +4207,8 @@ void Client::Handle_OP_GuildDemote(const EQApplicationPacket *app)
 
 	if (!IsInAGuild())
 		Message(0, "Error: You arent in a guild!");
-	else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_DEMOTE))
-		Message(0, "You dont have permission to invite.");
+	else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_DEMOTE))
+		Message(0, "You dont have permission to demote.");
 	else if (!worldserver.Connected())
 		Message(0, "Error: World server disconnected");
 	else {
@@ -4172,11 +4224,11 @@ void Client::Handle_OP_GuildDemote(const EQApplicationPacket *app)
 			return;
 		}
 
-		if(gci.rank < 1) {
+		if(gci.rank > GUILD_RANK_RECRUIT ) {
 			Message(0, "%s cannot be demoted any further!", demote->target);
 			return;
 		}
-		uint8 rank = gci.rank - 1;
+		uint8 rank = gci.rank + 1;
 
 
 		mlog(GUILDS__ACTIONS, "Demoting %s (%d) from rank %s (%d) to %s (%d) in %s (%d)",
@@ -4189,7 +4241,7 @@ void Client::Handle_OP_GuildDemote(const EQApplicationPacket *app)
 			Message(13, "Error while setting rank %d on '%s'.", rank, demote->target);
 			return;
 		}
-		Message(0, "Successfully demoted %s to rank %d", demote->target, rank);
+		Message(0, "Successfully demoted %s to rank %s", demote->target, guild_mgr.GetRankName(GuildID(), rank));
 	}
 //	SendGuildMembers(GuildID(), true);
 	return;
@@ -4209,7 +4261,9 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 
 	if (!IsInAGuild())
 		Message(0, "Error: You are not in a guild!");
-	else if(gc->officer > GUILD_MAX_RANK)
+	else if(gc->officer > GUILD_RANK_RECRUIT)
+		Message(13, "Invalid rank.");
+	else if(gc->officer < GUILD_RANK_LEADER)
 		Message(13, "Invalid rank.");
 	else if (!worldserver.Connected())
 		Message(0, "Error: World server disconnected");
@@ -4229,9 +4283,9 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 			//ok, figure out what they are trying to do.
 			if(client->GuildID() == GuildID()) {
 				//they are already in this guild, must be a promotion or demotion
-				if(gc->officer < client->GuildRank()) {
+				if(gc->officer > client->GuildRank()) {
 					//demotion
-					if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_DEMOTE)) {
+					if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_DEMOTE)) {
 						Message(13, "You dont have permission to demote.");
 						return;
 					}
@@ -4250,9 +4304,9 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 						return;
 					}
 
-				} else if(gc->officer > client->GuildRank()) {
+				} else if(gc->officer < client->GuildRank()) {
 					//promotion
-					if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PROMOTE)) {
+					if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_PROMOTE)) {
 						Message(13, "You dont have permission to demote.");
 						return;
 					}
@@ -4286,7 +4340,7 @@ void Client::Handle_OP_GuildInvite(const EQApplicationPacket *app)
 					return;
 				}
 
-				if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_INVITE)) {
+				if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_INVITE)) {
 					Message(13, "You dont have permission to invite.");
 					return;
 				}
@@ -4336,7 +4390,7 @@ void Client::Handle_OP_GuildRemove(const EQApplicationPacket *app)
 		Message(0, "Error: You arent in a guild!");
 	// we can always remove ourself, otherwise, our rank needs remove permissions
 	else if (strcasecmp(gc->othername,GetName()) != 0 &&
-			!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_REMOVE))
+			!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_MEMBERS_REMOVE))
 		Message(0, "You dont have permission to remove guild members.");
 	else if (!worldserver.Connected())
 		Message(0, "Error: World server disconnected");
@@ -4405,7 +4459,9 @@ void Client::Handle_OP_GuildInviteAccept(const EQApplicationPacket *app)
 
 	GuildInviteAccept_Struct* gj = (GuildInviteAccept_Struct*) app->pBuffer;
 
-	if (gj->response == 5 || gj->response == 4) {
+	//if (gj->response == 5 || gj->response == 4) {
+	if (gj->response == GUILD_RANK_NONE)
+	{
 		//dont care if the check fails (since we dont know the rank), just want to clear the entry.
 		guild_mgr.VerifyAndClearInvite(CharacterID(), gj->guildeqid, gj->response);
 
@@ -9397,7 +9453,7 @@ void Client::CompleteConnect()
 							gender = 0;
 						else if (gender == 0)
 							gender = 1;
-						SendIllusionPacket(GetRace(), gender, 0xFFFF, 0xFFFF);
+						SendIllusionPacket(GetRace(), gender, 0xFF, 0xFF);
 					}
 					else if (spell.base[x1] == -2)
 					{
@@ -9410,7 +9466,7 @@ void Client::CompleteConnect()
 					}
 					else
 					{
-						SendIllusionPacket(spell.base[x1], 0xFF, 0xFFFF, 0xFFFF);
+						SendIllusionPacket(spell.base[x1], 0xFF, 0xFF, 0xFF);
 					}
 					switch(spell.base[x1]){
 						case OGRE:
@@ -11741,6 +11797,8 @@ void Client::Handle_OP_GMSearchCorpse(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 {
+	printf("CP: OP_GuildBank\n");
+	DumpPacket(app);
 	if(!GuildBanks)
 		return;
 
@@ -11768,27 +11826,22 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 		if(Action == GuildBankDeposit)
 			GuildBankDepositAck(true);
 		else
-			GuildBankAck();
+			GuildBankAck(Action);
 
 		return;
-	}
-
-	if(!IsGuildBanker())
-	{
-		if((Action != GuildBankDeposit) && (Action != GuildBankViewItem) && (Action != GuildBankWithdraw))
-		{
-			_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
-
-			GuildBankAck();
-
-			return;
-		}
 	}
 
 	switch(Action)
 	{
 		case GuildBankPromote:
 		{
+			if(!(IsGuildBanker() || guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_BANK_PROMOTE_ITEMS)))
+			{
+				_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
+				Message(13, "You are not permitted to do that.");
+				GuildBankAck(Action);
+				return;
+			}
 			if(GuildBanks->IsAreaFull(GuildID(), GuildBankMainArea))
 			{
 				Message_StringID(13, GUILD_BANK_FULL);
@@ -11815,7 +11868,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			else
 				Message(13, "Unexpected error while moving item into Guild Bank.");
 
-			GuildBankAck();
+			GuildBankAck(Action);
 
 			break;
 		}
@@ -11838,6 +11891,13 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			
 		case GuildBankDeposit:	// Deposit Item
 		{
+			if(!(IsGuildBanker() || guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_BANK_DEPOSIT_ITEMS)))
+			{
+				_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
+				Message(13, "You are not permitted to do that.");
+				GuildBankAck(Action);
+				return;
+			}
 			if(GuildBanks->IsAreaFull(GuildID(), GuildBankDepositArea))
 			{
 				Message_StringID(13, GUILD_BANK_FULL);
@@ -11912,6 +11972,13 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 
 		case GuildBankPermissions:
 		{
+			if(!(IsGuildBanker() || guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_BANK_CHANGE_ITEM_PERMISSIONS)))
+			{
+				_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
+				Message(13, "You are not permitted to do that.");
+				GuildBankAck(Action);
+				return;
+			}
 			GuildBankPermissions_Struct *gbps = (GuildBankPermissions_Struct*)app->pBuffer;
 
 			if(gbps->Permissions == 1)
@@ -11919,7 +11986,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			else
 				GuildBanks->SetPermissions(GuildID(), gbps->SlotID, gbps->Permissions, "");
 
-			GuildBankAck();
+			GuildBankAck(Action);
 			break;
 		}
 
@@ -11929,7 +11996,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			{
 				Message_StringID(13, GUILD_BANK_EMPTY_HANDS);
 
-				GuildBankAck();
+				GuildBankAck(Action);
 
 				break;
 			}
@@ -11940,7 +12007,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			
 			if(!inst)
 			{
-				GuildBankAck();
+				GuildBankAck(Action);
 
 				break;
 			}
@@ -11949,7 +12016,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			{
 				_log(GUILDS__BANK_ERROR, "Suspected attempted hack on the guild bank from %s", GetName());
 
-				GuildBankAck();
+				GuildBankAck(Action);
 
 				safe_delete(inst);
 
@@ -11960,7 +12027,7 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 			{
 				Message_StringID(13, DUP_LORE);
 
-				GuildBankAck();
+				GuildBankAck(Action);
 
 				safe_delete(inst);
 
@@ -11982,13 +12049,20 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 
 			safe_delete(inst);
 
-			GuildBankAck();
+			GuildBankAck(Action);
 
 			break;
 		}
 		
 		case GuildBankSplitStacks:
 		{
+			if(!(IsGuildBanker() || guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_BANK_CHANGE_ITEM_PERMISSIONS)))
+			{
+				_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
+				Message(13, "You are not permitted to do that.");
+				GuildBankAck(Action);
+				return;
+			}
 			if(GuildBanks->IsAreaFull(GuildID(), GuildBankMainArea))
 				Message_StringID(13, GUILD_BANK_FULL);
 			else
@@ -11998,18 +12072,25 @@ void Client::Handle_OP_GuildBank(const EQApplicationPacket *app)
 				GuildBanks->SplitStack(GuildID(), gbwis->SlotID, gbwis->Quantity);
 			}
 
-			GuildBankAck();
+			GuildBankAck(Action);
 
 			break;
 		}
 
 		case GuildBankMergeStacks:
 		{
+			if(!(IsGuildBanker() || guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_BANK_CHANGE_ITEM_PERMISSIONS)))
+			{
+				_log(GUILDS__BANK_ERROR, "Suspected hacking attempt on guild bank from %s", GetName());
+				Message(13, "You are not permitted to do that.");
+				GuildBankAck(Action);
+				return;
+			}
 			GuildBankWithdrawItem_Struct *gbwis = (GuildBankWithdrawItem_Struct*)app->pBuffer;
 
 			GuildBanks->MergeStacks(GuildID(), gbwis->SlotID);
 
-			GuildBankAck();
+			GuildBankAck(Action);
 
 			break;
 		}
@@ -12097,6 +12178,38 @@ void Client::Handle_OP_HideCorpse(const EQApplicationPacket *app)
 
 void Client::Handle_OP_GuildUpdateURLAndChannel(const EQApplicationPacket *app)
 {
+	if(!IsInAGuild())
+		return;
+
+	if(app->size == sizeof(GuildPermission_Struct))
+	{
+		GuildPermission_Struct *gps = (GuildPermission_Struct *)app->pBuffer;
+
+		// Can only change permissions if the rank we are changing is lower than our rank, and we have the permission we
+		// are trying to change. This is enforced by the client, but just in case.
+		printf("gps->GuildID = %i, Rank = %i, CheckPerms = %i\n",
+			gps->GuildID, gps->Rank, guild_mgr.CheckPermission(GuildID(), GuildRank(), gps->Permission)); fflush(stdout);
+		if((gps->Rank <= GuildRank()) || !guild_mgr.CheckPermission(GuildID(), GuildRank(), gps->Permission))
+		{
+			Message(13, "You do not have permission to do that.");
+			// The requested change will already have been reflected in the GMW of the requestor, so we resend them the permission
+			// they tried to change to set it back to what it should be in their GMW.
+			SendGuildPermission(gps->Rank, gps->Permission);
+			return;
+		}
+		guild_mgr.UpdatePermission(GuildID(), (GuildPermission_Struct *)app->pBuffer);	
+		return;
+	}
+
+	if(app->size == sizeof(GuildRank_Struct))
+	{
+		// Should check if player has perimssion to update rank names, even if this is enforced by the client.
+		printf("Guild Rank Name Update\n");
+		DumpPacket(app);
+		guild_mgr.UpdateRank(GuildID(), (GuildRank_Struct *)app->pBuffer);	
+		return;
+	}
+
 	if(app->size != sizeof(GuildUpdateURLAndChannel_Struct))
 	{
 		LogFile->write(EQEMuLog::Debug, "Size mismatch in OP_GuildUpdateURLAndChannel expected %i got %i",
@@ -12108,9 +12221,6 @@ void Client::Handle_OP_GuildUpdateURLAndChannel(const EQApplicationPacket *app)
 	}
 
 	GuildUpdateURLAndChannel_Struct *guuacs = (GuildUpdateURLAndChannel_Struct*)app->pBuffer;
-
-	if(!IsInAGuild())
-		return;
 
 	if(!guild_mgr.IsGuildLeader(GuildID(), CharacterID()))
 	{
@@ -12159,8 +12269,12 @@ void Client::Handle_OP_GuildStatus(const EQApplicationPacket *app)
 	if(!GuildName)
 		return;
 
-	bool IsLeader = guild_mgr.CheckPermission(TargetGuildID, c->GuildRank(), GUILD_PROMOTE);
-	bool IsOfficer = guild_mgr.CheckPermission(TargetGuildID, c->GuildRank(), GUILD_INVITE);
+	//bool IsLeader = guild_mgr.CheckPermission(TargetGuildID, c->GuildRank(), GUILD_PROMOTE);
+	//bool IsOfficer = guild_mgr.CheckPermission(TargetGuildID, c->GuildRank(), GUILD_INVITE);
+
+	// Add in handling for other ranks ?
+	bool IsLeader = c->GuildRank() == GUILD_RANK_LEADER;
+	bool IsOfficer = (c->GuildRank() == GUILD_RANK_OFFICER) || (c->GuildRank() == GUILD_RANK_SENIOR_OFFICER);
 
 	if((TargetGuildID == GuildID()) && (c != this))
 	{
@@ -12539,11 +12653,14 @@ void Client::Handle_OP_GuildCreate(const EQApplicationPacket *app)
 		Message(clientMessageError, "Guild creation failed.");
 	else
 	{
-		if(!guild_mgr.SetGuild(CharacterID(), NewGuildID, GUILD_LEADER))
+		guild_id = NewGuildID;
+
+		if(!guild_mgr.SetGuild(CharacterID(), NewGuildID, GUILD_RANK_LEADER))
 			Message(clientMessageError, "Unable to set guild leader's guild in the database. Contact a GM.");
 		else
 		{
 			Message(clientMessageYellow, "You are now the leader of %s", GuildName);
+			SendGuildRanksAndPermissions();
 
 			if(zone->GetZoneID() == RuleI(World, GuildBankZoneID) && GuildBanks)
 				GuildBanks->SendGuildBank(this);
@@ -13410,7 +13527,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		for (spacer = 0; spacer < 77; spacer++) { //More Item stats, but some seem to be off based on packet check
 			outapp->WriteUInt8(0);
 		}
-		outapp->WriteUInt32(4294967295); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt32(0); //Unknown
 		for (spacer = 0; spacer < 5; spacer++) { //Augment stuff
 			outapp->WriteUInt32(item->AugSlotType[spacer]);
@@ -13427,7 +13544,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		for (spacer = 0; spacer < 11; spacer++) { //unknowns
 			outapp->WriteUInt8(0);
 		}
-		outapp->WriteUInt32(4294967295); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt16(0); //Unknown
 		outapp->WriteUInt32(item->Favor); // Tribute
 		for (spacer = 0; spacer < 17; spacer++) { //unknowns
@@ -13435,7 +13552,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		}
 		outapp->WriteUInt32(item->GuildFavor); // Tribute
 		outapp->WriteUInt32(0); //Unknown
-		outapp->WriteUInt32(4294967295); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
 		for (spacer = 0; spacer < 11; spacer++) { //unknowns
 			outapp->WriteUInt8(0);
 		}
@@ -13450,13 +13567,13 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt32(1); // Always seen as 1
 		outapp->WriteUInt32(0); //unknown
-		outapp->WriteUInt32(3452750909); //0x3DCCCCCD/3452750909
+		outapp->WriteUInt32(3452750909u); //0x3DCCCCCD/3452750909
 		outapp->WriteUInt32(0);
 		outapp->WriteUInt16(8256); //0x4020/8256
 		outapp->WriteUInt16(0);
-		outapp->WriteUInt32(4294967295); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt16(0);
-		outapp->WriteUInt32(4294967295); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt16(0); //unknown

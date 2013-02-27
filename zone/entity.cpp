@@ -2274,7 +2274,7 @@ void EntityList::ChannelMessageFromWorld(const char* from, const char* to, uint8
 		if(chan_num == 0) {
 			if(!client->IsInGuild(guild_id))
 				continue;
-			if(!guild_mgr.CheckPermission(guild_id, client->GuildRank(), GUILD_HEAR))
+			if(!guild_mgr.CheckPermission(guild_id, client->GuildRank(), GUILD_PERMISSION_GUILD_CHAT_SEE))
 				continue;
 			if(client->GetFilter(FilterGuildChat) == FilterHide)
 				continue;
@@ -2347,6 +2347,46 @@ void EntityList::QueueClientsGuildBankItemUpdate(const GuildBankItemUpdate_Struc
 		iterator.Advance();
 	}
 	safe_delete(outapp);
+}
+
+void EntityList::SendGuildPermission(uint32 GuildID, uint32 Rank, uint32 Permission)
+{
+	printf("SendGuildPermission(%i, %i, %i)\n", GuildID, Rank, Permission); fflush(stdout);
+	LinkedListIterator<Client*> iterator(client_list);
+
+	iterator.Reset();
+
+	while(iterator.MoreElements())
+	{
+		Client* client = iterator.GetData()->CastToClient();
+
+		if (client && client->IsInGuild(GuildID))
+		{
+			client->SendGuildPermission(Rank, Permission);
+		}
+
+		iterator.Advance();
+	}
+}
+
+void EntityList::SendGuildRankName(uint32 GuildID, uint32 Rank, const char *RankName)
+{
+	printf("SendGuildRankName(%i, %i, %s)\n", GuildID, Rank, RankName); fflush(stdout);
+	LinkedListIterator<Client*> iterator(client_list);
+
+	iterator.Reset();
+
+	while(iterator.MoreElements())
+	{
+		Client* client = iterator.GetData()->CastToClient();
+
+		if (client && client->IsInGuild(GuildID))
+		{
+			client->SendGuildRankName(Rank, RankName);
+		}
+
+		iterator.Advance();
+	}
 }
 
 void EntityList::MessageStatus(uint32 to_guild_id, int to_minstatus, uint32 type, const char* message, ...) {

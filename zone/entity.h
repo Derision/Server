@@ -173,12 +173,14 @@ public:
 	int RezzAllCorpsesByCharID(uint32 charid);
 	bool IsMobInZone(Mob *who);
 	void ClearClientPetitionQueue();
-    bool CanAddHateForMob(Mob *p);
-    void	SendGuildMOTD(uint32 guild_id);
-    void	SendGuildSpawnAppearance(uint32 guild_id);
-    void	SendGuildMembers(uint32 guild_id);
-    void	RefreshAllGuildInfo(uint32 guild_id);
-    void	SendGuildList();
+	bool CanAddHateForMob(Mob *p);
+	void	SendGuildMOTD(uint32 guild_id);
+	void	SendGuildSpawnAppearance(uint32 guild_id);
+	void	SendGuildMembers(uint32 guild_id);
+	void	RefreshAllGuildInfo(uint32 guild_id);
+	void	SendGuildList();
+	void	SendGuildPermission(uint32 GuildID, uint32 Rank, uint32 Permission);
+	void	SendGuildRankName(uint32 GuildID, uint32 Rank, const char *RankName);
 //	void	SendGuildJoin(GuildJoin_Struct* gj);
 	// Check group list for NULL entries
 	void	CheckGroupList (const char *fname, const int fline);

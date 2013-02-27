@@ -93,6 +93,8 @@ public:
 	bool VerifyAndClearInvite(uint32 char_id, uint32 guild_id, uint8 rank);
 	void SendGuildMemberUpdateToWorld(const char *MemberName, uint32 GuildID, uint16 ZoneID, uint32 LastSeen);
 	void RequestOnlineGuildMembers(uint32 FromID, uint32 GuildID);
+	void UpdatePermission(uint32 GuildID, GuildPermission_Struct *NewPermission);
+	void UpdateRank(uint32 GuildID, GuildRank_Struct *NewRank);
 
 protected:
 	virtual void SendGuildRefresh(uint32 guild_id, bool name, bool motd, bool rank, bool relation);
@@ -115,6 +117,7 @@ class GuildBankManager
 public:
 	~GuildBankManager();
 	void SendGuildBank(Client *c);
+	void SendGuildBankRoF(Client *c);
 	bool AddItem(uint32 GuildID, uint8 Area, uint32 ItemID, int32 QtyOrCharges, const char *Donator, uint8 Permissions, const char *WhoFor);
 	int Promote(uint32 GuildID, int SlotID);
 	void SetPermissions(uint32 GuildID, uint16 SlotID, uint32 Permissions, const char *MemberName);

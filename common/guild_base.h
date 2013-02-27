@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <list>
 
 class Database;
 
@@ -48,7 +49,10 @@ public:
 	bool	SetGuildMOTD(uint32 guild_id, const char* motd, const char *setter);
 	bool	SetGuildURL(uint32 GuildID, const char* URL);
 	bool	SetGuildChannel(uint32 GuildID, const char* Channel);
-	
+	bool	SetGuildPermission(uint32 GuildID, uint32 Rank, uint32 Permission, uint32 Allowed);
+	bool	SetGuildRankName(uint32 GuildID, uint32 Rank, const char* RankName);
+	const char *const GetPermissionName(uint32 p) { return GuildActionNames[p -1]; }
+
 	//character edit actions
 	bool	SetGuildLeader(uint32 guild_id, uint32 leader_char_id);
 	bool	SetGuild(uint32 charid, uint32 guild_id, uint8 rank);
@@ -59,11 +63,14 @@ public:
 	bool	GetBankerFlag(uint32 CharID);
 	bool	SetTributeFlag(uint32 charid, bool enabled);
 	bool	SetPublicNote(uint32 charid, const char *note);
+
 	
 	//queries
 	bool	GetCharInfo(const char *char_name, CharGuildInfo &into);
 	bool	GetCharInfo(uint32 char_id, CharGuildInfo &into);
 	bool	GetEntireGuild(uint32 guild_id, std::vector<CharGuildInfo *> &members);	//caller is responsible for deleting each pointer in the resulting vector.
+	std::map<uint32, std::string> GetEntireGuild(uint32 GuildID);
+	std::map<uint32, std::string> GetGuildBankers(uint32 GuildID);
 	bool	GuildExists(uint32 guild_id) const;
 	bool	GetGuildMOTD(uint32 guild_id, char *motd_buffer, char *setter_buffer) const;
 	bool	GetGuildURL(uint32 GuildID, char *URLBuffer) const;
@@ -75,17 +82,18 @@ public:
 	bool	IsGuildLeader(uint32 guild_id, uint32 char_id) const;
 	uint8	GetDisplayedRank(uint32 guild_id, uint8 rank, uint32 char_id) const;
 	bool	CheckGMStatus(uint32 guild_id, uint8 status) const;
-	bool	CheckPermission(uint32 guild_id, uint8 rank, GuildAction act) const;
+	bool	CheckPermission(uint32 guild_id, uint8 rank, uint32 act) const;
 //	uint32	Getguild_id(uint32 eqid);
 	uint32	FindGuildByLeader(uint32 leader) const;
 //	void	GetGuildMembers(uint32 guild_id,GuildMember_Struct* gms);
 	uint32	NumberInGuild(uint32 guild_id);
+	uint64	GetRankPermissionBits(uint32 GuildID, uint32 Rank);
 //	bool	GetGuildRanks(uint32 guildeqid, GuildRanks_Struct* gr);
 //	bool	EditGuild(uint32 guild_id, uint8 ranknum, GuildRankLevel_Struct* grl);
 	
 	uint8 *MakeGuildList(const char *head_name, uint32 &length) const;	//make a guild list packet, returns ownership of the buffer.
 	
-	static const char *const GuildActionNames[_MaxGuildAction];
+	static const char *const GuildActionNames[GUILD_PERMISSION_MAX];
 	uint32	DoesAccountContainAGuildLeader(uint32 AccountID);
 	
 protected:
@@ -108,8 +116,11 @@ protected:
 	bool	DBSetAltFlag(uint32 charid, bool is_alt);
 	bool	DBSetTributeFlag(uint32 charid, bool enabled);
 	bool	DBSetPublicNote(uint32 charid, const char *note);
+	bool	DBSaveGuildRankPermissions(uint32 GuildID, uint32 Rank);
+	bool	DBSaveGuildRankName(uint32 GuildID, uint32 Rank);
 	bool	_RunQuery(char *&query, int len, const char *errmsg);
 //	void	DBSetPublicNote(uint32 guild_id,char* charname, char* note);
+	bool	SetRankPermissionBits(uint32 GuildID, uint32 Rank, uint64 Permissions);
 	
 	bool	LocalDeleteGuild(uint32 guild_id);
 	
@@ -117,7 +128,7 @@ protected:
 	public:
 		RankInfo();
 		std::string name;
-		bool permissions[_MaxGuildAction];
+		GuildPermissions permissions;
 	};
 	class GuildInfo {
 	public:

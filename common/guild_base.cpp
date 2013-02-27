@@ -27,8 +27,39 @@
 //until we move MAX_NUMBER_GUILDS
 #include "eq_packet_structs.h"
 
-const char *const BaseGuildManager::GuildActionNames[_MaxGuildAction] =
-{ "HearGuildChat", "SpeakGuildChat", "Invite", "Remove", "Promote", "Demote", "Set_MOTD", "War/Peace" };
+const char *const BaseGuildManager::GuildActionNames[GUILD_PERMISSION_MAX] =
+{
+"BANNER_CHANGE",
+"BANNER_PLANT",
+"BANNER_REMOVE",
+"DISPLAY_GUILD_NAME",
+"RANKS_CHANGE_PERMISSIONS",
+"RANKS_CHANGE_NAMES",
+"MEMBERS_INVITE",
+"MEMBERS_PROMOTE",
+"MEMBERS_DEMOTE",
+"MEMBERS_REMOVE",
+"EDIT_RECRUITING_SETTINGS",
+"EDIT_PUBLIC_NOTES",
+"BANK_DEPOSIT_ITEMS",
+"BANK_WITHDRAW_ITEMS",
+"BANK_VIEW_ITEMS",
+"BANK_PROMOTE_ITEMS",
+"BANK_CHANGE_ITEM_PERMISSIONS",
+"CHANGE_MOTD",
+"GUILD_CHAT_SEE",
+"GUILD_CHAT_SPEAK",
+"GUILD_EMAIL",
+"TRIBUTE_CHANGE_OTHERS",
+"TRIBUTE_CHANGE_ACTIVE_BENEFITS",
+"TROPHY_TRIBUTE_CHANGE_OTHERS",
+"TROPHY_TRIBUTE_CHANGE_ACTIVE_BENEFITS",
+"CHANGE_ALT_FLAG",
+"REAL_ESTATE_GUILD_PLOT_BUY",
+"REAL_ESTATE_GUILD_PLOT_SELL",
+"REAL_ESTATE_MODIFY_TROPHIES",
+"MEMBERS_DEMOTE_SELF"
+};
 
 BaseGuildManager::BaseGuildManager()
 : m_db(NULL)
@@ -69,7 +100,7 @@ bool BaseGuildManager::LoadGuilds() {
 	
 	//load up the rank info for each guild.
 	if (!m_db->RunQuery(query, MakeAnyLenString(&query, 
-		"SELECT guild_id,rank,title,can_hear,can_speak,can_invite,can_remove,can_promote,can_demote,can_motd,can_warpeace FROM guild_ranks"), errbuf, &result)) {
+		"SELECT guild_id,rank,title,permissions FROM guild_ranks"), errbuf, &result)) {
 		_log(GUILDS__ERROR, "Error loading guild ranks '%s': %s", query, errbuf);
 		safe_delete_array(query);
 		return(false);
@@ -92,6 +123,8 @@ bool BaseGuildManager::LoadGuilds() {
 		RankInfo &rank = res->second->ranks[rankn];
 		
 		rank.name = row[2];
+		rank.permissions.Bits = atoi(row[3]);
+		/*
 		rank.permissions[GUILD_HEAR] = (row[3][0] == '1')?true:false;
 		rank.permissions[GUILD_SPEAK] = (row[4][0] == '1')?true:false;
 		rank.permissions[GUILD_INVITE] = (row[5][0] == '1')?true:false;
@@ -99,7 +132,8 @@ bool BaseGuildManager::LoadGuilds() {
 		rank.permissions[GUILD_PROMOTE] = (row[7][0] == '1')?true:false;
 		rank.permissions[GUILD_DEMOTE] = (row[8][0] == '1')?true:false;
 		rank.permissions[GUILD_MOTD] = (row[9][0] == '1')?true:false;
-		rank.permissions[GUILD_WARPEACE] = (row[10][0] == '1')?true:false;
+		rank.permissions[GUILD_WARPEACE] = (row[10][0] == '1')?true:false
+		*/
 	}
 	mysql_free_result(result);
 	
@@ -138,7 +172,7 @@ bool BaseGuildManager::RefreshGuild(uint32 guild_id) {
 	
 	//load up the rank info for each guild.
 	if (!m_db->RunQuery(query, MakeAnyLenString(&query, 
-		"SELECT guild_id,rank,title,can_hear,can_speak,can_invite,can_remove,can_promote,can_demote,can_motd,can_warpeace "
+		"SELECT guild_id,rank,title,permissions "
 		"FROM guild_ranks WHERE guild_id=%lu", (unsigned long)guild_id), errbuf, &result)) {
 		_log(GUILDS__ERROR, "Error reloading guild ranks '%s': %s", query, errbuf);
 		safe_delete_array(query);
@@ -155,6 +189,8 @@ bool BaseGuildManager::RefreshGuild(uint32 guild_id) {
 		RankInfo &rank = info->ranks[rankn];
 		
 		rank.name = row[2];
+		rank.permissions.Bits = atoi(row[3]);
+		/*
 		rank.permissions[GUILD_HEAR] = (row[3][0] == '1')?true:false;
 		rank.permissions[GUILD_SPEAK] = (row[4][0] == '1')?true:false;
 		rank.permissions[GUILD_INVITE] = (row[5][0] == '1')?true:false;
@@ -163,6 +199,7 @@ bool BaseGuildManager::RefreshGuild(uint32 guild_id) {
 		rank.permissions[GUILD_DEMOTE] = (row[8][0] == '1')?true:false;
 		rank.permissions[GUILD_MOTD] = (row[9][0] == '1')?true:false;
 		rank.permissions[GUILD_WARPEACE] = (row[10][0] == '1')?true:false;
+		*/
 	}
 	mysql_free_result(result);
 	
@@ -194,25 +231,59 @@ BaseGuildManager::GuildInfo *BaseGuildManager::_CreateGuild(uint32 guild_id, con
 	m_guilds[guild_id] = info;
 	
 	//now setup default ranks (everything defaults to false)
-	info->ranks[0].name = "Member";
-	info->ranks[0].permissions[GUILD_HEAR] = true;
-	info->ranks[0].permissions[GUILD_SPEAK] = true;
-	info->ranks[1].name = "Officer";
-	info->ranks[1].permissions[GUILD_HEAR] = true;
-	info->ranks[1].permissions[GUILD_SPEAK] = true;
-	info->ranks[1].permissions[GUILD_INVITE] = true;
-	info->ranks[1].permissions[GUILD_REMOVE] = true;
-	info->ranks[1].permissions[GUILD_MOTD] = true;
-	info->ranks[2].name = "Leader";
-	info->ranks[2].permissions[GUILD_HEAR] = true;
-	info->ranks[2].permissions[GUILD_SPEAK] = true;
-	info->ranks[2].permissions[GUILD_INVITE] = true;
-	info->ranks[2].permissions[GUILD_REMOVE] = true;
-	info->ranks[2].permissions[GUILD_PROMOTE] = true;
-	info->ranks[2].permissions[GUILD_DEMOTE] = true;
-	info->ranks[2].permissions[GUILD_MOTD] = true;
-	info->ranks[2].permissions[GUILD_WARPEACE] = true;
+	info->ranks[GUILD_RANK_RECRUIT].name = "Recruit";
+	info->ranks[GUILD_RANK_RECRUIT].permissions.Bits =	GUILD_PERMISSION_BIT_DISPLAY_GUILD_NAME |
+								GUILD_PERMISSION_BIT_GUILD_CHAT_SEE |
+								GUILD_PERMISSION_BIT_GUILD_CHAT_SPEAK;	
+
+	info->ranks[GUILD_RANK_INITIATE].name = "Initiate";
+	info->ranks[GUILD_RANK_INITIATE].permissions.Bits = info->ranks[GUILD_RANK_RECRUIT].permissions.Bits;
+
+	info->ranks[GUILD_RANK_JUNIOR_MEMBER].name = "Junior Member";
+	info->ranks[GUILD_RANK_JUNIOR_MEMBER].permissions.Bits = info->ranks[GUILD_RANK_INITIATE].permissions.Bits;
+
+	info->ranks[GUILD_RANK_MEMBER].name = "Member";
+	info->ranks[GUILD_RANK_MEMBER].permissions.Bits = info->ranks[GUILD_RANK_JUNIOR_MEMBER].permissions.Bits;
+	info->ranks[GUILD_RANK_MEMBER].permissions.BankDepositItems = 1;
+	info->ranks[GUILD_RANK_MEMBER].permissions.BankViewItems = 1;
 	
+	info->ranks[GUILD_RANK_SENIOR_MEMBER].name = "Senior Member";
+	info->ranks[GUILD_RANK_SENIOR_MEMBER].permissions.Bits = info->ranks[GUILD_RANK_MEMBER].permissions.Bits;
+
+	info->ranks[GUILD_RANK_OFFICER].name = "Officer";
+	info->ranks[GUILD_RANK_OFFICER].permissions.Bits = info->ranks[GUILD_RANK_SENIOR_MEMBER].permissions.Bits;
+	info->ranks[GUILD_RANK_OFFICER].permissions.BannerChange = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.BannerPlant = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.BannerRemove = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.MembersInvite = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.MembersPromote = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.EditRecruitingSettings = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.EditPublicNotes = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.BankWithdrawItems = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.ChangeMOTD = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.SendGuildEMail = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.TributeChangeForOthers = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.TributeChangeActiveBenefit = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.TrophyTributeChangeForOthers = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.TrophyTributeChangeActiveBenefit = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.ChangeAltFlagForOthers = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.RealEstateModifyTrophies = 1;
+	info->ranks[GUILD_RANK_OFFICER].permissions.MembersDemoteSelf = 1;
+
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].name = "Senior Officer";
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.Bits = info->ranks[GUILD_RANK_OFFICER].permissions.Bits;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.RanksChangePermissions = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.RanksChangeNames = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.MembersDemote = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.MembersRemove = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.BankPromoteItems = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.BankChangeItemPermissions = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.RealEstateGuildPlotBuy = 1;
+	info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.RealEstateGuildPlotSell = 1;
+
+	info->ranks[GUILD_RANK_LEADER].name = "Leader";
+	info->ranks[GUILD_RANK_LEADER].permissions.Bits = info->ranks[GUILD_RANK_SENIOR_OFFICER].permissions.Bits;
+
 	return(info);
 }
 
@@ -276,24 +347,16 @@ bool BaseGuildManager::_StoreGuildDB(uint32 guild_id) {
 	
 	//now insert the new ranks
 	uint8 rank;
-	for(rank = 0; rank <= GUILD_MAX_RANK; rank++) {
+	for(rank = 1; rank <= GUILD_MAX_RANK; rank++) {
 		const RankInfo &r = info->ranks[rank];
 		
 		char *title_esc = new char[r.name.length()*2+1];
 		m_db->DoEscapeString(title_esc, r.name.c_str(), r.name.length());
 		
 		if (!m_db->RunQuery(query, MakeAnyLenString(&query, 
-		"INSERT INTO guild_ranks (guild_id,rank,title,can_hear,can_speak,can_invite,can_remove,can_promote,can_demote,can_motd,can_warpeace)"
-		" VALUES(%d,%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d)",
-			guild_id, rank, title_esc,
-			r.permissions[GUILD_HEAR],
-			r.permissions[GUILD_SPEAK],
-			r.permissions[GUILD_INVITE],
-			r.permissions[GUILD_REMOVE],
-			r.permissions[GUILD_PROMOTE],
-			r.permissions[GUILD_DEMOTE],
-			r.permissions[GUILD_MOTD],
-			r.permissions[GUILD_WARPEACE]), errbuf))
+		"INSERT INTO guild_ranks (guild_id,rank,title,permissions)"
+		" VALUES(%d,%d,'%s',%d)",
+			guild_id, rank, title_esc, r.permissions.Bits), errbuf))
 		{
 			_log(GUILDS__ERROR, "Error inserting new guild rank record when storing %d for %d. Giving up. '%s': %s", rank, guild_id, query, errbuf);
 			safe_delete_array(query);
@@ -618,10 +681,10 @@ bool BaseGuildManager::DBSetGuildLeader(uint32 guild_id, uint32 leader) {
 	safe_delete_array(query);
 	
 	//set the old leader to officer
-	if(!DBSetGuildRank(info->leader_char_id, GUILD_OFFICER))
+	if(!DBSetGuildRank(info->leader_char_id, GUILD_RANK_SENIOR_OFFICER))
 		return(false);
 	//set the new leader to leader
-	if(!DBSetGuildRank(leader, GUILD_LEADER))
+	if(!DBSetGuildRank(leader, GUILD_RANK_LEADER))
 		return(false);
 	
 	_log(GUILDS__DB, "Set guild leader for guild %d to %d in the database", guild_id, leader);
@@ -1011,6 +1074,68 @@ bool BaseGuildManager::GetEntireGuild(uint32 guild_id, vector<CharGuildInfo *> &
 	return(true);
 }
 
+std::map<uint32, std::string> BaseGuildManager::GetGuildBankers(uint32 GuildID)
+{
+	std::map<uint32, std::string> Bankers;
+
+	if(m_db == NULL)
+		return Bankers;
+	
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char *query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	
+	if (!m_db->RunQuery(query, MakeAnyLenString(&query, 
+		"SELECT c.id, c.name FROM character_ AS c LEFT JOIN guild_members AS g ON c.id=g.char_id WHERE g.guild_id = %u and g.banker = 1", GuildID),
+		errbuf, &result))
+	{
+		_log(GUILDS__ERROR, "Error querying guild bankers '%s': %s", query, errbuf);
+		safe_delete_array(query);
+		return Bankers;
+	}
+	safe_delete_array(query);
+	
+	while ((row = mysql_fetch_row(result)))
+	{
+		Bankers[atoi(row[0])] = row[1];
+	}
+	mysql_free_result(result);
+	
+	return Bankers;
+}
+
+std::map<uint32, std::string> BaseGuildManager::GetEntireGuild(uint32 GuildID)
+{
+	std::map<uint32, std::string> Members;
+
+	if(m_db == NULL)
+		return Members;
+	
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char *query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	
+	if (!m_db->RunQuery(query, MakeAnyLenString(&query, 
+		"SELECT c.id, c.name FROM character_ AS c LEFT JOIN guild_members AS g ON c.id=g.char_id WHERE g.guild_id = %u", GuildID),
+		errbuf, &result))
+	{
+		_log(GUILDS__ERROR, "Error querying guild members '%s': %s", query, errbuf);
+		safe_delete_array(query);
+		return Members;
+	}
+	safe_delete_array(query);
+	
+	while ((row = mysql_fetch_row(result)))
+	{
+		Members[atoi(row[0])] = row[1];
+	}
+	mysql_free_result(result);
+	
+	return Members;
+}
+
 bool BaseGuildManager::GetCharInfo(const char *char_name, CharGuildInfo &into) {
 	if(m_db == NULL) {
 		_log(GUILDS__DB, "Requested char info on %s when we have no database object.", char_name);
@@ -1225,7 +1350,9 @@ uint32 BaseGuildManager::FindGuildByLeader(uint32 leader) const {
 }
 
 //returns the rank to be sent to the client for display purposes, given their eqemu rank.
-uint8 BaseGuildManager::GetDisplayedRank(uint32 guild_id, uint8 rank, uint32 char_id) const {
+uint8 BaseGuildManager::GetDisplayedRank(uint32 guild_id, uint8 rank, uint32 char_id) const
+{
+	/*
 	map<uint32, GuildInfo *>::const_iterator res;
 	res = m_guilds.find(guild_id);
 	if(res == m_guilds.end())
@@ -1235,6 +1362,8 @@ uint8 BaseGuildManager::GetDisplayedRank(uint32 guild_id, uint8 rank, uint32 cha
 	else if (res->second->ranks[rank].permissions[GUILD_INVITE] || res->second->ranks[rank].permissions[GUILD_REMOVE] || res->second->ranks[rank].permissions[GUILD_MOTD])
 		return(1);	//officer rank
 	return(0);	//member rank
+	*/
+	return rank;
 }
 
 bool BaseGuildManager::CheckGMStatus(uint32 guild_id, uint8 status) const {
@@ -1258,7 +1387,7 @@ bool BaseGuildManager::CheckGMStatus(uint32 guild_id, uint8 status) const {
 	return(granted);
 }
 
-bool BaseGuildManager::CheckPermission(uint32 guild_id, uint8 rank, GuildAction act) const {
+bool BaseGuildManager::CheckPermission(uint32 guild_id, uint8 rank, uint32 act) const {
 	if(rank > GUILD_MAX_RANK) {
 		_log(GUILDS__PERMISSIONS, "Check permission on guild %d and rank %d for action %s (%d): Invalid rank, denied.",
 			guild_id, rank, GuildActionNames[act], act);
@@ -1268,16 +1397,17 @@ bool BaseGuildManager::CheckPermission(uint32 guild_id, uint8 rank, GuildAction 
 	res = m_guilds.find(guild_id);
 	if(res == m_guilds.end()) {
 		_log(GUILDS__PERMISSIONS, "Check permission on guild %d and rank %d for action %s (%d): Invalid guild, denied.",
-			guild_id, rank, GuildActionNames[act], act);
+			guild_id, rank, GuildActionNames[act - 1], act);
 		return(false);	//invalid guild
 	}
 	
-	bool granted = res->second->ranks[rank].permissions[act];
+	//bool granted = res->second->ranks[rank].permissions[act];
+	bool granted = res->second->ranks[rank].permissions.Bits & (1 << (act -1));
 	
 	_log(GUILDS__PERMISSIONS, "Check permission on guild %s (%d) and rank %s (%d) for action %s (%d): %s",
 		res->second->name.c_str(), guild_id, 
 		res->second->ranks[rank].name.c_str(), rank, 
-		GuildActionNames[act], act, 
+		GuildActionNames[act - 1], act, 
 		granted?"granted":"denied");
 	
 	return(granted);
@@ -1302,10 +1432,14 @@ void BaseGuildManager::ClearGuilds() {
 	m_guilds.clear();
 }
 
-BaseGuildManager::RankInfo::RankInfo() {
+BaseGuildManager::RankInfo::RankInfo()
+{
+	permissions.Bits = 0;
+	/*
 	uint8 r;
 	for(r = 0; r < _MaxGuildAction; r++)
 		permissions[r] = false;
+	*/
 }
 
 BaseGuildManager::GuildInfo::GuildInfo() {
@@ -1336,231 +1470,135 @@ uint32 BaseGuildManager::DoesAccountContainAGuildLeader(uint32 AccountID)
 	return Rows;
 }
 
+bool BaseGuildManager::SetGuildPermission(uint32 GuildID, uint32 Rank, uint32 Permission, uint32 Allowed)
+{
+	if((Rank < 1) || (Rank > 8))
+		return false;
 
-/*
+	if((Permission < 1) || (Permission > 30))
+		return false;
 
-bool Database::LoadGuilds(GuildRanks_Struct* guilds) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-	//	int i;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
-	
-	for (int a = 0; a < 512; a++) {
-		guilds[a].leader = 0;
-		guilds[a].databaseID = 0;
-		memset(guilds[a].name, 0, sizeof(guilds[a].name));
-		for (int i = 0; i <= GUILD_MAX_RANK; i++) {
-			snprintf(guilds[a].rank[i].rankname, 100, "Guild Rank %i", i);
-			if (i == 0) {
-				guilds[a].rank[i].heargu = 1;
-				guilds[a].rank[i].speakgu = 1;
-				guilds[a].rank[i].invite = 1;
-				guilds[a].rank[i].remove = 1;
-				guilds[a].rank[i].promote = 1;
-				guilds[a].rank[i].demote = 1;
-				guilds[a].rank[i].motd = 1;
-				guilds[a].rank[i].warpeace = 1;
-			}
-			else {
-				guilds[a].rank[i].heargu = 0;
-				guilds[a].rank[i].speakgu = 0;
-				guilds[a].rank[i].invite = 0;
-				guilds[a].rank[i].remove = 0;
-				guilds[a].rank[i].promote = 0;
-				guilds[a].rank[i].demote = 0;
-				guilds[a].rank[i].motd = 0;
-				guilds[a].rank[i].warpeace = 0;
-			}
-		}
-		Sleep(0);
-	}
-
-	
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT id, eqid, name, leader, minstatus, rank0title, rank1, rank1title, rank2, rank2title, rank3, rank3title, rank4, rank4title, rank5, rank5title from guilds"), errbuf, &result)) {
-
-		safe_delete_array(query);
-		uint32 guildeqid = 0xFFFFFFFF;
-		while ((row = mysql_fetch_row(result))) {
-			guildeqid = atoi(row[1]);
-			if (guildeqid < 512) {
-				guilds[guildeqid].leader = atoi(row[3]);
-				guilds[guildeqid].databaseID = atoi(row[0]);
-				guilds[guildeqid].minstatus = atoi(row[4]);
-				strcpy(guilds[guildeqid].name, row[2]);
-				for (int i = 0; i <= GUILD_MAX_RANK; i++) {
-					strcpy(guilds[guildeqid].rank[i].rankname, row[5 + (i*2)]);
-					if (i == 0) {
-						guilds[guildeqid].rank[i].heargu = 1;
-						guilds[guildeqid].rank[i].speakgu = 1;
-						guilds[guildeqid].rank[i].invite = 1;
-						guilds[guildeqid].rank[i].remove = 1;
-						guilds[guildeqid].rank[i].promote = 1;
-						guilds[guildeqid].rank[i].demote = 1;
-						guilds[guildeqid].rank[i].motd = 1;
-						guilds[guildeqid].rank[i].warpeace = 1;
-					}
-					else if (strlen(row[4 + (i*2)]) >= 8) {
-						guilds[guildeqid].rank[i].heargu = (row[4 + (i*2)][GUILD_HEAR] == '1');
-						guilds[guildeqid].rank[i].speakgu = (row[4 + (i*2)][GUILD_SPEAK] == '1');
-						guilds[guildeqid].rank[i].invite = (row[4 + (i*2)][GUILD_INVITE] == '1');
-						guilds[guildeqid].rank[i].remove = (row[4 + (i*2)][GUILD_REMOVE] == '1');
-						guilds[guildeqid].rank[i].promote = (row[4 + (i*2)][GUILD_PROMOTE] == '1');
-						guilds[guildeqid].rank[i].demote = (row[4 + (i*2)][GUILD_DEMOTE] == '1');
-						guilds[guildeqid].rank[i].motd = (row[4 + (i*2)][GUILD_MOTD] == '1');
-						guilds[guildeqid].rank[i].warpeace = (row[4 + (i*2)][GUILD_WARPEACE] == '1');
-					}
-					else {
-
-						guilds[guildeqid].rank[i].heargu = 1;
-						guilds[guildeqid].rank[i].speakgu = 1;
-						guilds[guildeqid].rank[i].invite = 0;
-
-						guilds[guildeqid].rank[i].remove = 0;
-						guilds[guildeqid].rank[i].promote = 0;
-						guilds[guildeqid].rank[i].demote = 0;
-						guilds[guildeqid].rank[i].motd = 0;
-						guilds[guildeqid].rank[i].warpeace = 0;
-					}
-					
-					if (guilds[guildeqid].rank[i].rankname[0] == 0)
-						snprintf(guilds[guildeqid].rank[i].rankname, 100, "Guild Rank %i", i);
-				}
-			}
-			Sleep(0);
-		}
-		mysql_free_result(result);
-		return true;
-	}
-	else
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
 	{
-		cerr << "Error in LoadGuilds query '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
+		return(false);
+	}
+
+	if(!Allowed)	
+		res->second->ranks[Rank].permissions.Bits &= ~(1 << (Permission - 1));
+	else
+		res->second->ranks[Rank].permissions.Bits |= (1 << (Permission - 1));
+
+	return true;
+}
+
+bool BaseGuildManager::SetGuildRankName(uint32 GuildID, uint32 Rank, const char* RankName)
+{
+	if((Rank < 1) || (Rank > 8))
+		return false;
+
+	for(uint32 i = 0; i < strlen(RankName); ++i)
+	{
+		if(!(isalpha(RankName[i]) || isspace(RankName[i])))
+			return false;
+	}
+
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
+	{
+		return(false);
+	}
+	
+	res->second->ranks[Rank].name = RankName;
+
+	return true;
+}
+
+uint64 BaseGuildManager::GetRankPermissionBits(uint32 GuildID, uint32 Rank)
+{
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
+	{
+		return 0;
+	}
+	
+	return res->second->ranks[Rank].permissions.Bits;
+
+}
+
+bool BaseGuildManager::SetRankPermissionBits(uint32 GuildID, uint32 Rank, uint64 Permissions)
+{
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
+	{
 		return false;
 	}
 	
-	return false;
+	res->second->ranks[Rank].permissions.Bits = Permissions;
+
+	return true;
+
 }
 
+bool BaseGuildManager::DBSaveGuildRankPermissions(uint32 GuildID, uint32 Rank)
+{
+	if(m_db == NULL)
+		return(false);
+	
+	if((Rank < 1) || (Rank > 8))
+		return false;
 
-void Database::SetPublicNote(uint32 guild_id,char* charname, char* note){
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
+		return(false);
+	GuildInfo *info = res->second;
+	
 	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-	char* notebuf = new char[(strlen(note)*2)+3];
-	DoEscapeString(notebuf, note, strlen(note)) ;
-	if (!RunQuery(query, MakeAnyLenString(&query, "update character_ set publicnote='%s' where name='%s' and guild=%i", notebuf,charname,guild_id), errbuf)) {
-		cerr << "Error running SetPublicNote query: " << errbuf << endl;
+	char *query = 0;
+	
+	if (!m_db->RunQuery(query, MakeAnyLenString(&query, "UPDATE guild_ranks SET permissions = %llu WHERE guild_id=%u AND rank=%u", 
+		res->second->ranks[Rank].permissions.Bits, GuildID, Rank), errbuf))
+	{
+		_log(GUILDS__ERROR, "Error updating rank permissions, %s : %s", query, errbuf);
+		safe_delete_array(query);
+		return(false);
 	}
 	safe_delete_array(query);
-	safe_delete_array(notebuf);
+	
+	return(true);
 }
 
-
-
-bool Database::GetGuildRanks(uint32 guildeqid, GuildRanks_Struct* gr) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
+bool BaseGuildManager::DBSaveGuildRankName(uint32 GuildID, uint32 Rank)
+{
+	if(m_db == NULL)
+		return(false);
 	
-	if (RunQuery(query, MakeAnyLenString(&query, "SELECT id, eqid, name, leader, minstatus, rank0title, rank1, rank1title, rank2, rank2title, rank3, rank3title, rank4, rank4title, rank5, rank5title from guilds where eqid=%i;", guildeqid), errbuf, &result))
-	{
-		safe_delete_array(query);
-		if (mysql_num_rows(result) == 1) {
-			row = mysql_fetch_row(result);
-			gr->leader = atoi(row[3]);
-			gr->databaseID = atoi(row[0]);
-			gr->minstatus = atoi(row[4]);
-			strcpy(gr->name, row[2]);
-			for (int i = 0; i <= GUILD_MAX_RANK; i++) {
-				strcpy(gr->rank[i].rankname, row[5 + (i*2)]);
-				if (i == 0) {
-					gr->rank[i].heargu = 1;
-					gr->rank[i].speakgu = 1;
-					gr->rank[i].invite = 1;
-					gr->rank[i].remove = 1;
-					gr->rank[i].promote = 1;
-					gr->rank[i].demote = 1;
-					gr->rank[i].motd = 1;
-					gr->rank[i].warpeace = 1;
-				}
-				else if (strlen(row[4 + (i*2)]) >= 8) {
-					gr->rank[i].heargu = (row[4 + (i*2)][GUILD_HEAR] == '1');
-					gr->rank[i].speakgu = (row[4 + (i*2)][GUILD_SPEAK] == '1');
-					gr->rank[i].invite = (row[4 + (i*2)][GUILD_INVITE] == '1');
-					gr->rank[i].remove = (row[4 + (i*2)][GUILD_REMOVE] == '1');
-					gr->rank[i].promote = (row[4 + (i*2)][GUILD_PROMOTE] == '1');
-					gr->rank[i].demote = (row[4 + (i*2)][GUILD_DEMOTE] == '1');
-					gr->rank[i].motd = (row[4 + (i*2)][GUILD_MOTD] == '1');
-					gr->rank[i].warpeace = (row[4 + (i*2)][GUILD_WARPEACE] == '1');
-				}
-				else {
-					gr->rank[i].heargu = 1;
-					gr->rank[i].speakgu = 1;
-					gr->rank[i].invite = 0;
-					gr->rank[i].remove = 0;
-					gr->rank[i].promote = 0;
-					gr->rank[i].demote = 0;
-					gr->rank[i].motd = 0;
-					gr->rank[i].warpeace = 0;
-				}
-				
-				if (gr->rank[i].rankname[0] == 0)
-					snprintf(gr->rank[i].rankname, 100, "Guild Rank %i", i);
-			}
-		}
-		else {
-			gr->leader = 0;
-			gr->databaseID = 0;
-			gr->minstatus = 0;
-			memset(gr->name, 0, sizeof(gr->name));
-			for (int i = 0; i <= GUILD_MAX_RANK; i++) {
-				snprintf(gr->rank[i].rankname, 100, "Guild Rank %i", i);
-				if (i == 0) {
-					gr->rank[i].heargu = 1;
-					gr->rank[i].speakgu = 1;
-					gr->rank[i].invite = 1;
-					gr->rank[i].remove = 1;
-					gr->rank[i].promote = 1;
-					gr->rank[i].demote = 1;
-					gr->rank[i].motd = 1;
-					gr->rank[i].warpeace = 1;
-				}
-				else {
-					gr->rank[i].heargu = 0;
-					gr->rank[i].speakgu = 0;
-					gr->rank[i].invite = 0;
-					gr->rank[i].remove = 0;
-					gr->rank[i].promote = 0;
-					gr->rank[i].demote = 0;
-					gr->rank[i].motd = 0;
-
-					gr->rank[i].warpeace = 0;
-				}
-			}
-		}
-		mysql_free_result(result);
-		return true;
-	}
-	else {
-		cerr << "Error in GetGuildRank query '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
+	if((Rank < 1) || (Rank > 8))
 		return false;
-	}
+
+	map<uint32, GuildInfo *>::const_iterator res;
+	res = m_guilds.find(GuildID);
+	if(res == m_guilds.end())
+		return(false);
+	GuildInfo *info = res->second;
 	
-	return false;
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char *query = 0;
+	
+	if (!m_db->RunQuery(query, MakeAnyLenString(&query, "UPDATE guild_ranks SET title = '%s' WHERE guild_id=%u AND rank=%u", 
+		res->second->ranks[Rank].name.c_str(), GuildID, Rank), errbuf))
+	{
+		_log(GUILDS__ERROR, "Error updating rank name, %s : %s", query, errbuf);
+		safe_delete_array(query);
+		return(false);
+	}
+	safe_delete_array(query);
+	
+	return(true);
 }
-
-
-
-
-
-
-
-*/
-
-
-
-
-
 

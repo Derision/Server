@@ -4789,6 +4789,104 @@ struct MercenaryMerchantResponse_Struct {
 /*0004*/
 };
 
+struct GuildBankAck_Struct
+{
+/*00*/	uint32	Action;	//	10
+/*04*/	uint32	Unknown04;
+};
+
+struct GuildBankDepositAck_Struct
+{
+/*00*/	uint32	Action;	//	10
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Fail;	//1 = Fail, 0 = Success
+};
+
+struct GuildBankPromote_Struct
+{
+/*00*/	uint32	Action;	// 3
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Unknown08;
+/*12*/	uint32	Slot;
+/*16*/	uint32	Unknown16;
+/*20*/	uint32	Unknown20;
+};
+
+struct GuildBankPermissions_Struct
+{
+/*00*/	uint32	Action;	// 6
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Unknown08;
+/*12*/	uint16	SlotID;
+/*14*/	uint16	Unknown10; // Saw 1, probably indicating it is the main area rather than deposits
+/*16*/	uint32	ItemID;
+/*20*/	uint32	Permissions;
+/*24*/	char	MemberName[64];
+/*88*/
+};
+
+struct GuildBankViewItem_Struct
+{
+/*00*/	uint32	Action;
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Unknown08;
+/*12*/	uint16	SlotID;	// 0 = Deposit area, 1 = Main area
+/*14*/	uint16	Area;
+/*16*/	uint32	Unknown16;
+/*20*/	uint32	Unknown20;
+/*24*/
+};
+
+struct GuildBankDepositItem_Struct
+{
+/*00*/	uint32 Action;
+/*04*/	uint32 Unknown04;
+/*08*/	uint32 Unknown08;
+/*12*/	uint32 Unknown12;
+/*16*/
+};
+
+struct GuildBankWithdrawItem_Struct
+{
+/*00*/	uint32	Action;
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Unknown08;
+/*12*/	uint16	SlotID;
+/*14*/	uint16	Area;
+/*16*/	uint32	Unknown12;
+/*20*/	uint32	Quantity;
+/*24*/
+};
+
+struct GuildBankItemUpdate_Struct
+{
+/*000*/	uint32	Action;
+/*004*/	uint32	Unknown004;
+/*008*/	uint32	Unknown008;	// Added in RoF
+/*012*/	uint16	SlotID;
+/*014*/	uint16	Area;
+/*016*/	uint32	Unknown016;
+/*020*/	uint32	ItemID;
+/*024*/	uint32	Icon;
+/*028*/	uint32	Quantity;
+/*032*/	uint32	Permissions;
+/*036*/	uint8	AllowMerge;
+/*037*/	uint8	Useable;	// Used in conjunction with the Public-if-useable permission.
+/*038*/	char	ItemName[64];
+/*102*/	char	Donator[64];
+/*166*/ char	WhoFor[64];
+/*230*/	uint16	Unknown230;
+/*232*/
+};
+
+struct GuildBankClear_Struct
+{
+/*00*/	uint32	Action;
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	DepositAreaCount;
+/*12*/	uint32	MainAreaCount;
+};
+
 	};	//end namespace structs
 };	//end namespace RoF
 

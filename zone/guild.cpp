@@ -68,8 +68,29 @@ void Client::SendGuildMOTD(bool GetGuildMOTDReply) {
 		
 	mlog(GUILDS__OUT_PACKETS, "Sending OP_GuildMOTD of length %d", outapp->size);
 	mpkt(GUILDS__OUT_PACKET_TRACE, outapp);
-	
+
 	FastQueuePacket(&outapp);
+
+}
+
+void Client::SendGuildRanksAndPermissions()
+{
+	if(!(GetClientVersionBit() & BIT_RoFAndLater))
+		return;
+
+	if(GuildID() == GUILD_NONE)
+		return;
+
+	for(uint32 Rank = 1; Rank < 9; ++Rank)
+		SendGuildRankName(Rank, guild_mgr.GetRankName(GuildID(), Rank));
+
+	for(uint32 Permission = 1; Permission < 31; ++Permission)
+	{
+		for(uint8 Rank = 1; Rank < 9; ++Rank)
+		{
+			SendGuildPermission(Rank, Permission);
+		}
+	}
 }
 
 void Client::SendGuildURL()
@@ -430,5 +451,39 @@ bool ZoneDatabase::SetGuildDoor(uint8 doorid,uint16 guild_id, const char* zone) 
 	safe_delete_array(query);
 	
 	return(affected_rows > 0);
+}
+
+void Client::SendGuildRankName(uint32 RankNumber, const char *RankText)
+{
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildUpdateURLAndChannel, 184);
+	outapp->WriteUInt32(4);
+	outapp->WriteUInt32(0);
+	outapp->WriteUInt32(GuildID());
+	outapp->WriteString(GetName());
+	outapp->SetWritePosition(76);
+	outapp->WriteUInt32(GuildID());
+	outapp->WriteUInt32(RankNumber);
+	outapp->WriteString(RankText);
+	
+	DumpPacket(outapp);
+	FastQueuePacket(&outapp);
+}
+
+void Client::SendGuildPermission(uint8 Rank, uint8 Permission)
+{
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildUpdateURLAndChannel, 92);
+	outapp->WriteUInt32(5);
+	outapp->WriteUInt32(0);
+	outapp->WriteUInt32(GuildID());
+	uint32 CurrentPosition = outapp->GetWritePosition();
+	outapp->WriteString(GetName());
+	outapp->SetWritePosition(CurrentPosition + 64);
+	outapp->WriteUInt32(GuildID());
+	outapp->WriteUInt32(Rank);
+	outapp->WriteUInt32(Permission);
+	outapp->WriteUInt32(guild_mgr.CheckPermission(GuildID(), Rank, Permission));
+
+	DumpPacket(outapp);
+	FastQueuePacket(&outapp);
 }
 

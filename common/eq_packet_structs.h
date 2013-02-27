@@ -1591,7 +1591,7 @@ struct GuildCommand_Struct {
 	char othername[64];
 	char myname[64];
 	uint16 guildeqid;
-	uint8 unknown[2]; // for guildinvite all 0's, for remove 0=0x56, 2=0x02
+	uint16 unknown130; // for guildinvite all 0's, for remove 0=0x56, 2=0x02
 	uint32 officer;
 };
 
@@ -3156,10 +3156,45 @@ struct GuildUpdateURLAndChannel_Struct
 /*4176*/
 };
 
+struct GuildPermission_Struct
+{
+/*00*/	uint32	Action;
+/*04*/	uint32	Unknown04;	// zero
+/*08*/	uint32	Unknown08;	// This is some sort of ID, the same for each packet for this guild, but not the 'GuildID' ? Zero for C->S packets.
+/*12*/	char	Name[64];	// Need to confirm if this should be the leader of name of member packet is being sent to. Empty for C->S packets.
+/*76*/	uint32	GuildID;	// zero for C->S packets.
+/*80*/	uint32	Rank;
+/*84*/	uint32	Permission;
+/*88*/	uint32	Allowed;
+/*92*/
+};
+
+struct GuildRank_Struct
+{
+/*000*/	uint32	Action;
+/*004*/	uint32	Unknown04;	// zero
+/*008*/	uint32	Unknown08;	// This is some sort of ID, the same for each packet for this guild, but not the 'GuildID' ? Zero for C->S packets.
+/*012*/	char	Name[64];	// Need to confirm if this should be the leader of name of member packet is being sent to. Empty for C->S packets.
+/*076*/	uint32	GuildID;	// zero for C->S packets.
+/*080*/	uint32	Rank;
+/*084*/	char	RankName[64];
+/*148*/ uint8	Unknown148[36];
+/*184*/
+};
+
 struct GuildStatus_Struct
 {
 /*000*/	char	Name[64];
 /*064*/	uint8	Unknown064[72];
+};
+
+struct GuildPromote_Struct
+{
+/*000*/	char	Target[64];
+/*064*/	char	Officer[64];
+/*128*/	uint32	GuildID;
+/*132*/	uint32	NewRank;
+/*136*/
 };
 
 struct GuildDemoteStruct{
@@ -4444,6 +4479,15 @@ struct GuildBankViewItem_Struct
 /*16*/	uint32	Unknown16;
 };
 
+struct GuildBankDepositItem_Struct
+{
+/*00*/	uint32 Action;
+/*04*/	uint32 Unknown04;
+/*08*/	uint32 Unknown08;
+/*12*/	uint32 Unknown12;
+/*16*/
+};
+
 struct GuildBankWithdrawItem_Struct
 {
 /*00*/	uint32	Action;
@@ -4478,6 +4522,7 @@ struct GuildBankItemUpdate_Struct
 
 /*000*/	uint32	Action;
 /*004*/	uint32	Unknown004;
+//	uint32	Unknown008;	// Added in RoF
 /*008*/	uint16	SlotID;
 /*010*/	uint16	Area;
 /*012*/	uint32	Unknown012;

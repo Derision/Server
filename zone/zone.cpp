@@ -819,6 +819,17 @@ void Zone::DBAWComplete(uint8 workpt_b1, DBAsyncWork* dbaw) {
 			pQueuedMerchantsWorkID = 0;
 			break;
 		}
+		case DBA_b1_Zone_Misc:
+		{
+			char errbuf[MYSQL_ERRMSG_SIZE];
+			uint32 affected_rows = 0;
+			DBAsyncQuery* dbaq = dbaw->PopAnswer();
+			if(!dbaq->GetAnswer(errbuf, 0, &affected_rows))
+			{
+				LogFile->write(EQEMuLog::Error, "Zone::DBAWComplete(): b1_ZoneMisc. Affected Rows = %i, errbuf = %s", affected_rows, errbuf);
+			}
+			break;
+		}
 
 		default: {
 			LogFile->write(EQEMuLog::Error, "Zone::DBAWComplete(): Unknown workpt_b1");

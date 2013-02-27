@@ -1170,6 +1170,30 @@ ENCODE(OP_InspectRequest) {
 	FINISH_ENCODE();
 }
 
+ENCODE(OP_GuildInvite)
+{
+	ENCODE_LENGTH_EXACT(GuildCommand_Struct);
+	SETUP_DIRECT_ENCODE(GuildCommand_Struct, structs::GuildCommand_Struct);
+	memcpy(eq->othername, emu->othername, sizeof(eq->othername));
+	memcpy(eq->myname, emu->myname, sizeof(eq->myname));
+	OUT(guildeqid);
+	OUT(unknown130);
+	OUT(officer);
+	FINISH_ENCODE();
+}
+
+ENCODE(OP_SetGuildRank)
+{
+	ENCODE_LENGTH_EXACT(GuildSetRank_Struct);
+	SETUP_DIRECT_ENCODE(GuildSetRank_Struct, structs::GuildSetRank_Struct);
+	OUT(Unknown00);
+	OUT(Unknown04);
+	OUT(Rank);
+	memcpy(eq->MemberName, emu->MemberName, sizeof(eq->MemberName));
+	OUT(Banker);
+	FINISH_ENCODE();
+}
+
 DECODE(OP_InspectRequest) {
 	DECODE_LENGTH_EXACT(structs::Inspect_Struct);
 	SETUP_DIRECT_DECODE(Inspect_Struct, structs::Inspect_Struct);
@@ -1362,6 +1386,29 @@ DECODE(OP_LFGuild)
 	memcpy(emu, eq, sizeof(structs::LFGuild_PlayerToggle_Struct));
 	memset(emu->Unknown612, 0, sizeof(emu->Unknown612));
 
+	FINISH_DIRECT_DECODE();
+}
+
+DECODE(OP_GuildInvite)
+{
+	DECODE_LENGTH_EXACT(structs::GuildCommand_Struct);
+	SETUP_DIRECT_DECODE(GuildCommand_Struct, structs::GuildCommand_Struct);
+	memcpy(emu->othername, eq->othername, sizeof(emu->othername));
+	memcpy(emu->myname, eq->myname, sizeof(emu->myname));
+	IN(guildeqid);
+	IN(unknown130);
+	IN(officer);
+	FINISH_DIRECT_DECODE();
+}
+
+DECODE(OP_GuildInviteAccept)
+{
+	DECODE_LENGTH_EXACT(structs::GuildInviteAccept_Struct);
+	SETUP_DIRECT_DECODE(GuildInviteAccept_Struct, structs::GuildInviteAccept_Struct);
+	memcpy(emu->inviter, eq->inviter, sizeof(emu->inviter));
+	memcpy(emu->newmember, eq->newmember, sizeof(emu->newmember));
+	IN(response);
+	IN(guildeqid);
 	FINISH_DIRECT_DECODE();
 }
 

@@ -456,7 +456,8 @@ int command_init(void) {
 		command_add("printquestitems","Returns available quest items for multiquesting currently on the target npc.",200,command_printquestitems) ||
 		command_add("clearquestitems","Clears quest items for multiquesting currently on the target npc.",200,command_clearquestitems) ||
 		command_add("zopp", "Troubleshooting command - Sends a fake item packet to you. No server reference is created.", 250, command_zopp) ||
-		command_add("augmentitem", "Force augments an item. Must have the augment item window open.", 250, command_augmentitem) 
+		command_add("augmentitem", "Force augments an item. Must have the augment item window open.", 250, command_augmentitem) ||
+		command_add("guildedit", "Manage Guild Permissions by Rank.", 0, command_guildedit)
 		)
 	{
 		command_deinit();
@@ -870,48 +871,21 @@ void command_sendop(Client *c,const Seperator *sep){
 
 void command_optest(Client *c, const Seperator *sep)
 {
-	if(sep->IsNumber(1))
-	{
-		switch(atoi(sep->arg[1]))
-		{
-			case 1:
-			{
-				EQApplicationPacket* outapp = new EQApplicationPacket(OP_AdventureFinish, sizeof(AdventureFinish_Struct));
-				AdventureFinish_Struct *af = (AdventureFinish_Struct*)outapp->pBuffer;
-				af->win_lose = 1;
-				af->points = 125;
-				c->FastQueuePacket(&outapp);
-				break;
-			}
-			case 2:
-			{
-				EQApplicationPacket* outapp = new EQApplicationPacket(OP_AdventureData, sizeof(AdventureRequestResponse_Struct));
-				AdventureRequestResponse_Struct *arr = (AdventureRequestResponse_Struct*)outapp->pBuffer;
-				if(sep->IsHexNumber(2))
-					arr->unknown000 = hextoi(sep->arg[2]);
-				else
-					arr->unknown000 = 0xBFC40100;
-				arr->risk = 1;
-				arr->showcompass = 1;
-				strcpy(arr->text, "This is some text for an adventure packet!\0");
-				arr->timeleft = 60*60;
-				//arr->timetoenter = 30*60;
-				if(sep->IsHexNumber(3))
-					arr->unknown2080=hextoi(sep->arg[3]);
-				else
-					arr->unknown2080=0x0A;
-				arr->x = c->GetY();
-				arr->y = c->GetX();
-				arr->z = c->GetZ();
-				c->FastQueuePacket(&outapp);
-				break;
-			}
-			default:
-			{		
-				break;
-			}
-		}
-	}
+	if(!c->GetTarget())
+		return;
+
+	EQApplicationPacket* outapp = new EQApplicationPacket(OP_GMLastName, sizeof(GMLastName_Struct));
+	GMLastName_Struct* gmn = (GMLastName_Struct*)outapp->pBuffer;
+	strcpy(gmn->name, c->GetTarget()->GetName());
+	strcpy(gmn->gmname, c->GetTarget()->GetName());
+	strcpy(gmn->lastname, "Testsurname");
+	gmn->unknown[0]=1;
+	gmn->unknown[1]=1;
+	gmn->unknown[2]=1;
+	gmn->unknown[3]=1;
+	entity_list.QueueClients(c, outapp, true);
+	DumpPacket(outapp);
+	safe_delete(outapp);
 }
 
 void command_help(Client *c, const Seperator *sep)
@@ -5104,7 +5078,7 @@ void command_guild(Client *c, const Seperator *sep)
 					guild_mgr.GetGuildName(guild_id), guild_id);
 			}
 			
-			if(!guild_mgr.SetGuild(charid, guild_id, GUILD_MEMBER)) {
+			if(!guild_mgr.SetGuild(charid, guild_id, GUILD_RANK_MEMBER)) {
 				c->Message(13, "Error putting '%s' into guild %d", sep->arg[2], guild_id);
 			} else {
 				c->Message(0, "%s has been put into guild %d", sep->arg[2], guild_id);
@@ -5133,7 +5107,7 @@ void command_guild(Client *c, const Seperator *sep)
 		int rank = atoi(sep->arg[3]);
 		if (!sep->IsNumber(3))
 			c->Message(0, "Usage: #guild setrank charname rank");
-		else if (rank < 0 || rank > GUILD_MAX_RANK)
+		else if (rank < 1 || rank > 8)
 			c->Message(0, "Error: invalid rank #.");
 		else {
 			uint32 charid = database.GetCharacterID(sep->arg[2]);
@@ -5198,7 +5172,7 @@ void command_guild(Client *c, const Seperator *sep)
 				else {
 					c->Message(0, "Guild created: Leader: %i, number %i: %s", leader, id, sep->argplus[3]);
 					
-					if(!guild_mgr.SetGuild(leader, id, GUILD_LEADER))
+					if(!guild_mgr.SetGuild(leader, id, GUILD_RANK_LEADER))
 						c->Message(0, "Unable to set guild leader's guild in the database. Your going to have to run #guild set");
 				}
 				
@@ -5385,6 +5359,223 @@ bool helper_guild_edit(Client *c, uint32 dbid, uint32 eqid, uint8 rank, const ch
 		c->Message(0, "Error: database.EditGuild() failed");
 	return true;
 }*/
+
+void command_guildedit(Client *c, const Seperator *sep)
+{
+	if ((strncasecmp(sep->arg[1], "help", 4) == 0) || !sep->arg[1][0])
+	{
+		c->Message(0, "#guildedit show - show current ranks and permissions.");
+		c->Message(0, "#guildedit perm <rank number 1 - 8|all> <permission name|permission number 1 - 30> <on|yes|1|off|no|0>");
+		c->Message(0, "#guildedit bank - List all characters that have the old Guild Banker flag set.");
+		c->Message(0, "#guildedit bank <charname> <on|yes|1|off|no|0> - Turn on or off the old Guild Banker flag for <charname>");
+	}
+		
+	if (strncasecmp(sep->arg[1], "show", 4) == 0)
+	{
+		string Body;
+
+		Body += "<br>Ranks: ";
+
+		char Temp[100];
+
+		for(int i = 1; i <= GUILD_MAX_RANK; ++i)
+		{
+			sprintf(Temp, "%i = %s", i, guild_mgr.GetRankName(c->GuildID(), i));
+			Body += Temp;
+
+			if(i != GUILD_MAX_RANK)
+				Body += ", ";
+
+		}
+
+		Body += "<br><br><TABLE>";
+		Body += "<TR><TD> <TD>1<TD>2<TD>3<TD>4<TD>5<TD>6<TD>7<TD>8<TD>";
+
+		for(int i = 1; i <= GUILD_PERMISSION_MAX; ++i)
+		{
+			sprintf(Temp, "%2i. ", i);
+			Body += "<TR><TD>";
+			Body += Temp;
+			Body += guild_mgr.GetPermissionName(i);
+			Body += "<TD>";
+			
+			for(int j = 1; j <= GUILD_MAX_RANK; ++j)
+			{
+				if(guild_mgr.CheckPermission(c->GuildID(), j, i))
+					Body += "Y";
+
+				Body += "<TD>";
+			}
+		}
+		Body += "</table><br>The following characters have the old Guild Banker flag:<br>";
+		std::map<uint32, std::string> Bankers = guild_mgr.GetGuildBankers(c->GuildID());
+
+		//for(std::map<uint32, std::string>::iterator it = Bankers.begin(); it != Bankers.end(); ++it)
+		std::map<uint32, std::string>::iterator it = Bankers.begin();
+		while(it != Bankers.end())
+		{
+			Body += (*it).second;
+			++it;
+			if(it != Bankers.end())
+				Body += ", ";
+		}
+		c->SendWindow(1,2, 0, "OK", "OK", 0, 2, c, "Title", Body.c_str());
+
+	}
+	else if(!strncasecmp(sep->arg[1], "perm", 4))
+	{
+		if(sep->IsNumber(2) || !strcasecmp(sep->arg[2], "all"))
+		{
+			uint32 RankFrom;
+			uint32 RankTo;
+
+			if(!strcasecmp(sep->arg[2], "all"))
+			{
+				// A member can only change permissions for ranks lower than his.
+				RankFrom = c->GuildRank() + 1;
+				RankTo = GUILD_MAX_RANK;
+			}
+			else
+			{
+				RankFrom = RankTo = atoi(sep->arg[2]);
+			}
+			if((RankFrom > c->GuildRank()) && (RankFrom >= 2) && (RankFrom <= 8) && (RankTo >= 2) && (RankTo <= 8 && (RankTo >= RankFrom)))
+			{
+				uint32 Permission = 0;
+
+				if(sep->IsNumber(3) && (atoi(sep->arg[3]) >= 1) && (atoi(sep->arg[3]) <= GUILD_PERMISSION_MAX))
+				{
+					Permission = atoi(sep->arg[3]);
+				}
+				else
+				{
+					for(int i = 1; i <= GUILD_PERMISSION_MAX; ++i)
+					{
+						if(!strcasecmp(sep->arg[3], guild_mgr.GetPermissionName(i)))
+						{
+							Permission = i;
+							break;
+						}
+					}
+				}
+			
+				if(Permission > 0)
+				{
+					// A member with the 'Change Rank Permission' permission can only change it for those permissions that he himself
+					// has been granted permission. i.e. if you have 'Change Rank Permission' but say, your rank does not have the BANNER_PLANT
+					// permission, you may not change the BANNER_PLANT permission.
+
+					if(!guild_mgr.CheckPermission(c->GuildID(), c->GuildRank(), Permission))
+					{
+						c->Message(13, "You do not have permission to alter permission %i, %s", Permission,
+							guild_mgr.GetPermissionName(Permission));
+						return;
+					}
+					
+					if(!strcasecmp(sep->arg[4], "yes") || !strcasecmp(sep->arg[4], "on") || !strcasecmp(sep->arg[4], "1"))
+					{
+						GuildPermission_Struct gps;
+
+						gps.GuildID = c->GuildID();
+						gps.Permission = Permission;
+						gps.Allowed = 1;
+						for(uint32 i = RankFrom; i <= RankTo; ++i)
+						{
+							gps.Rank = i;
+							guild_mgr.UpdatePermission(c->GuildID(), &gps);
+							c->Message(0, "Rank: %i, %s is now allowed to %s", i, guild_mgr.GetRankName(c->GuildID(), i),
+								guild_mgr.GetPermissionName(Permission));
+						}
+						return;
+					}
+					if(!strcasecmp(sep->arg[4], "no") || !strcasecmp(sep->arg[4], "off") || !strcasecmp(sep->arg[4], "0"))
+					{
+						GuildPermission_Struct gps;
+
+						gps.GuildID = c->GuildID();
+						gps.Permission = Permission;
+						gps.Allowed = 0;
+
+						for(uint32 i = RankFrom; i <= RankTo; ++i)
+						{
+							gps.Rank = i;
+							guild_mgr.UpdatePermission(c->GuildID(), &gps);
+							c->Message(0, "Rank: %i, %s is now NOT allowed to %s", i, guild_mgr.GetRankName(c->GuildID(), i),
+								guild_mgr.GetPermissionName(Permission));
+						}
+						return;
+					}
+				}
+			}
+			else
+			{
+				if(RankFrom <= c->GuildRank())
+					c->Message(0, "You are only rank %i. You cannot change permissions for rank %i.", c->GuildRank(), RankFrom);
+				else
+					c->Message(0, "Invalid rank range (From %i to %i).", RankFrom, RankTo);
+			}
+		}
+		else
+			c->Message(0, "Invalid rank number %s specified. Must be between 1 and 8, or all", sep->arg[2]);
+	}
+	else if(!strncasecmp(sep->arg[1], "bank", 4))
+	{
+		if(!guild_mgr.IsGuildLeader(c->GuildID(), c->CharacterID()))
+		{
+			c->Message(13, "You must be the leader of the guild to use this subcommand.");
+			return;
+		}
+		if(!sep->arg[2][0])
+		{
+			c->Message(0, "List of members who have the old Guild Banker flag:");
+			std::map<uint32, std::string> Bankers = guild_mgr.GetGuildBankers(c->GuildID());
+
+			for(std::map<uint32, std::string>::iterator it = Bankers.begin(); it != Bankers.end(); ++it)
+				c->Message(0, "%s", (*it).second.c_str());
+
+			return;
+		}
+		if(sep->arg[3][0])
+		{
+			bool Allowed = false;
+
+			if(!strcasecmp(sep->arg[3], "yes") || !strcasecmp(sep->arg[3], "on") || !strcasecmp(sep->arg[3], "1"))
+				Allowed = true;
+			else if(!strcasecmp(sep->arg[3], "no") || !strcasecmp(sep->arg[3], "off") || !strcasecmp(sep->arg[3], "0"))
+				Allowed = false;
+			else
+			{
+				c->Message(13, "Syntax: #guildedit bank <charname> <yes|on|1|no|off|0>");
+				return;
+			}
+
+			std::map<uint32, std::string> Members = guild_mgr.GetEntireGuild(c->GuildID());
+
+			for(std::map<uint32, std::string>::iterator it = Members.begin(); it != Members.end(); ++it)
+			{
+				if(!strcasecmp(sep->arg[2], (*it).second.c_str()))
+				{
+					if(!guild_mgr.SetBankerFlag((*it).first, Allowed))
+					{
+						c->Message(13, "Error setting guild banker flag.");
+						return;
+					}
+					if(Allowed)
+						c->Message(0, "%s now has the old Guild Member flag set.", (*it).second.c_str());
+					else
+						c->Message(0, "%s now does not have the old Guild Member flag set.", (*it).second.c_str());
+
+					return;
+				}
+			}
+			c->Message(13, "%s is not a member of your guild", sep->arg[2]);
+		}
+		else
+		{
+			c->Message(13, "Syntax: #guildedit bank <charname> <yes|on|1|no|off|0>");
+		}
+	}
+}
 
 void command_zonestatus(Client *c, const Seperator *sep)
 {

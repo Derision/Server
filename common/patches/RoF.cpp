@@ -1316,7 +1316,7 @@ ENCODE(OP_PlayerProfile)
 	outapp->WriteUInt8(emu->gm);
 
 	outapp->WriteUInt32(emu->guild_id);
-	outapp->WriteUInt8(0);				// Unknown - observed 1 in a live packet.
+	outapp->WriteUInt8(0);				// Unknown - observed 1 in a live packet. Could be rank.
 	outapp->WriteUInt32(0);				// Unknown - observed 1 in a live packet.
 	outapp->WriteUInt8(0);				// Unknown - observed 1 in a live packet.
 	outapp->WriteUInt32(0);				// Unknown
@@ -3976,6 +3976,84 @@ ENCODE(OP_GuildMemberUpdate)
 	FINISH_ENCODE();
 }
 
+ENCODE(OP_GuildBank)
+{
+	_log(NET__ERROR, "Outbound OP_GuildBank, Action is %i", *(uint32 *)((*p)->pBuffer));
+
+	switch(*(uint32 *)((*p)->pBuffer))
+	{
+		case 1:	// GuildBankItemUpdate
+		{
+			SETUP_DIRECT_ENCODE(GuildBankItemUpdate_Struct, structs::GuildBankItemUpdate_Struct);
+			eq->Action = 0;
+			OUT(Unknown004);
+			eq->Unknown008 = 1;
+			eq->Unknown016 = emu->Unknown012;
+			OUT(SlotID);
+			OUT(Area);
+			OUT(ItemID);
+			OUT(Icon);
+			OUT(Quantity);
+			OUT(Permissions);
+			OUT(AllowMerge);
+			OUT(Useable);
+			memcpy(eq->ItemName, emu->ItemName, sizeof(eq->ItemName));
+			memcpy(eq->Donator, emu->Donator, sizeof(eq->Donator));
+			memcpy(eq->WhoFor, emu->WhoFor, sizeof(eq->WhoFor));
+			_hex(NET__ERROR, __packet->pBuffer, __packet->size);
+			FINISH_ENCODE();
+			break;
+		}
+		case 5:	// GuildBankDepositAck (Used to indicate if a deposit was accepted or rejected
+		{
+
+			EQApplicationPacket *in = *p;
+			*p = NULL;
+
+			unsigned char *emu_buffer = in->pBuffer;
+
+			GuildBankDepositAck_Struct *gbdas = (GuildBankDepositAck_Struct *)emu_buffer;
+
+			uint32 PacketSize = gbdas->Fail ? 12 : 16;
+			uint32 Action = gbdas->Fail ? 9 : 4;
+	
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, PacketSize);
+
+			outapp->WriteUInt32(Action);
+			DumpPacket(outapp);
+			dest->FastQueuePacket(&outapp, ack_req);
+	
+			delete in;
+
+			break;
+
+		}
+		case 10:
+		{
+			EQApplicationPacket *in = *p;
+			*p = NULL;
+
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, 24);
+
+			outapp->WriteUInt32(2);
+
+			DumpPacket(outapp);
+			dest->FastQueuePacket(&outapp, ack_req);
+	
+			delete in;
+
+			break;
+
+		}
+
+		default:
+		{
+			_hex(NET__ERROR, (*p)->pBuffer, (*p)->size);
+			dest->FastQueuePacket(&(*p));
+		}
+	}
+}
+
 ENCODE(OP_BeginCast)
 {
 	SETUP_DIRECT_ENCODE(BeginCast_Struct, structs::BeginCast_Struct);
@@ -4775,6 +4853,82 @@ DECODE(OP_GuildStatus)
 
 	memcpy(emu->Name, eq->Name, sizeof(emu->Name));
 	FINISH_DIRECT_DECODE();
+}
+
+DECODE(OP_GuildBank)
+{
+	_log(NET__ERROR, "Incoming OP_GuildBank");
+	_hex(NET__ERROR, __packet->pBuffer, __packet->size);
+
+	switch(*(uint32 *)((__packet)->pBuffer))
+	{
+		case 2:
+		{
+			DECODE_LENGTH_EXACT(structs::GuildBankPromote_Struct);
+			SETUP_DIRECT_DECODE(GuildBankPromote_Struct, structs::GuildBankPromote_Struct);
+			
+			emu->Action = 3;
+			IN(Slot);
+
+			FINISH_DIRECT_DECODE();
+			break;
+
+
+		}
+		case 3:
+		{
+			DECODE_LENGTH_EXACT(structs::GuildBankViewItem_Struct);
+			SETUP_DIRECT_DECODE(GuildBankViewItem_Struct, structs::GuildBankViewItem_Struct);
+			
+			emu->Action = 4;
+			IN(SlotID);
+			IN(Area);
+
+			FINISH_DIRECT_DECODE();
+			break;
+		}
+		case 4:
+		{
+			DECODE_LENGTH_EXACT(structs::GuildBankDepositItem_Struct);
+			SETUP_DIRECT_DECODE(GuildBankDepositItem_Struct, structs::GuildBankDepositItem_Struct);
+			
+			emu->Action = 5;
+
+			FINISH_DIRECT_DECODE();
+			break;
+		}
+		case 5:
+		{
+			DECODE_LENGTH_EXACT(structs::GuildBankPermissions_Struct);
+			SETUP_DIRECT_DECODE(GuildBankPermissions_Struct, structs::GuildBankPermissions_Struct);
+			
+			emu->Action = 6;
+			IN(SlotID);
+			IN(ItemID);
+			IN(Permissions);
+			memcpy(emu->MemberName, eq->MemberName, sizeof(emu->MemberName));
+
+			FINISH_DIRECT_DECODE();
+			break;
+		}
+		case 6:
+		case 7:
+		case 8:
+		{
+			DECODE_LENGTH_EXACT(structs::GuildBankWithdrawItem_Struct);
+			SETUP_DIRECT_DECODE(GuildBankWithdrawItem_Struct, structs::GuildBankWithdrawItem_Struct);
+			
+			emu->Action = eq->Action + 1;
+			IN(SlotID);
+			IN(Area);
+			IN(Quantity);
+
+			FINISH_DIRECT_DECODE();
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 uint32 NextItemInstSerialNumber = 1;

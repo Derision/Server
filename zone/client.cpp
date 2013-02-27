@@ -852,7 +852,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 	case 0: { // GuildChat
 		if (!IsInAGuild())
 			Message_StringID(MT_DefaultText, GUILD_NOT_MEMBER2);	//You are not a member of any guild.
-		else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_SPEAK))
+		else if (!guild_mgr.CheckPermission(GuildID(), GuildRank(), GUILD_PERMISSION_GUILD_CHAT_SPEAK))
 			Message(0, "Error: You dont have permission to speak to the guild.");
 		else if (!worldserver.SendChannelMessage(this, targetname, chan_num, GuildID(), language, message))
 			Message(0, "Error: World server disconnected");
@@ -5606,20 +5606,47 @@ void Client::ProcessInspectRequest(Client* requestee, Client* requester) {
 	}
 }
 
-void Client::GuildBankAck()
+void Client::GuildBankAck(uint32 Action)
 {
+	if((GetClientVersionBit() & BIT_RoFAndLater) && (Action != GuildBankPromote))
+	{
+		EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, 12);
+		outapp->WriteUInt32(9);
+		FastQueuePacket(&outapp);
+		return;
+
+	}
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, sizeof(GuildBankAck_Struct));
-
 	GuildBankAck_Struct *gbas = (GuildBankAck_Struct*) outapp->pBuffer;
-
 	gbas->Action = GuildBankAcknowledge;
-
 	FastQueuePacket(&outapp);
 }
 
 void Client::GuildBankDepositAck(bool Fail)
 {
+	/*
+	if(GetClientVersion() >= EQClientRoF)
+	{
+		if(!Fail)
+		{
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, 16);
+			outapp->WriteUInt32(4);
+			DumpPacket(outapp);
+			FastQueuePacket(&outapp);
+			return;
+		}
+		else
+		{
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, 16);
+			outapp->WriteUInt32(9);
+			DumpPacket(outapp);
+			FastQueuePacket(&outapp);
+			return;
 
+		}
+
+	}
+	*/
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBank, sizeof(GuildBankDepositAck_Struct));
 
 	GuildBankDepositAck_Struct *gbdas = (GuildBankDepositAck_Struct*) outapp->pBuffer;

@@ -1675,8 +1675,20 @@ struct GuildCommand_Struct {
 	char othername[64];
 	char myname[64];
 	uint16 guildeqid;
-	uint8 unknown[2]; // for guildinvite all 0's, for remove 0=0x56, 2=0x02
+	uint16 unknown130; // for guildinvite all 0's, for remove 0=0x56, 2=0x02
 	uint32 officer;
+};
+
+// Server -> Client
+// Update a guild members rank and banker status
+struct GuildSetRank_Struct
+{
+/*00*/	uint32	Unknown00;
+/*04*/	uint32	Unknown04;
+/*08*/	uint32	Rank;
+/*12*/	char	MemberName[64];
+/*76*/	uint32	Banker;
+/*80*/
 };
 
 // Opcode OP_GMZoneRequest

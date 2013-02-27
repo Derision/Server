@@ -591,17 +591,19 @@ public:
 	void	SendGuildChannel();
 	void	SendGuildSpawnAppearance();
 	void	SendGuildMembers();
-    void	SendGuildList();
+	void	SendGuildList();
 	void	SendGuildJoin(GuildJoin_Struct* gj);
 	void	RefreshGuildInfo();
-
+	void	SendGuildRanksAndPermissions();
+	void	SendGuildRankName(uint32 RankNumber, const char *RankText);
+	void	SendGuildPermission(uint8 Rank, uint8 Permission);
 
 	void	SendManaUpdatePacket();
 	void	SendManaUpdate();
 	void	SendEnduranceUpdate();
 	uint8	GetFace()		const { return m_pp.face; }
 	void	WhoAll(Who_All_Struct* whom);
-    void	FriendsWho(char *FriendsString);
+	void	FriendsWho(char *FriendsString);
 
 	void	Stun(int duration);
 	void	UnStun();
@@ -1048,7 +1050,8 @@ public:
 	bool TryReward(uint32 claim_id);
 	QGlobalCache *GetQGlobals() { return qGlobals; }
 	QGlobalCache *CreateQGlobals() { qGlobals = new QGlobalCache(); return qGlobals; }
-	void GuildBankAck();
+	void GuildBankAck(uint32 Action);
+	void GuildBankAck9();
 	void GuildBankDepositAck(bool Fail);
 	inline bool IsGuildBanker() { return GuildBanker; }
 	void ClearGuildBank();

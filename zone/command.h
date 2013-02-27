@@ -326,6 +326,7 @@ void command_printquestitems(Client *c, const Seperator *sep);
 void command_clearquestitems(Client *c, const Seperator *sep);
 void command_zopp(Client *c, const Seperator *sep);
 void command_augmentitem(Client *c, const Seperator *sep);
+void command_guildedit(Client *c, const Seperator *sep);
 
 #ifdef EMBPERL
 void command_embperl_plugin(Client *c, const Seperator *sep);

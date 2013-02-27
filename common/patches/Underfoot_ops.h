@@ -78,6 +78,8 @@ E(OP_AltCurrency)
 E(OP_WearChange)
 E(OP_MercenaryDataResponse)
 E(OP_MercenaryDataUpdate)
+E(OP_GuildInvite)
+E(OP_SetGuildRank)
 //list of packets we need to decode on the way in:
 D(OP_SetServerFilter)
 D(OP_CharacterCreate)
@@ -124,5 +126,7 @@ D(OP_PetCommands)
 D(OP_BuffRemoveRequest)
 D(OP_AltCurrencySellSelection)
 D(OP_AltCurrencySell)
+D(OP_GuildInvite)
+D(OP_GuildInviteAccept)
 #undef E
 #undef D

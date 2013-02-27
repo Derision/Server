@@ -846,6 +846,7 @@ bool ZoneServer::Process() {
 		}
 		
 		case ServerOP_GuildRankUpdate:
+		case ServerOP_GuildPermissionsAndRankNameUpdate:
 		{
 			zoneserver_list.SendPacket(pack);
 			break;

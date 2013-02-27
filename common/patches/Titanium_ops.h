@@ -37,6 +37,8 @@ E(OP_BecomeTrader)
 E(OP_PetBuffWindow)
 E(OP_OnLevelMessage)
 E(OP_LFGuild)
+E(OP_GuildInvite)
+E(OP_SetGuildRank)
 //list of packets we need to decode on the way in:
 D(OP_SetServerFilter)
 D(OP_CharacterCreate)
@@ -49,5 +51,7 @@ D(OP_InspectRequest)
 D(OP_InspectAnswer)
 D(OP_WearChange)
 D(OP_LFGuild)
+D(OP_GuildInvite)
+D(OP_GuildInviteAccept)
 #undef E
 #undef D

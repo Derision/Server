@@ -1090,7 +1090,7 @@ void QuestManager::CreateGuild(const char *guild_name, const char *leader) {
 				else {
 					sprintf(hString, "Guild Creation: Guild created: Leader: %i, number %i: %s", cid, gid, leader);
 					worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", hString);
-					if(!guild_mgr.SetGuild(cid, gid, GUILD_LEADER))
+					if(!guild_mgr.SetGuild(cid, gid, GUILD_RANK_LEADER))
 						worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Unable to set guild leader's guild in the database. Your going to have to run #guild set");				
 				}
 				

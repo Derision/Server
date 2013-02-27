@@ -22,6 +22,11 @@
 #include "../common/servertalk.h"
 #include "client.h"
 #include "entity.h"
+#include "../common/packet_dump.h"
+#include "../common/breakdowns.h"
+
+extern DBAsync *dbasync;
+extern DBAsyncFinishedQueue MTdbafq;
 
 /*
 
@@ -277,14 +282,17 @@ void ZoneGuildManager::DescribeGuild(Client *c, uint32 guild_id) const {
 	
 	char permbuffer[256];
 	uint8 i;
-	for (i = 0; i <= GUILD_MAX_RANK; i++) {
+
+
+	for (i = 1; i <= GUILD_MAX_RANK; i++)
+	{
+		c->Message(0, "Rank %i: %s", i, info->ranks[i].name.c_str());
 		char *permptr = permbuffer;
 		uint8 r;
-		for(r = 0; r < _MaxGuildAction; r++)
-			permptr += sprintf(permptr, "  %s: %c", GuildActionNames[r], info->ranks[i].permissions[r]?'Y':'N');
-		
-		c->Message(0, "Rank %i: %s", i, info->ranks[i].name.c_str());
-		c->Message(0, "Permissions: %s", permbuffer);
+		for(r = 1; r <= GUILD_PERMISSION_MAX; r++)
+			c->Message(0, " %s: %s", GuildActionNames[r - 1], guild_mgr.CheckPermission(guild_id, i, r) ? "Allowed" : "Not Allowed");
+
+		c->Message(0, "");
 	}
 		
 }
@@ -375,6 +383,7 @@ void ZoneGuildManager::ProcessWorldPacket(ServerPacket *pack) {
 		else if(c != NULL && s->guild_id != GUILD_NONE) {
 			//char is in zone, and has changed into a new guild, send MOTD.
 			c->SendGuildMOTD();
+			c->SendGuildRanksAndPermissions();
 		}
 			
 		
@@ -531,6 +540,28 @@ void ZoneGuildManager::ProcessWorldPacket(ServerPacket *pack) {
 			break;
 		}
 	}
+	case ServerOP_GuildPermissionsAndRankNameUpdate:
+	{
+		if(ZoneLoaded)
+		{
+			ServerGuildPermissionsAndRankName_Struct *gprns = (ServerGuildPermissionsAndRankName_Struct *)pack->pBuffer;
+			printf("Received UpdatePermission packet from world. Type = %i\n", gprns->Type); fflush(stdout);
+			DumpPacket(pack);
+			if(gprns->Type == 0)
+			{
+				SetGuildPermission(gprns->GuildID, gprns->Rank, gprns->Permission, gprns->Allowed);
+			
+				entity_list.SendGuildPermission(gprns->GuildID, gprns->Rank, gprns->Permission);
+			}
+			else if(gprns->Type == 1)
+			{
+				SetGuildRankName(gprns->GuildID, gprns->Rank, gprns->RankName);
+			
+				entity_list.SendGuildRankName(gprns->GuildID, gprns->Rank, gprns->RankName);
+			}
+		}
+	}
+
 	}
 }
 
@@ -631,6 +662,77 @@ GuildApproval* ZoneGuildManager::FindGuildByOwnerApproval(Client* owner)
 		iterator.Advance();
 	}
 	return 0;
+}
+
+void ZoneGuildManager::UpdatePermission(uint32 GuildID, GuildPermission_Struct *NewPermissions)
+{
+	printf("GuildID: %i, Rank: %o, Permission: %i, Allowed: %i\n", GuildID, NewPermissions->Rank, NewPermissions->Permission, NewPermissions->Allowed);
+	fflush(stdout);
+	if(SetGuildPermission(GuildID, NewPermissions->Rank, NewPermissions->Permission, NewPermissions->Allowed))
+	{
+		//DBSaveGuildRankPermissions(GuildID, NewPermissions->Rank);
+
+		char* query = 0;
+		DBAsyncWork* dbaw = new DBAsyncWork(&database, &MTdbafq, (DBA_b4_Zone << 24) | DBA_b1_Zone_Misc, DBAsync::Write, 0xFFFFFFFF);
+		dbaw->AddQuery(0,  &query, MakeAnyLenString(&query, "UPDATE guild_ranks SET permissions = %llu WHERE guild_id=%u AND rank=%u",
+			GetRankPermissionBits(GuildID, NewPermissions->Rank), GuildID, NewPermissions->Rank), false, true);
+		dbasync->AddWork(&dbaw, 0);
+		safe_delete_array(query);
+		ServerPacket* pack = new ServerPacket(ServerOP_GuildPermissionsAndRankNameUpdate, sizeof(ServerGuildPermissionsAndRankName_Struct));
+
+		ServerGuildPermissionsAndRankName_Struct *sgprn = (ServerGuildPermissionsAndRankName_Struct*)pack->pBuffer;
+
+		sgprn->GuildID = GuildID;
+		sgprn->Rank = NewPermissions->Rank;
+		sgprn->Type = 0;
+		sgprn->Permission = NewPermissions->Permission;
+		sgprn->Allowed = NewPermissions->Allowed;
+		printf("Sent UpdatePermission packet to world.\n"); fflush(stdout);
+		DumpPacket(pack);
+		worldserver.SendPacket(pack);
+
+		safe_delete(pack);
+	}
+}
+
+void ZoneGuildManager::UpdateRank(uint32 GuildID, GuildRank_Struct *NewRank)
+{
+	printf("GuildID: %i, Rank: %i, New Rank Name: %s\n", GuildID, NewRank->Rank, NewRank->RankName);
+	fflush(stdout);
+
+	if(SetGuildRankName(GuildID, NewRank->Rank, NewRank->RankName))
+	{
+		//DBSaveGuildRankName(GuildID, NewRank->Rank);
+
+		printf("UPDATE guild_ranks SET title = '%s' WHERE guild_id=%u AND rank=%u\n",
+			GetRankName(GuildID, NewRank->Rank), GuildID, NewRank->Rank); fflush(stdout);
+
+		char* query = 0;
+		DBAsyncWork* dbaw = new DBAsyncWork(&database, &MTdbafq, (DBA_b4_Zone << 24) | DBA_b1_Zone_Misc, DBAsync::Write, 0xFFFFFFFF);
+		dbaw->AddQuery(0,  &query, MakeAnyLenString(&query, "UPDATE guild_ranks SET title = '%s' WHERE guild_id=%u AND rank=%u",
+			GetRankName(GuildID, NewRank->Rank), GuildID, NewRank->Rank), false, true);
+		dbasync->AddWork(&dbaw, 0);
+		safe_delete_array(query);
+		ServerPacket* pack = new ServerPacket(ServerOP_GuildPermissionsAndRankNameUpdate, sizeof(ServerGuildPermissionsAndRankName_Struct));
+
+		ServerGuildPermissionsAndRankName_Struct *sgprn = (ServerGuildPermissionsAndRankName_Struct*)pack->pBuffer;
+
+		sgprn->GuildID = GuildID;
+		sgprn->Rank = NewRank->Rank;
+		sgprn->Type = 1;
+		strncpy(sgprn->RankName, NewRank->RankName, sizeof(sgprn->RankName));
+		printf("Sent UpdateRankName packet to world.\n"); fflush(stdout);
+		DumpPacket(pack);
+		worldserver.SendPacket(pack);
+
+		safe_delete(pack);
+	}
+	else
+	{
+		printf("Failed to update rank name.\n");
+		fflush(stdout);
+	}
+		
 }
 
 GuildBankManager::~GuildBankManager()
@@ -754,6 +856,14 @@ bool GuildBankManager::IsLoaded(uint32 GuildID)
 
 void GuildBankManager::SendGuildBank(Client *c)
 {
+	/*
+	if(c->GetClientVersion() >= EQClientRoF)
+	{
+		SendGuildBankRoF(c);
+		return;
+	}
+	*/
+
 	if(!c || !c->IsInAGuild())
 		return;
 
@@ -800,6 +910,14 @@ void GuildBankManager::SendGuildBank(Client *c)
 			strn0cpy(gbius->Donator, (*Iterator)->Items.DepositArea[i].Donator, sizeof(gbius->Donator));
 
 			strn0cpy(gbius->WhoFor, (*Iterator)->Items.DepositArea[i].WhoFor, sizeof(gbius->WhoFor));
+		
+			// Temp test for RoF	
+			/*	
+			gbius->Action = 0;
+			gbius->Unknown008 = 1;
+			DumpPacket(outapp);
+			*/
+		
 
 			c->FastQueuePacket(&outapp);
 		}
@@ -838,10 +956,162 @@ void GuildBankManager::SendGuildBank(Client *c)
 			strn0cpy(gbius->Donator, (*Iterator)->Items.MainArea[i].Donator, sizeof(gbius->Donator));
 
 			strn0cpy(gbius->WhoFor, (*Iterator)->Items.MainArea[i].WhoFor, sizeof(gbius->WhoFor));
+
+			// Temp test for RoF	
+			/*	
+			gbius->Action = 0;
+			gbius->Unknown008 = 1;
+			DumpPacket(outapp);
+			*/
+		
 			
 			c->FastQueuePacket(&outapp);
 		}
 	}
+}
+
+void GuildBankManager::SendGuildBankRoF(Client *c)
+{
+	if(!c || !c->IsInAGuild())
+		return;
+
+	if(!IsLoaded(c->GuildID()))
+		Load(c->GuildID());
+
+	std::list<GuildBank*>::iterator Iterator = GetGuildBank(c->GuildID());
+
+	if(Iterator == Banks.end())
+	{
+		_log(GUILDS__BANK_ERROR, "Unable to find guild bank for guild ID %i", c->GuildID());
+
+		return;
+	}
+
+	uint32 PacketSize = 240;
+
+	for(int i = 0; i < GUILD_BANK_DEPOSIT_AREA_SIZE; ++i)
+	{
+		if((*Iterator)->Items.DepositArea[i].ItemID > 0)
+		{
+			const Item_Struct *Item = database.GetItem((*Iterator)->Items.DepositArea[i].ItemID);
+
+			if(!Item)
+				continue;
+
+			PacketSize += (4 + strlen((*Iterator)->Items.DepositArea[i].WhoFor) + 1 + strlen((*Iterator)->Items.DepositArea[i].Donator) + 1 +
+					14 + strlen(Item->Name) + 1);
+		}
+	}
+	
+	for(int i = 0; i < GUILD_BANK_MAIN_AREA_SIZE; ++i)
+	{
+		if((*Iterator)->Items.MainArea[i].ItemID > 0)
+		{
+			const Item_Struct *Item = database.GetItem((*Iterator)->Items.MainArea[i].ItemID);
+
+			if(!Item)
+				continue;
+
+			PacketSize += (4 + strlen((*Iterator)->Items.DepositArea[i].WhoFor) + 1 + strlen((*Iterator)->Items.DepositArea[i].Donator) + 1 +
+					14 + strlen(Item->Name) + 1);
+		}
+	}
+
+	EQApplicationPacket *outapp = new EQApplicationPacket(OP_GuildBankItems, PacketSize);
+
+	for(int i = 0; i < GUILD_BANK_DEPOSIT_AREA_SIZE; ++i)
+	{
+		if((*Iterator)->Items.DepositArea[i].ItemID > 0)
+		{
+			const Item_Struct *Item = database.GetItem((*Iterator)->Items.DepositArea[i].ItemID);
+
+			if(!Item)
+			{
+				outapp->WriteUInt8(0);
+				continue;
+			}
+
+			outapp->WriteUInt8(1);
+			outapp->WriteUInt32((*Iterator)->Items.DepositArea[i].Permissions);
+			outapp->WriteString((*Iterator)->Items.DepositArea[i].WhoFor);
+			outapp->WriteString((*Iterator)->Items.DepositArea[i].Donator);
+			outapp->WriteUInt32(Item->ID);
+			outapp->WriteUInt32(Item->Icon);
+			outapp->WriteUInt32((*Iterator)->Items.DepositArea[i].Quantity);
+
+			if(!Item->Stackable)
+			{
+				outapp->WriteUInt8(0);
+			}
+			else
+			{
+				if((*Iterator)->Items.DepositArea[i].Quantity == Item->StackSize)
+					outapp->WriteUInt8(0);
+				else
+					outapp->WriteUInt8(1);
+			}
+
+			outapp->WriteUInt8(0);
+
+			outapp->WriteString(Item->Name);
+
+		}
+		else
+		{
+			outapp->WriteUInt8(0);
+		}
+		
+	}
+
+	for(int i = 0; i < 20; ++i)
+		outapp->WriteUInt8(0);
+	
+	for(int i = 0; i < GUILD_BANK_MAIN_AREA_SIZE; ++i)
+	{
+		if((*Iterator)->Items.MainArea[i].ItemID > 0)
+		{
+			const Item_Struct *Item = database.GetItem((*Iterator)->Items.MainArea[i].ItemID);
+
+			if(!Item)
+			{
+				outapp->WriteUInt8(0);
+				continue;
+			}
+
+			bool Useable = Item->IsEquipable(c->GetBaseRace(), c->GetBaseClass());
+
+			outapp->WriteUInt8(1);
+			outapp->WriteUInt32((*Iterator)->Items.MainArea[i].Permissions);
+			outapp->WriteString((*Iterator)->Items.MainArea[i].WhoFor);
+			outapp->WriteString((*Iterator)->Items.MainArea[i].Donator);
+			outapp->WriteUInt32(Item->ID);
+			outapp->WriteUInt32(Item->Icon);
+			outapp->WriteUInt32((*Iterator)->Items.MainArea[i].Quantity);
+
+			if(!Item->Stackable)
+			{
+				outapp->WriteUInt8(0);
+			}
+			else
+			{
+				if((*Iterator)->Items.MainArea[i].Quantity == Item->StackSize)
+					outapp->WriteUInt8(0);
+				else
+					outapp->WriteUInt8(1);
+			}
+
+			outapp->WriteUInt8(Useable);
+
+			outapp->WriteString(Item->Name);
+		}
+		else
+		{
+			outapp->WriteUInt8(0);
+		}
+	}
+	DumpPacket(outapp);
+	c->FastQueuePacket(&outapp);
+	
 }
 bool GuildBankManager::IsAreaFull(uint32 GuildID, uint16 Area)
 {

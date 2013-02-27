@@ -84,6 +84,8 @@
 #define ServerOP_QGlobalDelete		0x0064
 #define ServerOP_DepopPlayerCorpse	0x0065
 
+#define ServerOP_GuildPermissionsAndRankNameUpdate	0x0070
+
 #define ServerOP_RaidAdd			0x0100 //in use
 #define ServerOP_RaidRemove			0x0101 //in use
 #define	ServerOP_RaidDisband		0x0102 //in use
@@ -794,6 +796,22 @@ struct ServerGuildMemberUpdate_Struct {
 	uint32 LastSeen;
 };
 
+struct ServerGuildPermissionsAndRankName_Struct
+{
+	uint32 GuildID;
+	uint32 Rank;
+	uint8 Type;	// 0 = Permissions, 1 = Rank Name
+	union
+	{
+		struct
+		{
+			uint32 Permission;
+			uint32 Allowed;
+		};
+		char RankName[64];
+	};
+};
+		
 struct SpawnPlayerCorpse_Struct {
 	uint32 player_corpse_id;
 	uint32 zone_id;

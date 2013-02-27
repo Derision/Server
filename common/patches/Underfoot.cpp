@@ -9,6 +9,7 @@
 #include "../eq_packet_structs.h"
 #include "../MiscFunctions.h"
 #include "../Item.h"
+#include "../guilds.h"
 #include "Underfoot_structs.h"
 #include "../rulesys.h"
 
@@ -107,6 +108,36 @@ const EQClientVersion Strategy::ClientVersion() const
 
 #include "SSDefine.h"
 
+static inline uint32 EmuGuildRankToEQGuildRank(uint32 EmuGuildRank)
+{
+	switch(EmuGuildRank)
+	{
+		case GUILD_RANK_LEADER:
+			return 2;
+
+		case GUILD_RANK_SENIOR_OFFICER:
+		case GUILD_RANK_OFFICER:
+			return 1;
+
+		default:
+			return 0;
+	}	
+}
+
+static inline uint32 EQGuildRankToEmuGuildRank(uint32 EQGuildRank)
+{
+	switch(EQGuildRank)
+	{
+		case 0:
+			return GUILD_RANK_MEMBER;
+		case 1:
+			return GUILD_RANK_OFFICER;
+		case 2:
+			return GUILD_RANK_LEADER;
+		default:
+			return GUILD_RANK_NONE;
+	}
+}
 
 // Converts Titanium Slot IDs to Underfoot Slot IDs for use in Encodes
 static inline uint32 TitaniumToUnderfootSlot(uint32 TitaniumSlot) {
@@ -1585,7 +1616,7 @@ ENCODE(OP_GuildMemberList) {
 			PutFieldN(level);
 			PutFieldN(banker);
 			PutFieldN(class_);
-			PutFieldN(rank);
+			e->rank = htonl(EmuGuildRankToEQGuildRank(emu_e->rank));
 			PutFieldN(time_last_on);
 			PutFieldN(tribute_enable);
 			PutFieldN(total_tribute);
@@ -1606,6 +1637,9 @@ ENCODE(OP_GuildMemberList) {
 
 	delete[] __emu_buffer;
 
+	_log(NET__ERROR, "OP_GuildMemberList out");
+	//_hex(NET__ERROR, __packet->pBuffer, __packet->size);
+	_hex(NET__ERROR, in->pBuffer, in->size);
 	dest->FastQueuePacket(&in, ack_req);
 }
 
@@ -2747,6 +2781,20 @@ ENCODE(OP_SpawnAppearance)
 
 	SpawnAppearance_Struct *sas = (SpawnAppearance_Struct *)emu_buffer;
 
+	if(sas->type == AT_GuildRank)
+	{
+		EQApplicationPacket* outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
+		SpawnAppearance_Struct* appearance = (SpawnAppearance_Struct*)outapp->pBuffer;
+		appearance->spawn_id = sas->spawn_id;
+		appearance->type = sas->type;
+		appearance->parameter = EmuGuildRankToEQGuildRank(sas->parameter);
+		dest->FastQueuePacket(&outapp, ack_req);
+	
+		delete in;
+
+		return;
+	}
+
 	if(sas->type != AT_Size)
 	{
 		dest->FastQueuePacket(&in, ack_req);
@@ -2831,6 +2879,34 @@ ENCODE(OP_InspectRequest) {
 	SETUP_DIRECT_ENCODE(Inspect_Struct, structs::Inspect_Struct);
 	OUT(TargetID);
 	OUT(PlayerID);
+	FINISH_ENCODE();
+}
+
+ENCODE(OP_GuildInvite)
+{
+	ENCODE_LENGTH_EXACT(GuildCommand_Struct);
+	SETUP_DIRECT_ENCODE(GuildCommand_Struct, structs::GuildCommand_Struct);
+	memcpy(eq->othername, emu->othername, sizeof(eq->othername));
+	memcpy(eq->myname, emu->myname, sizeof(eq->myname));
+	OUT(guildeqid);
+	OUT(unknown130);
+	eq->officer = EmuGuildRankToEQGuildRank(emu->officer);
+	_log(NET__ERROR, "OP_GuildInvite out");
+	_hex(NET__ERROR, __packet->pBuffer, __packet->size);
+	FINISH_ENCODE();
+}
+
+ENCODE(OP_SetGuildRank)
+{
+	ENCODE_LENGTH_EXACT(GuildSetRank_Struct);
+	SETUP_DIRECT_ENCODE(GuildSetRank_Struct, structs::GuildSetRank_Struct);
+	OUT(Unknown00);
+	OUT(Unknown04);
+	eq->Rank = EmuGuildRankToEQGuildRank(emu->Rank);
+	memcpy(eq->MemberName, emu->MemberName, sizeof(eq->MemberName));
+	OUT(Banker);
+	_log(NET__ERROR, "OP_SetGuildRank out");
+	_hex(NET__ERROR, __packet->pBuffer, __packet->size);
 	FINISH_ENCODE();
 }
 
@@ -3434,6 +3510,30 @@ DECODE(OP_BuffRemoveRequest)
 
 	IN(EntityID);
 
+	FINISH_DIRECT_DECODE();
+}
+
+DECODE(OP_GuildInvite)
+{
+	DECODE_LENGTH_EXACT(structs::GuildCommand_Struct);
+	SETUP_DIRECT_DECODE(GuildCommand_Struct, structs::GuildCommand_Struct);
+	memcpy(emu->othername, eq->othername, sizeof(emu->othername));
+	memcpy(emu->myname, eq->myname, sizeof(emu->myname));
+	IN(guildeqid);
+	IN(unknown130);
+	emu->officer = EQGuildRankToEmuGuildRank(eq->officer);
+	FINISH_DIRECT_DECODE();
+}
+
+DECODE(OP_GuildInviteAccept)
+{
+	DECODE_LENGTH_EXACT(structs::GuildInviteAccept_Struct);
+	SETUP_DIRECT_DECODE(GuildInviteAccept_Struct, structs::GuildInviteAccept_Struct);
+	memcpy(emu->inviter, eq->inviter, sizeof(emu->inviter));
+	memcpy(emu->newmember, eq->newmember, sizeof(emu->newmember));
+	//IN(response);
+	emu->response = EQGuildRankToEmuGuildRank(eq->response);
+	IN(guildeqid);
 	FINISH_DIRECT_DECODE();
 }
 

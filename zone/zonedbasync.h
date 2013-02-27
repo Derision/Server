@@ -17,6 +17,7 @@ bool DBAsyncCB_CharacterBackup(DBAsyncWork* iWork);
 #define DBA_b1_Entity_Corpse_Backup			4
 #define DBA_b1_Zone_MerchantLists			5
 #define DBA_b1_Zone_MerchantListsTemp		6
+#define DBA_b1_Zone_Misc			7
 
 #endif
 

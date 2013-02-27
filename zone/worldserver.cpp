@@ -580,6 +580,7 @@ void WorldServer::Process() {
 		case ServerOP_GuildCharRefresh:
 		case ServerOP_GuildMemberUpdate:
 		case ServerOP_GuildRankUpdate:
+		case ServerOP_GuildPermissionsAndRankNameUpdate:
 		case ServerOP_LFGuildUpdate:
 //		case ServerOP_GuildGMSet:
 //		case ServerOP_GuildGMSetRank:
