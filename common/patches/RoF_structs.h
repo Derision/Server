@@ -4302,7 +4302,7 @@ struct ItemSerializationHeader
 /*040*/	uint32 unknown020; //0
 /*044*/	uint32 instance_id; //unique instance id if not merchant item, else is merchant slot
 /*048*/	uint32 unknown028; //0
-/*052*/	uint32 last_cast_time;	// Unix Time from PP of last cast for this recast type if recast delay > 0
+/*052*/	uint32 recast_time;	// Unix Time of when item may be clicked again
 /*056*/	uint32 charges; //Total Charges an item has (-1 for unlimited)
 /*060*/	uint32 inst_nodrop;	// 1 if the item is no drop (attuned items)
 /*064*/	uint32 unknown044;	// 0

@@ -259,6 +259,7 @@ public:
 		m_instnodrop = false;
 		m_merchantslot = 0;
 		m_color = 0;
+		m_RecastTime = 0;
 	}
 
 	ItemInst(const ItemInst& copy);
@@ -341,6 +342,9 @@ public:
 	int16 GetCurrentSlot() const			{ return m_currentslot; }
 	void SetCurrentSlot(int16 curr_slot)   { m_currentslot = curr_slot; }
 
+	void SetRecastTime(uint32 RecastTime) { m_RecastTime = RecastTime; }
+	int32 GetRecastTime() const { return m_RecastTime; }
+
 
 
 
@@ -397,6 +401,7 @@ protected:
 	bool 				m_instnodrop;
 	int32				m_merchantcount;		//number avaliable on the merchant, -1=unlimited
 	int32				m_SerialNumber;	// Unique identifier for this instance of an item. Needed for Bazaar.
+	int32				m_RecastTime;
 	//
 	// Items inside of this item (augs or contents);
 	map<uint8, ItemInst*> m_contents; // Zero-based index: min=0, max=9

@@ -894,8 +894,9 @@ struct PlayerProfile_Struct
 /*07892*/ SpellBuff_Struct buffs[BUFF_COUNT];	// [1900] Buffs currently on the player (30 Max) - (Each Size 76)
 /*09792*/ uint8   unknown09792[380];		// BUFF_COUNT has been left at 25. These are the extra 5 buffs in Underfoot
 /*10172*/ Disciplines_Struct  disciplines;	// [400] Known disciplines
-/*10972*/ uint32  recastTimers[MAX_RECAST_TYPES]; // Timers (UNIX Time of last use)
-/*11052*/ uint8   unknown11052[160];		// Some type of Timers
+/*10972*/ uint32  unknown10972[20];		// Timers (UNIX Time of last use)
+/*11052*/ uint8   unknown11052[80];		// Some type of Timers
+/*11132*/ uint32  recastTimers[MAX_RECAST_TYPES]; // Clicky Item Recast Timers (UNIX Time of last use)
 /*11212*/ uint32  endurance;			// Current endurance
 /*11216*/ uint8   unknown11216[20];		// ?
 /*11236*/ uint32  aapoints_spent;		// Number of spent AA points
@@ -3916,7 +3917,7 @@ struct ItemSerializationHeader
 /*020*/	uint32 unknown020; //0
 /*024*/	uint32 instance_id; //unique instance id if not merchant item, else is merchant slot
 /*028*/	uint32 unknown028; //0
-/*032*/	uint32 last_cast_time;	// Unix Time from PP of last cast for this recast type if recast delay > 0
+/*032*/	uint32 recast_time;	// Unix Time of when item may be clicked again
 /*036*/	uint32 charges; //Total Charges an item has (-1 for unlimited)
 /*040*/	uint32 inst_nodrop; // 1 if the item is no drop (attuned items)
 /*044*/	uint32 unknown044; //0

@@ -754,6 +754,7 @@ public:
 	uint32	GetAugmentIDAt(int16 slot_id, uint8 augslot);
 	bool	PutItemInInventory(int16 slot_id, const ItemInst& inst, bool client_update = false);
 	bool	PushItemOnCursor(const ItemInst& inst, bool client_update = false);
+	void	SetItemRecastTime(int16 SlotID, int32 RecastTime);
 	void	DeleteItemInInventory(int16 slot_id, int8 quantity = 0, bool client_update = false, bool update_db = true);
 	bool	SwapItem(MoveItem_Struct* move_in);
 	void	SwapItemResync(MoveItem_Struct* move_slots);

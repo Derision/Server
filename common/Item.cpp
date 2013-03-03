@@ -73,6 +73,7 @@ ItemInst::ItemInst(const Item_Struct* item, int16 charges) {
 		m_color = 0;
 	m_merchantcount = 1;
 	m_SerialNumber = GetNextItemInstSerialNumber();
+	m_RecastTime = 0;
 }
 
 ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges) {
@@ -88,6 +89,7 @@ ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges) {
 		m_color = 0;
 	m_merchantcount = 1;
 	m_SerialNumber = GetNextItemInstSerialNumber();
+	m_RecastTime = 0;
 }
 
 ItemInstQueue::~ItemInstQueue() {
@@ -157,6 +159,7 @@ ItemInst::ItemInst(const ItemInst& copy)
 	m_merchantslot=copy.m_merchantslot;
 	m_currentslot=copy.m_currentslot;
 	m_instnodrop=copy.m_instnodrop;
+	m_RecastTime = copy.m_RecastTime;
 	m_merchantcount=copy.m_merchantcount;
 	// Copy container contents
 	iter_contents it;

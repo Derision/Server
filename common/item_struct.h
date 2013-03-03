@@ -197,7 +197,7 @@ struct Item_Struct {
 	uint32	Haste;
 	uint32	DamageShield;
 	uint32	RecastDelay;
-	uint32	RecastType;
+	int32	RecastType;
 	uint32	AugDistiller;
 	bool	Attuneable;
 	bool	NoPet;

@@ -286,12 +286,13 @@ bool SharedDatabase::SaveInventory(uint32 char_id, const ItemInst* inst, int16 s
 			uint32 len_query = MakeAnyLenString(&query, 
 				"REPLACE INTO inventory "
 				"	(charid,slotid,itemid,charges,instnodrop,custom_data,color,"
-				"	augslot1,augslot2,augslot3,augslot4,augslot5)"
+				"	augslot1,augslot2,augslot3,augslot4,augslot5,recasttime)"
 				" VALUES(%lu,%lu,%lu,%lu,%lu,'%s',%lu,"
-				"	%lu,%lu,%lu,%lu,%lu)",
+				"	%lu,%lu,%lu,%lu,%lu,%lu)",
 				(unsigned long)char_id, (unsigned long)slot_id, (unsigned long)inst->GetItem()->ID, (unsigned long)charges, 
                 (unsigned long)(inst->IsInstNoDrop() ? 1:0),inst->GetCustomDataString().c_str(),(unsigned long)inst->GetColor(),
-				(unsigned long)augslot[0],(unsigned long)augslot[1],(unsigned long)augslot[2],(unsigned long)augslot[3],(unsigned long)augslot[4] );
+				(unsigned long)augslot[0],(unsigned long)augslot[1],(unsigned long)augslot[2],(unsigned long)augslot[3],(unsigned long)augslot[4],
+				(unsigned long)inst->GetRecastTime() );
 			
 			ret = RunQuery(query, len_query, errbuf);
 		}
@@ -520,7 +521,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 	
 	// Retrieve character inventory
 	if (RunQuery(query, MakeAnyLenString(&query, "SELECT slotid,itemid,charges,color,augslot1,augslot2,augslot3,augslot4,augslot5,"
-        "instnodrop,custom_data FROM inventory WHERE charid=%i ORDER BY slotid", char_id), errbuf, &result)) {
+        "instnodrop,recasttime,custom_data FROM inventory WHERE charid=%i ORDER BY slotid", char_id), errbuf, &result)) {
 
 		while ((row = mysql_fetch_row(result))) {	
 			int16 slot_id	= atoi(row[0]);
@@ -534,6 +535,7 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 			aug[3]	= (uint32)atoul(row[7]);
 			aug[4]	= (uint32)atoul(row[8]);
 			bool instnodrop	= (row[9] && (uint16)atoi(row[9])) ? true : false;
+			int32 RecastTime = (uint32)atoul(row[10]);
 
 			const Item_Struct* item = GetItem(item_id);
 			
@@ -542,8 +544,8 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 				
 				ItemInst* inst = CreateBaseItem(item, charges);
 				
-                if(row[10]) {
-                    std::string data_str(row[10]);
+                if(row[11]) {
+                    std::string data_str(row[11]);
                     std::string id;
                     std::string value;
                     bool use_id = true;
@@ -576,6 +578,8 @@ bool SharedDatabase::GetInventory(uint32 char_id, Inventory* inv) {
 					inst->SetCharges(-1);
 				else
 					inst->SetCharges(charges);
+
+				inst->SetRecastTime(RecastTime);
 
 				if (item->ItemClass == ItemClassCommon) {
 					for(int i=0;i<5;i++) {
@@ -629,7 +633,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 	
 	// Retrieve character inventory
 	if (RunQuery(query, MakeAnyLenString(&query, "SELECT slotid,itemid,charges,color,augslot1,augslot2,augslot3,augslot4,augslot5,"
-        "instnodrop,custom_data FROM inventory INNER JOIN character_ ch ON ch.id=charid WHERE ch.name='%s' AND ch.account_id=%i ORDER BY slotid", 
+        "instnodrop,recasttime,custom_data FROM inventory INNER JOIN character_ ch ON ch.id=charid WHERE ch.name='%s' AND ch.account_id=%i ORDER BY slotid", 
         name, account_id), errbuf, &result))
 	{
 		while ((row = mysql_fetch_row(result))) {
@@ -644,6 +648,7 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			aug[3]	= (uint32)atoi(row[7]);
 			aug[4]	= (uint32)atoi(row[8]);
 			bool instnodrop	= (row[9] && (uint16)atoi(row[9])) ? true : false;
+			int32 RecastTime = (uint32)atoul(row[10]);
 			const Item_Struct* item = GetItem(item_id);
 			int16 put_slot_id = SLOT_INVALID;
 			if(!item)
@@ -652,8 +657,8 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			ItemInst* inst = CreateBaseItem(item, charges);			
 			inst->SetInstNoDrop(instnodrop);
 
-            if(row[10]) {
-                std::string data_str(row[10]);
+            if(row[11]) {
+                std::string data_str(row[11]);
                 std::string id;
                 std::string value;
                 bool use_id = true;
@@ -681,6 +686,8 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 			if (color > 0)
 				inst->SetColor(color);
 			inst->SetCharges(charges);
+
+			inst->SetRecastTime(RecastTime);
 
 			if (item->ItemClass == ItemClassCommon) {
 				for(int i=0;i<5;i++) {
@@ -937,7 +944,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
             item.Haste = (uint32)atoul(row[ItemField::haste]);
             item.DamageShield = (uint32)atoul(row[ItemField::damageshield]);
             item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
-            item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
+            item.RecastType = (int32)atoul(row[ItemField::recasttype]);
             item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
             item.AugDistiller = (uint32)atoul(row[ItemField::augdistiller]);
             item.Attuneable = (atoi(row[ItemField::attuneable])==0) ? false : true;

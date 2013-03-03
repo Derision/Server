@@ -766,7 +766,9 @@ struct PlayerProfile_Struct
 /*7220*/	uint32				tribute_active;		//1=active
 /*7224*/	Tribute_Struct		tributes[MAX_PLAYER_TRIBUTES];
 /*7264*/	Disciplines_Struct	disciplines;			//fathernitwit: 10-06-04
-/*7664*/	char				unknown7464[240];
+/*7664*/	uint32				unknown7664[20]; // Timers (GMT of last use)
+/*7744*/	uint8				unknown7744[80];
+/*7824*/	uint32				recastTimers[MAX_RECAST_TYPES]; // Timers (GMT of last use)
 /*7904*/	uint32				endurance;
 /*7908*/	uint32				group_leadership_exp;	//0-1000
 /*7912*/	uint32				raid_leadership_exp;	//0-2000

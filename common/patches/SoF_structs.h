@@ -844,8 +844,9 @@ struct PlayerProfile_Struct //23576 Octets
 /*07040*/ uint32  hunger_level;			// Food (ticks till next eat)
 /*07044*/ SpellBuff_Struct buffs[BUFF_COUNT];	// [600]Buffs currently on the player
 /*07644*/ Disciplines_Struct  disciplines;	// [400] Known disciplines
-/*08044*/ uint32 recastTimers[MAX_RECAST_TYPES]; // Timers (UNIX Time of last use)
-/*08124*/ uint8 unknown08124[160];		// Some type of Timers
+/*08044*/ uint32 unknown08044[20]; // Timers (UNIX Time of last use)
+/*08124*/ uint8 unknown08124[80];		// Some type of Timers
+/*08200*/ uint32 recastTimers[MAX_RECAST_TYPES]; // Timers (UNIX Time of last use)
 /*08284*/ uint32  endurance;			// Current endurance
 /*08288*/ uint32  aapoints_spent;		// Number of spent AA points
 /*08292*/ uint32  aapoints;				// Unspent AA points
@@ -3725,7 +3726,7 @@ struct ItemSerializationHeader
 	uint32 unknown020; //0
 	uint32 instance_id; //unique instance id if not merchant item, else is merchant slot
 	uint32 unknown028; //0
-	uint32 last_cast_time;	// Unix Time from PP of last cast for this recast type if recast delay > 0
+	uint32 recast_time;	// Unix Time of when item may be clicked again
 	uint32 charges; //Total Charges an item has (-1 for unlimited)
 	uint32 inst_nodrop; // 1 if the item is no drop (attuned items)
 	uint32 unknown044; //0

@@ -394,6 +394,16 @@ uint32 Client::GetAugmentIDAt(int16 slot_id, uint8 augslot) {
 	return INVALID_ID;
 }
 
+void Client::SetItemRecastTime(int16 SlotID, int32 RecastTime)
+{
+	ItemInst *inst = m_inv.GetItem(SlotID);
+	if(inst)
+	{
+		inst->SetRecastTime(RecastTime);
+		database.SaveInventory(character_id, inst, SlotID);
+	}
+}
+
 // Remove item from inventory
 void Client::DeleteItemInInventory(int16 slot_id, int8 quantity, bool client_update, bool update_db) {
 	#if (EQDEBUG >= 5)

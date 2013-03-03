@@ -1057,16 +1057,24 @@ ENCODE(OP_PlayerProfile)
 		outapp->WriteUInt32(0);
 	}
 
+	// Don't know what these are.
 	outapp->WriteUInt32(MAX_RECAST_TYPES);			// Timestamp count
+
+	for(uint32 r = 0; r < MAX_RECAST_TYPES; r++)
+	{
+		//outapp->WriteUInt32(emu->recastTimers[r]);
+		outapp->WriteUInt32(0);
+	}
+
+	// These timestamps are when a clicky item with a ReuseType > 0 may be clicked again.
+	outapp->WriteUInt32(100);			// Timestamp2 count
 
 	for(uint32 r = 0; r < MAX_RECAST_TYPES; r++)
 	{
 		outapp->WriteUInt32(emu->recastTimers[r]);
 	}
 
-	outapp->WriteUInt32(100);			// Timestamp2 count
-
-	for(uint32 r = 0; r < 100; r++)
+	for(uint32 r = MAX_RECAST_TYPES; r < 100; r++)
 	{
 		outapp->WriteUInt32(0);
 	}
@@ -1095,11 +1103,17 @@ ENCODE(OP_PlayerProfile)
 		outapp->WriteUInt32(0);
 	}
 
+	// Spell Refresh Timers
 	outapp->WriteUInt32(13);			// Unknown count
 
-	for(uint32 r = 0; r < 13; r++)
+	for(uint32 r = 0; r < MAX_PP_MEMSPELL; r++)
 	{
-		outapp->WriteUInt32(0);			// Unknown
+		outapp->WriteUInt32(emu->spellSlotRefresh[r]);
+	}
+
+	for(uint32 r = MAX_PP_MEMSPELL; r < 13; r++)
+	{
+		outapp->WriteUInt32(0);
 	}
 
 	outapp->WriteUInt8(0);			// Unknown
@@ -4827,7 +4841,7 @@ char* SerializeItem(const ItemInst *inst, int16 slot_id_in, uint32 *length, uint
 	hdr.unknown020 = 0;
 	hdr.instance_id = (merchant_slot == 0) ? inst->GetSerialNumber() : merchant_slot;
 	hdr.unknown028 = 0;
-	hdr.last_cast_time = ((item->RecastDelay > 1) ? 1212693140 : 0);
+	hdr.recast_time = ((item->RecastDelay > 1) ? inst->GetRecastTime() : 0);
 	hdr.charges = (stackable ? (item->MaxCharges ? 1 : 0) : charges);
 	hdr.inst_nodrop = inst->IsInstNoDrop() ? 1 : 0;
 	hdr.unknown044 = 0;

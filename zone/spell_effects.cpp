@@ -4471,8 +4471,9 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 		case SE_ReduceReuseTimer:
 		{ 
 			if(type == focusReduceRecastTime)
+			{
 				value = focus_spell.base[i] / 1000;
-				
+			}
 			break;
 		}
 
@@ -4951,7 +4952,7 @@ int16 Client::GetFocusEffect(focusType type, uint16 spell_id) {
 		return 0;
 	//Summon Spells that require reagents are typically imbue type spells, enchant metal, sacrifice and shouldn't be affected
 	//by reagent conservation for obvious reasons.
-	
+
 	return realTotal + realTotal2 + realTotal3;
 }
 

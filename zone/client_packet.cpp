@@ -2050,7 +2050,8 @@ void Client::Handle_OP_ItemVerifyRequest(const EQApplicationPacket *app)
 			DivineAura() ||
 			(IsSilenced() && !IsDiscipline(spell_id)) ||
 			(IsAmnesiad() && IsDiscipline(spell_id)) ||
-			(IsDetrimentalSpell(spell_id) && !zone->CanDoCombat())
+			(IsDetrimentalSpell(spell_id) && !zone->CanDoCombat()) ||
+			((item->RecastType == -1) && (inst->GetRecastTime() > time(NULL)))
 		)
 	)
 	{
@@ -9120,9 +9121,17 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 		LogFile->write(EQEMuLog::Error, "Unable to load ability timers from the database for %s (%i)!", GetCleanName(), CharacterID());
 	}
 
-	for(unsigned int i =0 ; i < MAX_PP_MEMSPELL; ++i)
+	for(unsigned int i = 0 ; i < MAX_PP_MEMSPELL; ++i)
 		if(IsValidSpell(m_pp.mem_spells[i]))
 			m_pp.spellSlotRefresh[i] = p_timers.GetRemainingTime(pTimerSpellStart + m_pp.mem_spells[i]) * 1000;
+
+	for(unsigned int i = 0; i < MAX_RECAST_TYPES; ++i)
+	{
+		if(p_timers.GetRemainingTime(pTimerItemStart + i) > 0)
+			m_pp.recastTimers[i] = p_timers.GetRemainingTime(pTimerItemStart + i) + time(NULL);
+		else
+			m_pp.recastTimers[i] = 0;
+	}
 
 	if(m_pp.class_==SHADOWKNIGHT || m_pp.class_==PALADIN)
 	{
