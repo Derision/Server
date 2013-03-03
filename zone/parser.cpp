@@ -22,7 +22,7 @@ using namespace std;
 #include "../common/classes.h"
 #include "../common/races.h"
 #include "zonedb.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "../common/packet_functions.h"
 #include "spawn2.h"
 #include "zone.h"
@@ -498,10 +498,6 @@ void Parser::Event(QuestEventID event, uint32 npcid, const char * data, NPC* npc
 	
 Parser::Parser() : DEFAULT_QUEST_PREFIX("default") {
 	MainList.clear();
-	pMaxNPCID = database.GetMaxNPCType();
-	/*pNPCqstID = new int32[pMaxNPCID+1];
-	for (uint32 i=0; i<pMaxNPCID+1; i++)
-		pNPCqstID[i] = -1;*/
 	pNPCqstID = new int32[1];
 	npcarrayindex=1;
 }

@@ -25,16 +25,20 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "features.h"
+#include "../common/features.h"
 #ifdef EMBPERL_XS_CLASSES
 #include "../common/debug.h"
 #include "embperl.h"
+
+#ifdef seed
+#undef seed
+#endif
 
 typedef const char Const_char;
 
 #include "mob.h"
 #include "client.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 
 #ifdef THIS	 /* this macro seems to leak out on some systems */
 #undef THIS		

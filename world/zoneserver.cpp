@@ -46,6 +46,7 @@ extern volatile bool RunLoops;
 extern AdventureManager adventure_manager;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
+void CatchSignal(int sig_num);
 
 ZoneServer::ZoneServer(EmuTCPConnection* itcpc) 
 : WorldTCPConnection(), tcpc(itcpc), ls_zboot(5000) {
@@ -795,12 +796,12 @@ bool ZoneServer::Process() {
 		case ServerOP_ReloadRules:
 		{
 			zoneserver_list.SendPacket(pack);
-			rules->LoadRules(&database, "default");
+			RuleManager::Instance()->LoadRules(&database, "default");
 			break;
 		}
 		case ServerOP_ReloadRulesWorld:
 		{
-			rules->LoadRules(&database, "default");
+			RuleManager::Instance()->LoadRules(&database, "default");
 			break;
 		}
 		case ServerOP_CameraShake:

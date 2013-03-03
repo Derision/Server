@@ -73,7 +73,7 @@ Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
 
 
 #include "../common/debug.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "masterentity.h"
 #include "../common/packet_dump.h"
 #include "../common/moremath.h"
@@ -99,14 +99,7 @@ Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
 
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
-#if !defined(NEW_LoadSPDat) && !defined(DB_LoadSPDat)
-	extern SPDat_Spell_Struct spells[SPDAT_RECORDS];
-#endif
-extern bool spells_loaded;
 extern WorldServer worldserver;
-uchar blah[]={0x0D,0x00,0x00,0x00,0x01,0x00,0x00,0x00};
-uchar blah2[]={0x12,0x00,0x00,0x00,0x16,0x01,0x00,0x00};
-
 
 // this is run constantly for every mob
 void Mob::SpellProcess()
@@ -1313,8 +1306,8 @@ bool Mob::DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_ce
 		case ST_SummonedPet:
 		{
 			uint8 body_type = spell_target ? spell_target->GetBodyType() : 0;
-			if(spell_target && (spell_target == GetPet()) &&
-				(body_type == BT_Summoned || body_type == BT_Summoned2 || body_type == BT_Summoned3 || body_type == BT_Animal))
+			if(!spell_target || (spell_target != GetPet()) ||
+			   (body_type != BT_Summoned && body_type != BT_Summoned2 && body_type != BT_Summoned3 && body_type != BT_Animal))
 			{
 				mlog(SPELLS__CASTING_ERR, "Spell %d canceled: invalid target of body type %d (summoned pet)",
 							  spell_id, body_type);

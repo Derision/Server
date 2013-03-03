@@ -25,7 +25,7 @@
 #include "../common/servertalk.h"
 #include "../common/rulesys.h"
 #include "../common/eq_packet_structs.h"
-#include "features.h"
+#include "../common/features.h"
 #include "spawngroup.h"
 //#include "mob.h"
 #include "zonedump.h"
@@ -219,6 +219,7 @@ public:
 	bool	CanDoCombat() const { return(can_combat); }
 	bool	CanLevitate() const {return(can_levitate); } // Magoth78
 	bool    CanCastOutdoor() const {return(can_castoutdoor);} //qadar
+	bool	AllowMercs() const {return(allow_mercs);}
 	bool	IsHotzone() const { return(is_hotzone); }
 	inline	bool BuffTimersSuspended() const { return newzone_data.SuspendBuffs != 0; };
 	
@@ -269,6 +270,7 @@ private:
 	bool    can_castoutdoor;
 	bool	can_levitate;
 	bool	is_hotzone;
+	bool	allow_mercs;
 	uint32	pgraveyard_id, pgraveyard_zoneid;
 	float	pgraveyard_x, pgraveyard_y, pgraveyard_z, pgraveyard_heading;
 	int     default_ruleset;

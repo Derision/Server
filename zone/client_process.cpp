@@ -51,14 +51,14 @@
 #include "worldserver.h"
 #include "../common/packet_dump_file.h"
 #include "../common/MiscFunctions.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "petitions.h"
 #include "NpcAI.h"
 #include "../common/skills.h"
 #include "forage.h"
 #include "zone.h"
 #include "event_codes.h"
-#include "faction.h"
+#include "../common/faction.h"
 #include "../common/crc32.h"
 #include "../common/rulesys.h"
 #include "StringIDs.h"
@@ -73,10 +73,6 @@ using namespace std;
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
 extern WorldServer worldserver;
-#if !defined(NEW_LoadSPDat) && !defined(DB_LoadSPDat)
-	extern SPDat_Spell_Struct spells[SPDAT_RECORDS];
-#endif
-extern bool spells_loaded;
 extern PetitionList petition_list;
 extern EntityList entity_list;
 

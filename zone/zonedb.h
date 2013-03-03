@@ -3,8 +3,9 @@
 
 #include "../common/shareddb.h"
 #include "../common/eq_packet_structs.h"
-#include "loottable.h"
-#include "faction.h"
+#include "../common/loottable.h"
+#include "zonedump.h"
+#include "../common/faction.h"
 //#include "doors.h"
 
 struct wplist {
@@ -169,6 +170,7 @@ struct LootTable_Struct;
 
 
 class ZoneDatabase : public SharedDatabase {
+    typedef list<ServerLootItem_Struct*> ItemList;
 public:
 	ZoneDatabase();
 	ZoneDatabase(const char* host, const char* user, const char* passwd, const char* database,uint32 port);
@@ -280,7 +282,6 @@ public:
 	bool    LoadAAEffects();
 	bool	LoadAAEffects2();
 	bool    LoadSwarmSpells();
-//	uint32	GetPlayerAlternateAdv(uint32 account_id, char* name, PlayerAA_Struct* aa);
 	SendAA_Struct*	GetAASkillVars(uint32 skill_id);
 	uint8	GetTotalAALevels(uint32 skill_id);
 	uint32	GetSizeAA();
@@ -292,7 +293,7 @@ public:
 	/*
 	 * Zone related
 	 */
-	bool	GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, int &ruleset, char **map_filename);
+	bool	GetZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct *data, bool &can_bind, bool &can_combat, bool &can_levitate, bool &can_castoutdoor, bool &is_city, bool &is_hotzone, bool &allow_mercs, int &ruleset, char **map_filename);
 	bool	SaveZoneCFG(uint32 zoneid, uint16 instance_id, NewZone_Struct* zd);
 	bool	DumpZoneState();
 	int8	LoadZoneState(const char* zonename, LinkedList<Spawn2*>& spawn2_list);
@@ -300,14 +301,6 @@ public:
 	bool	UpdateZoneSafeCoords(const char* zonename, float x, float y, float z);
 	uint8	GetUseCFGSafeCoords();
     int		getZoneShutDownDelay(uint32 zoneID, uint32 version);
-	
-	/*
-	 * Item
-	 */
-	void	LoadItemStatus();
-	inline uint8	GetItemStatus(uint32 id) { if (id < MAX_ITEM_ID) { return item_minstatus[id]; } return 0; }
-	inline void SetItemStatus(uint32 id, uint8 status) { if (id < MAX_ITEM_ID) { item_minstatus[id] = status; } }
-	bool	DBSetItemStatus(uint32 id, uint8 status);
 	
 	/*
 	 * Spawns and Spawn Points
@@ -357,9 +350,11 @@ public:
 	 * Mercs
 	 */
 	const	NPCType*	GetMercType(uint32 id, uint16 raceid, uint32 clientlevel);
+	void    LoadMercEquipment(Merc *merc);
 	void	SaveMercBuffs(Merc *merc);
     void	LoadMercBuffs(Merc *merc);
 	bool	LoadMercInfo(Client *c);
+	bool	LoadCurrentMerc(Client *c);
 	bool	SaveMerc(Merc *merc);
 	bool	DeleteMerc(uint32 merc_id);
 	//void	LoadMercTypesForMercMerchant(NPC *merchant);
@@ -399,7 +394,6 @@ public:
 	/*
 	 * Doors
 	 */
-	uint32  MaxDoors() { return max_door_type; }
 	bool	DoorIsOpen(uint8 door_id,const char* zone_name);
 	void	SetDoorPlace(uint8 value,uint8 door_id,const char* zone_name);
 	bool	LoadDoors(int32 iDoorCount, Door *into, const char *zone_name, int16 version);
@@ -482,11 +476,9 @@ protected:
 	
 	uint32				max_faction;
 	Faction**			faction_array;
-	
-	uint32				npc_spells_maxid;
+	uint32 npc_spells_maxid;
 	DBnpcspells_Struct** npc_spells_cache;
 	bool*				npc_spells_loadtried;
-	uint8 item_minstatus[MAX_ITEM_ID];
 	uint8 door_isopen_array[255];
 };
 
