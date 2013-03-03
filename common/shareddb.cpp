@@ -1,51 +1,48 @@
 
 #include "shareddb.h"
-#include "../common/Item.h"
-#include "../common/EMuShareMem.h"
-#include "../common/classes.h"
-#include "../common/rulesys.h"
-#include "../common/seperator.h"
+#include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include "Item.h"
+#include "classes.h"
+#include "rulesys.h"
+#include "seperator.h"
 #include "MiscFunctions.h"
 #include "eq_packet_structs.h"
 #include "guilds.h"
 #include "extprofile.h"
-#include <iostream>
-#include <cstring>
-#include <cstdlib>
+#include "memory_mapped_file.h"
+#include "ipc_mutex.h"
+#include "eqemu_exception.h"
+#include "loottable.h"
+#include "faction.h"
+#include "features.h"
 
 using namespace std;
 
-
-extern LoadEMuShareMemDLL EMuShareMemDLL;
-
-//hackish mechanism to support callbacks from sharedmem
-SharedDatabase *SharedDatabase::s_usedb = NULL;
-
 SharedDatabase::SharedDatabase()
-: Database()
+: Database(), skill_caps_mmf(NULL), items_mmf(NULL), items_hash(NULL), faction_mmf(NULL), faction_hash(NULL),
+    loot_table_mmf(NULL), loot_drop_mmf(NULL), loot_table_hash(NULL), loot_drop_hash(NULL)
 {
-	SDBInitVars();
-	s_usedb = this;
 }
 
 SharedDatabase::SharedDatabase(const char* host, const char* user, const char* passwd, const char* database, uint32 port)
-: Database(host, user, passwd, database, port)
+: Database(host, user, passwd, database, port), skill_caps_mmf(NULL), items_mmf(NULL), items_hash(NULL), 
+    faction_mmf(NULL), faction_hash(NULL), loot_table_mmf(NULL), loot_drop_mmf(NULL), loot_table_hash(NULL), 
+    loot_drop_hash(NULL)
 {
-	SDBInitVars();
-	s_usedb = this;
-}
-
-void SharedDatabase::SDBInitVars() {
-	max_item = 0;
-	max_npc_type = 0;
-	
-	loottable_max = 0;
-	lootdrop_max = 0;
-	max_door_type = 0;
-	npcfactionlist_max = 0;
 }
 
 SharedDatabase::~SharedDatabase() {
+    safe_delete(skill_caps_mmf);
+    safe_delete(items_mmf);
+    safe_delete(items_hash);
+    safe_delete(faction_mmf);
+    safe_delete(faction_hash);
+    safe_delete(loot_table_mmf);
+    safe_delete(loot_drop_mmf);
+    safe_delete(loot_table_hash);
+    safe_delete(loot_drop_hash);
 }
 
 bool SharedDatabase::SetHideMe(uint32 account_id, uint8 hideme)
@@ -720,370 +717,338 @@ bool SharedDatabase::GetInventory(uint32 account_id, char* name, Inventory* inv)
 }
 
 
-int32 SharedDatabase::GetItemsCount(uint32* oMaxID) {
+void SharedDatabase::GetItemsCount(int32 &item_count, uint32 &max_id) {
 	char errbuf[MYSQL_ERRMSG_SIZE];
     MYSQL_RES *result;
     MYSQL_ROW row;
-	int32 ret = -1;
+	item_count = -1;
+    max_id = 0;
 	
-	char query[] = "SELECT MAX(id),count(*) FROM items";
-	if (RunQuery(query, strlen(query), errbuf, &result)) {
+	char query[] = "SELECT MAX(id), count(*) FROM items";
+	if (RunQuery(query, static_cast<uint32>(strlen(query)), errbuf, &result)) {
 		row = mysql_fetch_row(result);
 		if (row != NULL && row[1] != 0) {
-			ret = atoi(row[1]);
-			if (oMaxID) {
-				if (row[0])
-					*oMaxID = atoi(row[0]);
-				else
-					*oMaxID = 0;
-			}
+			item_count = atoi(row[1]);
+			if(row[0])
+				max_id = atoi(row[0]);
 		}
 		mysql_free_result(result);
 	}
 	else {
-		cerr << "Error in GetItemsCount query '" << query << "' " << errbuf << endl;
+		LogFile->write(EQEMuLog::Error, "Error in GetItemsCount '%s': '%s'", query, errbuf);
 	}
-	
-	return ret;
-}
-
-
-int32 SharedDatabase::GetNPCTypesCount(uint32* oMaxID) {
-
-	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
-	query = new char[256];
-	strcpy(query, "SELECT MAX(id), count(*) FROM npc_types");
-	if (RunQuery(query, strlen(query), errbuf, &result)) {
-		safe_delete_array(query);
-		row = mysql_fetch_row(result);
-		if (row != NULL && row[1] != 0) {
-			int32 ret = atoi(row[1]);
-			if (oMaxID) {
-				if (row[0])
-					*oMaxID = atoi(row[0]);
-				else
-					*oMaxID = 0;
-			}
-			mysql_free_result(result);
-			return ret;
-		}
-		mysql_free_result(result);
-	}
-	else {
-		cerr << "Error in GetNPCTypesCount query '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
-
-		return -1;
-	}
-	
-	return -1;
-}
-
-
-bool SharedDatabase::extDBLoadItems(int32 iItemCount, uint32 iMaxItemID) {
-	return s_usedb->DBLoadItems(iItemCount, iMaxItemID);
 }
 
 bool SharedDatabase::LoadItems() {
-	if (!EMuShareMemDLL.Load())
-		return false;
-	int32 tmp = 0;
-	tmp = GetItemsCount(&max_item);
-	if (tmp == -1) {
-		cout << "Error: SharedDatabase::LoadItems() (sharemem): GetItemsCount() returned -1" << endl;
-		return false;
-	}
-	bool ret = EMuShareMemDLL.Items.DLLLoadItems(&extDBLoadItems, sizeof(Item_Struct), &tmp, &max_item);
-	return ret;
+    if(items_mmf) {
+        return true;
+    }
+
+    try {
+        EQEmu::IPCMutex mutex("items");
+        mutex.Lock();
+        items_mmf = new EQEmu::MemoryMappedFile("shared/items");
+
+        int32 items = -1;
+        uint32 max_item = 0;
+        GetItemsCount(items, max_item);
+        if(items == -1) {
+            EQ_EXCEPT("SharedDatabase", "Database returned no result");
+        }
+        uint32 size = static_cast<uint32>(EQEmu::FixedMemoryHashSet<Item_Struct>::estimated_size(items, max_item));
+        if(items_mmf->Size() != size) {
+            EQ_EXCEPT("SharedDatabase", "Couldn't load items because items_mmf->Size() != size");
+        }
+
+        items_hash = new EQEmu::FixedMemoryHashSet<Item_Struct>(reinterpret_cast<uint8*>(items_mmf->Get()), size);
+        mutex.Unlock();
+    } catch(std::exception& ex) {
+        LogFile->write(EQEMuLog::Error, "Error Loading Items: %s", ex.what());
+        return false;
+    }
+
+	return true;
 }
 
-// Load all database items into cache
-bool SharedDatabase::DBLoadItems(int32 iItemCount, uint32 iMaxItemID) {
-	_CP(Database_DBLoadItems);
-	char errbuf[MYSQL_ERRMSG_SIZE];
+void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_item_id) {
+    EQEmu::FixedMemoryHashSet<Item_Struct> hash(reinterpret_cast<uint8*>(data), size, items, max_item_id);
+    char errbuf[MYSQL_ERRMSG_SIZE];
 	MYSQL_RES *result;
 	MYSQL_ROW row;
-	bool ret = false;
-	
-	LogFile->write(EQEMuLog::Status, "Loading items from database: count=%i", iItemCount);
-	
-	// Make sure enough memory was alloc'd in cache
-	int32 item_count = GetItemsCount(&max_item);
-	if (item_count != iItemCount) {
-		LogFile->write(EQEMuLog::Error, "Insufficient shared memory to load items (actual=%i, allocated=%i)", item_count, iItemCount);
-		return ret;
-	}
-	else if (max_item != iMaxItemID) {
-		LogFile->write(EQEMuLog::Error, "Insufficient shared memory to load items (max item=%i, allocated=%i).  Increase MMF_EQMAX_ITEMS define", max_item, iMaxItemID);
-		return ret;
-	}
-	
-	bool disableNoRent = false;
-	char ndbuffer[4];
-	if(GetVariable("disablenorent", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableNoRent = true;
-		}
-	}
-	bool disableNoDrop = false;
-	if(GetVariable("disablenodrop", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableNoDrop = true;
-		}
-	}
-	bool disableLoreGroup = false;
-	if(GetVariable("disablelore", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableLoreGroup = true;
-		}
-	}
-	bool disableNoTransfer = false;
-	if(GetVariable("disablenotransfer", ndbuffer, 4)) {
-		if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
-			disableNoTransfer = true;
-		}
-	}
-	
-	// Retrieve all items from database
-	char query[] = "select source,"
+
+    char ndbuffer[4];
+    bool disableNoRent = false;
+    if(GetVariable("disablenorent", ndbuffer, 4)) {
+        if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
+            disableNoRent = true;
+        }
+    }
+    bool disableNoDrop = false;
+    if(GetVariable("disablenodrop", ndbuffer, 4)) {
+        if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
+            disableNoDrop = true;
+        }
+    }
+    bool disableLoreGroup = false;
+    if(GetVariable("disablelore", ndbuffer, 4)) {
+        if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
+            disableLoreGroup = true;
+        }
+    }
+    bool disableNoTransfer = false;
+    if(GetVariable("disablenotransfer", ndbuffer, 4)) {
+        if(ndbuffer[0] == '1' && ndbuffer[1] == '\0') {
+            disableNoTransfer = true;
+        }
+    }
+
+    char query[] = "select source,"
 #define F(x) "`"#x"`,"
 #include "item_fieldlist.h"
 #undef F
 		"updated"
 		" from items order by id";
-	
-	Item_Struct item;
-	if (RunQuery(query, sizeof(query), errbuf, &result)) {
-                while((row = mysql_fetch_row(result))) {
-#if EQDEBUG >= 6
-				LogFile->write(EQEMuLog::Status, "Loading %s:%i", row[ItemField::name], row[ItemField::id]);
-#endif				
-			memset(&item, 0, sizeof(Item_Struct));
+    Item_Struct item;
+	if(RunQuery(query, sizeof(query), errbuf, &result)) {
+        while((row = mysql_fetch_row(result))) {	
+            memset(&item, 0, sizeof(Item_Struct));
 			
-			item.ItemClass = (uint8)atoi(row[ItemField::itemclass]);
-			strcpy(item.Name,row[ItemField::name]);
-			strcpy(item.Lore,row[ItemField::lore]);
-			strcpy(item.IDFile,row[ItemField::idfile]);
-			item.ID = (uint32)atoul(row[ItemField::id]);
-			item.Weight = (uint8)atoi(row[ItemField::weight]);
+            item.ItemClass = (uint8)atoi(row[ItemField::itemclass]);
+            strcpy(item.Name,row[ItemField::name]);
+            strcpy(item.Lore,row[ItemField::lore]);
+            strcpy(item.IDFile,row[ItemField::idfile]);
+            item.ID = (uint32)atoul(row[ItemField::id]);
+            item.Weight = (uint8)atoi(row[ItemField::weight]);
             item.NoRent = disableNoRent ? (uint8)atoi("255") : (uint8)atoi(row[ItemField::norent]);
-			item.NoDrop = disableNoDrop ? (uint8)atoi("255") : (uint8)atoi(row[ItemField::nodrop]);
-			item.Size = (uint8)atoi(row[ItemField::size]);
-			item.Slots = (uint32)atoul(row[ItemField::slots]);
-			item.Price = (uint32)atoul(row[ItemField::price]);
-			item.Icon = (uint32)atoul(row[ItemField::icon]);
-			//item.Unk012 = (int32)atoul(row[ItemField::UNK012]);
-			//item.Unk013 = (uint32)atoul(row[ItemField::UNK013]);
-			item.BenefitFlag = (uint32)atoul(row[ItemField::benefitflag]);
-			item.Tradeskills = (atoi(row[ItemField::tradeskills])==0) ? false : true;
-			item.CR = (int8)atoi(row[ItemField::cr]);
-			item.DR = (int8)atoi(row[ItemField::dr]);
-			item.PR = (int8)atoi(row[ItemField::pr]);
-			item.MR = (int8)atoi(row[ItemField::mr]);
-			item.FR = (int8)atoi(row[ItemField::fr]);
-			item.AStr = (int8)atoi(row[ItemField::astr]);
-			item.ASta = (int8)atoi(row[ItemField::asta]);
-			item.AAgi = (int8)atoi(row[ItemField::aagi]);
-			item.ADex = (int8)atoi(row[ItemField::adex]);
-			item.ACha = (int8)atoi(row[ItemField::acha]);
-			item.AInt = (int8)atoi(row[ItemField::aint]);
-			item.AWis = (int8)atoi(row[ItemField::awis]);
-			item.HP = (int32)atoul(row[ItemField::hp]);
-			item.Mana = (int32)atoul(row[ItemField::mana]);
-			item.AC = (int32)atoul(row[ItemField::ac]);
-			item.Deity = (uint32)atoul(row[ItemField::deity]);
-			item.SkillModValue = (int32)atoul(row[ItemField::skillmodvalue]);
-			//item.Unk033 = (int32)atoul(row[ItemField::UNK033]);
-			item.SkillModType = (uint32)atoul(row[ItemField::skillmodtype]);
-			item.BaneDmgRace = (uint32)atoul(row[ItemField::banedmgrace]);
-			item.BaneDmgAmt = (int8)atoi(row[ItemField::banedmgamt]);
-			item.BaneDmgBody = (uint32)atoul(row[ItemField::banedmgbody]);
-			item.Magic = (atoi(row[ItemField::magic])==0) ? false : true;
-			item.CastTime_ = (int32)atoul(row[ItemField::casttime_]);
-			item.ReqLevel = (uint8)atoi(row[ItemField::reqlevel]);
-			item.BardType = (uint32)atoul(row[ItemField::bardtype]);
-			item.BardValue = (int32)atoul(row[ItemField::bardvalue]);
-			item.Light = (int8)atoi(row[ItemField::light]);
-			item.Delay = (uint8)atoi(row[ItemField::delay]);
-			item.RecLevel = (uint8)atoi(row[ItemField::reclevel]);
-			item.RecSkill = (uint8)atoi(row[ItemField::recskill]);
-			item.ElemDmgType = (uint8)atoi(row[ItemField::elemdmgtype]);
-			item.ElemDmgAmt = (uint8)atoi(row[ItemField::elemdmgamt]);
-			item.Range = (uint8)atoi(row[ItemField::range]);
-			item.Damage = (uint32)atoi(row[ItemField::damage]);
-			item.Color = (uint32)atoul(row[ItemField::color]);
-			item.Classes = (uint32)atoul(row[ItemField::classes]);
-			item.Races = (uint32)atoul(row[ItemField::races]);
-			//item.Unk054 = (uint32)atoul(row[ItemField::UNK054]);
-			item.MaxCharges = (int16)atoi(row[ItemField::maxcharges]);
-			item.ItemType = (uint8)atoi(row[ItemField::itemtype]);
-			item.Material = (uint8)atoi(row[ItemField::material]);
-			item.SellRate = (float)atof(row[ItemField::sellrate]);
-			//item.Unk059 = (uint32)atoul(row[ItemField::UNK059]);
-			item.CastTime = (uint32)atoul(row[ItemField::casttime]);
-			item.EliteMaterial = (uint32)atoul(row[ItemField::elitematerial]);
-			item.ProcRate = (int32)atoi(row[ItemField::procrate]);
-			item.CombatEffects = (int8)atoi(row[ItemField::combateffects]);
-			item.Shielding = (int8)atoi(row[ItemField::shielding]);
-			item.StunResist = (int8)atoi(row[ItemField::stunresist]);
-			item.StrikeThrough = (int8)atoi(row[ItemField::strikethrough]);
-			item.ExtraDmgSkill = (uint32)atoul(row[ItemField::extradmgskill]);
-			item.ExtraDmgAmt = (uint32)atoul(row[ItemField::extradmgamt]);
-			item.SpellShield = (int8)atoi(row[ItemField::spellshield]);
-			item.Avoidance = (int8)atoi(row[ItemField::avoidance]);
-			item.Accuracy = (int8)atoi(row[ItemField::accuracy]);
-			item.CharmFileID = (uint32)atoul(row[ItemField::charmfileid]);
-			item.FactionMod1 = (int32)atoul(row[ItemField::factionmod1]);
-			item.FactionMod2 = (int32)atoul(row[ItemField::factionmod2]);
-			item.FactionMod3 = (int32)atoul(row[ItemField::factionmod3]);
-			item.FactionMod4 = (int32)atoul(row[ItemField::factionmod4]);
-			item.FactionAmt1 = (int32)atoul(row[ItemField::factionamt1]);
-			item.FactionAmt2 = (int32)atoul(row[ItemField::factionamt2]);
-			item.FactionAmt3 = (int32)atoul(row[ItemField::factionamt3]);
-			item.FactionAmt4 = (int32)atoul(row[ItemField::factionamt4]);
-			strcpy(item.CharmFile,row[ItemField::charmfile]);
-			item.AugType = (uint32)atoul(row[ItemField::augtype]);
-			item.AugSlotType[0] = (uint8)atoi(row[ItemField::augslot1type]);
-			item.AugSlotVisible[0] = (uint8)atoi(row[ItemField::augslot1visible]);
-			item.AugSlotUnk2[0] = 0;
-			item.AugSlotType[1] = (uint8)atoi(row[ItemField::augslot2type]);
-			item.AugSlotVisible[1] = (uint8)atoi(row[ItemField::augslot2visible]);
-			item.AugSlotUnk2[1] = 0;
-			item.AugSlotType[2] = (uint8)atoi(row[ItemField::augslot3type]);
-			item.AugSlotVisible[2] = (uint8)atoi(row[ItemField::augslot3visible]);
-			item.AugSlotUnk2[2] = 0;
-			item.AugSlotType[3] = (uint8)atoi(row[ItemField::augslot4type]);
-			item.AugSlotVisible[3] = (uint8)atoi(row[ItemField::augslot4visible]);
-			item.AugSlotUnk2[3] = 0;
-			item.AugSlotType[4] = (uint8)atoi(row[ItemField::augslot5type]);
-			item.AugSlotVisible[4] = (uint8)atoi(row[ItemField::augslot5visible]);
-			item.AugSlotUnk2[4] = 0;
-			item.LDoNTheme = (uint32)atoul(row[ItemField::ldontheme]);
-			item.LDoNPrice = (uint32)atoul(row[ItemField::ldonprice]);
-			item.LDoNSold = (uint32)atoul(row[ItemField::ldonsold]);
-			item.BagType = (uint8)atoi(row[ItemField::bagtype]);
-			item.BagSlots = (uint8)atoi(row[ItemField::bagslots]);
-			item.BagSize = (uint8)atoi(row[ItemField::bagsize]);
-			item.BagWR = (uint8)atoi(row[ItemField::bagwr]);
-			item.Book = (uint8)atoi(row[ItemField::book]);
-			item.BookType = (uint32)atoul(row[ItemField::booktype]);
-			strcpy(item.Filename,row[ItemField::filename]);
-			item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
-			item.AugRestrict = (uint32)atoul(row[ItemField::augrestrict]);
-			item.LoreGroup = disableLoreGroup ? (uint8)atoi("0") : atoi(row[ItemField::loregroup]);
-			item.LoreFlag = item.LoreGroup!=0;
-			item.PendingLoreFlag = (atoi(row[ItemField::pendingloreflag])==0) ? false : true;
-			item.ArtifactFlag = (atoi(row[ItemField::artifactflag])==0) ? false : true;
-			item.SummonedFlag = (atoi(row[ItemField::summonedflag])==0) ? false : true;
-			item.Favor = (uint32)atoul(row[ItemField::favor]);
-			item.FVNoDrop = (atoi(row[ItemField::fvnodrop])==0) ? false : true;
-			item.Endur = (uint32)atoul(row[ItemField::endur]);
-			item.DotShielding = (uint32)atoul(row[ItemField::dotshielding]);
-			item.Attack = (uint32)atoul(row[ItemField::attack]);
-			item.Regen = (uint32)atoul(row[ItemField::regen]);
-			item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);
-			item.EnduranceRegen = (uint32)atoul(row[ItemField::enduranceregen]);
-			item.Haste = (uint32)atoul(row[ItemField::haste]);
-			item.DamageShield = (uint32)atoul(row[ItemField::damageshield]);
-			item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
-			item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
-			item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
-			item.AugDistiller = (uint32)atoul(row[ItemField::augdistiller]);
-			//item.Unk123 = (uint32)atoul(row[ItemField::UNK123]);
-			//item.Unk124 = (uint32)atoul(row[ItemField::UNK124]);
-			item.Attuneable = (atoi(row[ItemField::attuneable])==0) ? false : true;
-			item.NoPet = (atoi(row[ItemField::nopet])==0) ? false : true;
-			//item.Unk127 = (uint32)atoul(row[ItemField::UNK127]);
-			item.PointType = (uint32)atoul(row[ItemField::pointtype]);
-			item.PotionBelt = (atoi(row[ItemField::potionbelt])==0) ? false : true;
-			item.PotionBeltSlots = (atoi(row[ItemField::potionbeltslots])==0) ? false : true;
-			item.StackSize = (uint16)atoi(row[ItemField::stacksize]);
+            item.NoDrop = disableNoDrop ? (uint8)atoi("255") : (uint8)atoi(row[ItemField::nodrop]);
+            item.Size = (uint8)atoi(row[ItemField::size]);
+            item.Slots = (uint32)atoul(row[ItemField::slots]);
+            item.Price = (uint32)atoul(row[ItemField::price]);
+            item.Icon = (uint32)atoul(row[ItemField::icon]);
+            item.BenefitFlag = (atoul(row[ItemField::benefitflag]) != 0);
+            item.Tradeskills = (atoi(row[ItemField::tradeskills])==0) ? false : true;
+            item.CR = (int8)atoi(row[ItemField::cr]);
+            item.DR = (int8)atoi(row[ItemField::dr]);
+            item.PR = (int8)atoi(row[ItemField::pr]);
+            item.MR = (int8)atoi(row[ItemField::mr]);
+            item.FR = (int8)atoi(row[ItemField::fr]);
+            item.AStr = (int8)atoi(row[ItemField::astr]);
+            item.ASta = (int8)atoi(row[ItemField::asta]);
+            item.AAgi = (int8)atoi(row[ItemField::aagi]);
+            item.ADex = (int8)atoi(row[ItemField::adex]);
+            item.ACha = (int8)atoi(row[ItemField::acha]);
+            item.AInt = (int8)atoi(row[ItemField::aint]);
+            item.AWis = (int8)atoi(row[ItemField::awis]);
+            item.HP = (int32)atoul(row[ItemField::hp]);
+            item.Mana = (int32)atoul(row[ItemField::mana]);
+            item.AC = (int32)atoul(row[ItemField::ac]);
+            item.Deity = (uint32)atoul(row[ItemField::deity]);
+            item.SkillModValue = (int32)atoul(row[ItemField::skillmodvalue]);
+            //item.Unk033 = (int32)atoul(row[ItemField::UNK033]);
+            item.SkillModType = (uint32)atoul(row[ItemField::skillmodtype]);
+            item.BaneDmgRace = (uint32)atoul(row[ItemField::banedmgrace]);
+            item.BaneDmgAmt = (int8)atoi(row[ItemField::banedmgamt]);
+            item.BaneDmgBody = (uint32)atoul(row[ItemField::banedmgbody]);
+            item.Magic = (atoi(row[ItemField::magic])==0) ? false : true;
+            item.CastTime_ = (int32)atoul(row[ItemField::casttime_]);
+            item.ReqLevel = (uint8)atoi(row[ItemField::reqlevel]);
+            item.BardType = (uint32)atoul(row[ItemField::bardtype]);
+            item.BardValue = (int32)atoul(row[ItemField::bardvalue]);
+            item.Light = (int8)atoi(row[ItemField::light]);
+            item.Delay = (uint8)atoi(row[ItemField::delay]);
+            item.RecLevel = (uint8)atoi(row[ItemField::reclevel]);
+            item.RecSkill = (uint8)atoi(row[ItemField::recskill]);
+            item.ElemDmgType = (uint8)atoi(row[ItemField::elemdmgtype]);
+            item.ElemDmgAmt = (uint8)atoi(row[ItemField::elemdmgamt]);
+            item.Range = (uint8)atoi(row[ItemField::range]);
+            item.Damage = (uint32)atoi(row[ItemField::damage]);
+            item.Color = (uint32)atoul(row[ItemField::color]);
+            item.Classes = (uint32)atoul(row[ItemField::classes]);
+            item.Races = (uint32)atoul(row[ItemField::races]);
+            //item.Unk054 = (uint32)atoul(row[ItemField::UNK054]);
+            item.MaxCharges = (int16)atoi(row[ItemField::maxcharges]);
+            item.ItemType = (uint8)atoi(row[ItemField::itemtype]);
+            item.Material = (uint8)atoi(row[ItemField::material]);
+            item.SellRate = (float)atof(row[ItemField::sellrate]);
+            //item.Unk059 = (uint32)atoul(row[ItemField::UNK059]);
+            item.CastTime = (uint32)atoul(row[ItemField::casttime]);
+            item.EliteMaterial = (uint32)atoul(row[ItemField::elitematerial]);
+            item.ProcRate = (int32)atoi(row[ItemField::procrate]);
+            item.CombatEffects = (int8)atoi(row[ItemField::combateffects]);
+            item.Shielding = (int8)atoi(row[ItemField::shielding]);
+            item.StunResist = (int8)atoi(row[ItemField::stunresist]);
+            item.StrikeThrough = (int8)atoi(row[ItemField::strikethrough]);
+            item.ExtraDmgSkill = (uint32)atoul(row[ItemField::extradmgskill]);
+            item.ExtraDmgAmt = (uint32)atoul(row[ItemField::extradmgamt]);
+            item.SpellShield = (int8)atoi(row[ItemField::spellshield]);
+            item.Avoidance = (int8)atoi(row[ItemField::avoidance]);
+            item.Accuracy = (int8)atoi(row[ItemField::accuracy]);
+            item.CharmFileID = (uint32)atoul(row[ItemField::charmfileid]);
+            item.FactionMod1 = (int32)atoul(row[ItemField::factionmod1]);
+            item.FactionMod2 = (int32)atoul(row[ItemField::factionmod2]);
+            item.FactionMod3 = (int32)atoul(row[ItemField::factionmod3]);
+            item.FactionMod4 = (int32)atoul(row[ItemField::factionmod4]);
+            item.FactionAmt1 = (int32)atoul(row[ItemField::factionamt1]);
+            item.FactionAmt2 = (int32)atoul(row[ItemField::factionamt2]);
+            item.FactionAmt3 = (int32)atoul(row[ItemField::factionamt3]);
+            item.FactionAmt4 = (int32)atoul(row[ItemField::factionamt4]);
+            strcpy(item.CharmFile,row[ItemField::charmfile]);
+            item.AugType = (uint32)atoul(row[ItemField::augtype]);
+            item.AugSlotType[0] = (uint8)atoi(row[ItemField::augslot1type]);
+            item.AugSlotVisible[0] = (uint8)atoi(row[ItemField::augslot1visible]);
+            item.AugSlotUnk2[0] = 0;
+            item.AugSlotType[1] = (uint8)atoi(row[ItemField::augslot2type]);
+            item.AugSlotVisible[1] = (uint8)atoi(row[ItemField::augslot2visible]);
+            item.AugSlotUnk2[1] = 0;
+            item.AugSlotType[2] = (uint8)atoi(row[ItemField::augslot3type]);
+            item.AugSlotVisible[2] = (uint8)atoi(row[ItemField::augslot3visible]);
+            item.AugSlotUnk2[2] = 0;
+            item.AugSlotType[3] = (uint8)atoi(row[ItemField::augslot4type]);
+            item.AugSlotVisible[3] = (uint8)atoi(row[ItemField::augslot4visible]);
+            item.AugSlotUnk2[3] = 0;
+            item.AugSlotType[4] = (uint8)atoi(row[ItemField::augslot5type]);
+            item.AugSlotVisible[4] = (uint8)atoi(row[ItemField::augslot5visible]);
+            item.AugSlotUnk2[4] = 0;
+            item.LDoNTheme = (uint32)atoul(row[ItemField::ldontheme]);
+            item.LDoNPrice = (uint32)atoul(row[ItemField::ldonprice]);
+            item.LDoNSold = (uint32)atoul(row[ItemField::ldonsold]);
+            item.BagType = (uint8)atoi(row[ItemField::bagtype]);
+            item.BagSlots = (uint8)atoi(row[ItemField::bagslots]);
+            item.BagSize = (uint8)atoi(row[ItemField::bagsize]);
+            item.BagWR = (uint8)atoi(row[ItemField::bagwr]);
+            item.Book = (uint8)atoi(row[ItemField::book]);
+            item.BookType = (uint32)atoul(row[ItemField::booktype]);
+            strcpy(item.Filename,row[ItemField::filename]);
+            item.BaneDmgRaceAmt = (uint32)atoul(row[ItemField::banedmgraceamt]);
+            item.AugRestrict = (uint32)atoul(row[ItemField::augrestrict]);
+            item.LoreGroup = disableLoreGroup ? (uint8)atoi("0") : atoi(row[ItemField::loregroup]);
+            item.LoreFlag = item.LoreGroup!=0;
+            item.PendingLoreFlag = (atoi(row[ItemField::pendingloreflag])==0) ? false : true;
+            item.ArtifactFlag = (atoi(row[ItemField::artifactflag])==0) ? false : true;
+            item.SummonedFlag = (atoi(row[ItemField::summonedflag])==0) ? false : true;
+            item.Favor = (uint32)atoul(row[ItemField::favor]);
+            item.FVNoDrop = (atoi(row[ItemField::fvnodrop])==0) ? false : true;
+            item.Endur = (uint32)atoul(row[ItemField::endur]);
+            item.DotShielding = (uint32)atoul(row[ItemField::dotshielding]);
+            item.Attack = (uint32)atoul(row[ItemField::attack]);
+            item.Regen = (uint32)atoul(row[ItemField::regen]);
+            item.ManaRegen = (uint32)atoul(row[ItemField::manaregen]);
+            item.EnduranceRegen = (uint32)atoul(row[ItemField::enduranceregen]);
+            item.Haste = (uint32)atoul(row[ItemField::haste]);
+            item.DamageShield = (uint32)atoul(row[ItemField::damageshield]);
+            item.RecastDelay = (uint32)atoul(row[ItemField::recastdelay]);
+            item.RecastType = (uint32)atoul(row[ItemField::recasttype]);
+            item.GuildFavor = (uint32)atoul(row[ItemField::guildfavor]);
+            item.AugDistiller = (uint32)atoul(row[ItemField::augdistiller]);
+            item.Attuneable = (atoi(row[ItemField::attuneable])==0) ? false : true;
+            item.NoPet = (atoi(row[ItemField::nopet])==0) ? false : true;
+            item.PointType = (uint32)atoul(row[ItemField::pointtype]);
+            item.PotionBelt = (atoi(row[ItemField::potionbelt])==0) ? false : true;
+            item.PotionBeltSlots = (atoi(row[ItemField::potionbeltslots])==0) ? false : true;
+            item.StackSize = (uint16)atoi(row[ItemField::stacksize]);
             item.NoTransfer = disableNoTransfer ? false : (atoi(row[ItemField::notransfer])==0) ? false : true;
-			item.Stackable = (atoi(row[ItemField::stackable])==0) ? false : true;
-			//item.Unk134 = (uint32)atoul(row[ItemField::UNK134]);
-			item.Click.Effect = (uint32)atoul(row[ItemField::clickeffect]);
-			item.Click.Type = (uint8)atoul(row[ItemField::clicktype]);
-			item.Click.Level = (uint8)atoul(row[ItemField::clicklevel]);
-			item.Click.Level2 = (uint8)atoul(row[ItemField::clicklevel2]);
-			strcpy(item.CharmFile,row[ItemField::charmfile]);
-			item.Proc.Effect = (uint16)atoul(row[ItemField::proceffect]);
-			item.Proc.Type = (uint8)atoul(row[ItemField::proctype]);
-			item.Proc.Level = (uint8)atoul(row[ItemField::proclevel]);
-			item.Proc.Level2 = (uint8)atoul(row[ItemField::proclevel2]);
-			item.Worn.Effect = (uint16)atoul(row[ItemField::worneffect]);
-			item.Worn.Type = (uint8)atoul(row[ItemField::worntype]);
-			item.Worn.Level = (uint8)atoul(row[ItemField::wornlevel]);
-			item.Worn.Level2 = (uint8)atoul(row[ItemField::wornlevel2]);
-			item.Focus.Effect = (uint16)atoul(row[ItemField::focuseffect]);
-			item.Focus.Type = (uint8)atoul(row[ItemField::focustype]);
-			item.Focus.Level = (uint8)atoul(row[ItemField::focuslevel]);
-			item.Focus.Level2 = (uint8)atoul(row[ItemField::focuslevel2]);
-			item.Scroll.Effect = (uint16)atoul(row[ItemField::scrolleffect]);
-			item.Scroll.Type = (uint8)atoul(row[ItemField::scrolltype]);
-			item.Scroll.Level = (uint8)atoul(row[ItemField::scrolllevel]);
-			item.Scroll.Level2 = (uint8)atoul(row[ItemField::scrolllevel2]);
-			item.Bard.Effect = (uint16)atoul(row[ItemField::bardeffect]);
-			item.Bard.Type = (uint8)atoul(row[ItemField::bardtype]);
-			item.Bard.Level = (uint8)atoul(row[ItemField::bardlevel]);
-			item.Bard.Level2 = (uint8)atoul(row[ItemField::bardlevel2]);
-			item.QuestItemFlag = (atoi(row[ItemField::questitemflag])==0) ? false : true;
-			item.SVCorruption = (int32)atoi(row[ItemField::svcorruption]);
-			item.Purity = (uint32)atoul(row[ItemField::purity]);
-			item.BackstabDmg = (uint32)atoul(row[ItemField::backstabdmg]);
-			item.DSMitigation = (uint32)atoul(row[ItemField::dsmitigation]);
-			item.HeroicStr = (int32)atoi(row[ItemField::heroic_str]);
-			item.HeroicInt = (int32)atoi(row[ItemField::heroic_int]);
-			item.HeroicWis = (int32)atoi(row[ItemField::heroic_wis]);
-			item.HeroicAgi = (int32)atoi(row[ItemField::heroic_agi]);
-			item.HeroicDex = (int32)atoi(row[ItemField::heroic_dex]);
-			item.HeroicSta = (int32)atoi(row[ItemField::heroic_sta]);
-			item.HeroicCha = (int32)atoi(row[ItemField::heroic_cha]);
-			item.HeroicMR = (int32)atoi(row[ItemField::heroic_mr]);
-			item.HeroicFR = (int32)atoi(row[ItemField::heroic_fr]);
-			item.HeroicCR = (int32)atoi(row[ItemField::heroic_cr]);
-			item.HeroicDR = (int32)atoi(row[ItemField::heroic_dr]);
-			item.HeroicPR = (int32)atoi(row[ItemField::heroic_pr]);
-			item.HeroicSVCorrup = (int32)atoi(row[ItemField::heroic_svcorrup]);
-			item.HealAmt = (int32)atoi(row[ItemField::healamt]);
-			item.SpellDmg = (int32)atoi(row[ItemField::spelldmg]);
-			item.LDoNSellBackRate = (uint32)atoul(row[ItemField::ldonsellbackrate]);
-			item.ScriptFileID = (uint32)atoul(row[ItemField::scriptfileid]);
-			item.ExpendableArrow = (uint16)atoul(row[ItemField::expendablearrow]);
-			item.Clairvoyance = (uint32)atoul(row[ItemField::clairvoyance]);
-			strcpy(item.ClickName,row[ItemField::clickname]);
-			strcpy(item.ProcName,row[ItemField::procname]);
-			strcpy(item.WornName,row[ItemField::wornname]);
-			strcpy(item.FocusName,row[ItemField::focusname]);
-			strcpy(item.ScrollName,row[ItemField::scrollname]);
+            item.Stackable = (atoi(row[ItemField::stackable])==0) ? false : true;
+            item.Click.Effect = (uint32)atoul(row[ItemField::clickeffect]);
+            item.Click.Type = (uint8)atoul(row[ItemField::clicktype]);
+            item.Click.Level = (uint8)atoul(row[ItemField::clicklevel]);
+            item.Click.Level2 = (uint8)atoul(row[ItemField::clicklevel2]);
+            strcpy(item.CharmFile,row[ItemField::charmfile]);
+            item.Proc.Effect = (uint16)atoul(row[ItemField::proceffect]);
+            item.Proc.Type = (uint8)atoul(row[ItemField::proctype]);
+            item.Proc.Level = (uint8)atoul(row[ItemField::proclevel]);
+            item.Proc.Level2 = (uint8)atoul(row[ItemField::proclevel2]);
+            item.Worn.Effect = (uint16)atoul(row[ItemField::worneffect]);
+            item.Worn.Type = (uint8)atoul(row[ItemField::worntype]);
+            item.Worn.Level = (uint8)atoul(row[ItemField::wornlevel]);
+            item.Worn.Level2 = (uint8)atoul(row[ItemField::wornlevel2]);
+            item.Focus.Effect = (uint16)atoul(row[ItemField::focuseffect]);
+            item.Focus.Type = (uint8)atoul(row[ItemField::focustype]);
+            item.Focus.Level = (uint8)atoul(row[ItemField::focuslevel]);
+            item.Focus.Level2 = (uint8)atoul(row[ItemField::focuslevel2]);
+            item.Scroll.Effect = (uint16)atoul(row[ItemField::scrolleffect]);
+            item.Scroll.Type = (uint8)atoul(row[ItemField::scrolltype]);
+            item.Scroll.Level = (uint8)atoul(row[ItemField::scrolllevel]);
+            item.Scroll.Level2 = (uint8)atoul(row[ItemField::scrolllevel2]);
+            item.Bard.Effect = (uint16)atoul(row[ItemField::bardeffect]);
+            item.Bard.Type = (uint8)atoul(row[ItemField::bardtype]);
+            item.Bard.Level = (uint8)atoul(row[ItemField::bardlevel]);
+            item.Bard.Level2 = (uint8)atoul(row[ItemField::bardlevel2]);
+            item.QuestItemFlag = (atoi(row[ItemField::questitemflag])==0) ? false : true;
+            item.SVCorruption = (int32)atoi(row[ItemField::svcorruption]);
+            item.Purity = (uint32)atoul(row[ItemField::purity]);
+            item.BackstabDmg = (uint32)atoul(row[ItemField::backstabdmg]);
+            item.DSMitigation = (uint32)atoul(row[ItemField::dsmitigation]);
+            item.HeroicStr = (int32)atoi(row[ItemField::heroic_str]);
+            item.HeroicInt = (int32)atoi(row[ItemField::heroic_int]);
+            item.HeroicWis = (int32)atoi(row[ItemField::heroic_wis]);
+            item.HeroicAgi = (int32)atoi(row[ItemField::heroic_agi]);
+            item.HeroicDex = (int32)atoi(row[ItemField::heroic_dex]);
+            item.HeroicSta = (int32)atoi(row[ItemField::heroic_sta]);
+            item.HeroicCha = (int32)atoi(row[ItemField::heroic_cha]);
+            item.HeroicMR = (int32)atoi(row[ItemField::heroic_mr]);
+            item.HeroicFR = (int32)atoi(row[ItemField::heroic_fr]);
+            item.HeroicCR = (int32)atoi(row[ItemField::heroic_cr]);
+            item.HeroicDR = (int32)atoi(row[ItemField::heroic_dr]);
+            item.HeroicPR = (int32)atoi(row[ItemField::heroic_pr]);
+            item.HeroicSVCorrup = (int32)atoi(row[ItemField::heroic_svcorrup]);
+            item.HealAmt = (int32)atoi(row[ItemField::healamt]);
+            item.SpellDmg = (int32)atoi(row[ItemField::spelldmg]);
+            item.LDoNSellBackRate = (uint32)atoul(row[ItemField::ldonsellbackrate]);
+            item.ScriptFileID = (uint32)atoul(row[ItemField::scriptfileid]);
+            item.ExpendableArrow = (uint16)atoul(row[ItemField::expendablearrow]);
+            item.Clairvoyance = (uint32)atoul(row[ItemField::clairvoyance]);
+            strcpy(item.ClickName,row[ItemField::clickname]);
+            strcpy(item.ProcName,row[ItemField::procname]);
+            strcpy(item.WornName,row[ItemField::wornname]);
+            strcpy(item.FocusName,row[ItemField::focusname]);
+            strcpy(item.ScrollName,row[ItemField::scrollname]);
 
-			if (!EMuShareMemDLL.Items.cbAddItem(item.ID, &item)) {
-				LogFile->write(EQEMuLog::Error, "Database::DBLoadItems: Failure reported from EMuShareMemDLL.Items.cbAddItem(%i)", item.ID);
-				break;
-			}
+            try {
+                hash.insert(item.ID, item);
+            } catch(std::exception &ex) {
+                LogFile->write(EQEMuLog::Error, "Database::LoadItems: %s", ex.what());
+                break;
+            }
 		}
 		
 		mysql_free_result(result);
-		ret = true;
 	}
 	else {
-		LogFile->write(EQEMuLog::Error, "DBLoadItems query '%s', %s", query, errbuf);
-		LogFile->write(EQEMuLog::Error, "If you got boat loads of errors, make sure you sourced all sql updates!\n");
+		LogFile->write(EQEMuLog::Error, "LoadItems '%s', %s", query, errbuf);
 	}
-	return ret;
 }
-
 
 const Item_Struct* SharedDatabase::GetItem(uint32 id) {
-	return EMuShareMemDLL.Items.GetItem(id);
+    if(!items_hash || id > items_hash->max_key()) {
+        return NULL;
+    }
+
+    if(items_hash->exists(id)) {
+        return &(items_hash->at(id));
+    }
+
+    return NULL;
 }
 
-const Item_Struct* SharedDatabase::IterateItems(uint32* NextIndex) {
-	return EMuShareMemDLL.Items.IterateItems(NextIndex);
-}
+const Item_Struct* SharedDatabase::IterateItems(uint32* id) {
+    if(!items_hash || !id) {
+        return NULL;
+    }
 
+    for(;;) {
+        if(*id > items_hash->max_key()) {
+            break;
+        }
+
+        if(items_hash->exists(*id)) {
+            return &(items_hash->at((*id)++));
+        } else {
+            ++(*id);
+        }
+    }
+
+    return NULL;
+}
 
 string SharedDatabase::GetBook(const char *txtfile)
 {
@@ -1118,147 +1083,123 @@ string SharedDatabase::GetBook(const char *txtfile)
 	}
 }
 
+void SharedDatabase::GetFactionListInfo(uint32 &list_count, uint32 &max_lists) {
+    list_count = 0;
+    max_lists = 0;
+    const char *query = "SELECT COUNT(*), MAX(id) FROM npc_faction";
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
 
-bool SharedDatabase::extDBLoadNPCFactionLists(int32 iNPCFactionListCount, uint32 iMaxNPCFactionListID) {
-	return s_usedb->DBLoadNPCFactionLists(iNPCFactionListCount, iMaxNPCFactionListID);
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        if(row = mysql_fetch_row(result)) {
+            list_count = static_cast<uint32>(atoul(row[0]));
+            max_lists = static_cast<uint32>(atoul(row[1]));
+        }
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting npc faction info from database: %s, %s", query, errbuf);
+    }
 }
 
 const NPCFactionList* SharedDatabase::GetNPCFactionEntry(uint32 id) {
-	return EMuShareMemDLL.NPCFactionList.GetNPCFactionList(id);
+	if(!faction_hash) {
+        return NULL;
+    }
+
+    if(faction_hash->exists(id)) {
+        return &(faction_hash->at(id));
+    }
+
+    return NULL;
+}
+
+void SharedDatabase::LoadNPCFactionLists(void *data, uint32 size, uint32 list_count, uint32 max_lists) {
+    EQEmu::FixedMemoryHashSet<NPCFactionList> hash(reinterpret_cast<uint8*>(data), size, list_count, max_lists);
+    const char *query = "SELECT npc_faction.id, npc_faction.primaryfaction, npc_faction.ignore_primary_assist, "
+        "npc_faction_entries.faction_id, npc_faction_entries.value, npc_faction_entries.npc_value, npc_faction_entries.temp "
+        "FROM npc_faction LEFT JOIN npc_faction_entries ON npc_faction.id = npc_faction_entries.npc_faction_id ORDER BY "
+        "npc_faction.id;";
+
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    NPCFactionList faction;
+
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        uint32 current_id = 0;
+        uint32 current_entry = 0;
+        while(row = mysql_fetch_row(result)) {
+            uint32 id = static_cast<uint32>(atoul(row[0]));
+            if(id != current_id) {
+                if(current_id != 0) {
+                    hash.insert(current_id, faction);
+                }
+
+                memset(&faction, 0, sizeof(faction));
+                current_entry = 0;
+                current_id = id;
+                faction.id = id;
+                faction.primaryfaction = static_cast<uint32>(atoul(row[1]));
+                faction.assistprimaryfaction = (atoi(row[2]) == 0);
+            }
+
+            if(!row[3]) {
+                continue;
+            }
+
+            if(current_entry >= MAX_NPC_FACTIONS) {
+                continue;
+            }
+
+            faction.factionid[current_entry] = static_cast<uint32>(atoul(row[3]));
+            faction.factionvalue[current_entry] = static_cast<int32>(atoi(row[4]));
+            faction.factionnpcvalue[current_entry] = static_cast<int8>(atoi(row[5]));
+            faction.factiontemp[current_entry] = static_cast<uint8>(atoi(row[6]));
+            ++current_entry;
+        }
+
+        if(current_id != 0) {
+            hash.insert(current_id, faction);
+        }
+
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting npc faction info from database: %s, %s", query, errbuf);
+    }
 }
 
 bool SharedDatabase::LoadNPCFactionLists() {
-	if (!EMuShareMemDLL.Load())
-		return false;
-	int32 tmp = -1;
-	uint32 tmp_npcfactionlist_max;
-	tmp = GetNPCFactionListsCount(&tmp_npcfactionlist_max);
-	if (tmp < 0) {
-		cout << "Error: SharedDatabase::LoadNPCFactionLists-ShareMem: GetNPCFactionListsCount() returned < 0" << endl;
-		return false;
-	}
-	npcfactionlist_max = tmp_npcfactionlist_max;
-	bool ret = EMuShareMemDLL.NPCFactionList.DLLLoadNPCFactionLists(&extDBLoadNPCFactionLists, sizeof(NPCFactionList), &tmp, &npcfactionlist_max, MAX_NPC_FACTIONS);
-	return ret;
-}
+    if(faction_hash) {
+        return true;
+    }
+	
+    try {
+        EQEmu::IPCMutex mutex("faction");
+        mutex.Lock();
+        faction_mmf = new EQEmu::MemoryMappedFile("shared/faction");
 
-bool SharedDatabase::DBLoadNPCFactionLists(int32 iNPCFactionListCount, uint32 iMaxNPCFactionListID) {
-	_CP(Database_DBLoadNPCFactionLists);
-	LogFile->write(EQEMuLog::Status, "Loading NPC Faction Lists from database...");
-	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
-	query = new char[256];
-	strcpy(query, "SELECT MAX(id), Count(*) FROM npc_faction");
-	if (RunQuery(query, strlen(query), errbuf, &result)) {
-		safe_delete_array(query);
-		row = mysql_fetch_row(result);
-		if (row && row[0]) {
-			if ((uint32)atoi(row[0]) > iMaxNPCFactionListID) {
-				cout << "Error: Insufficient shared memory to load NPC Faction Lists." << endl;
-				cout << "Max(id): " << atoi(row[0]) << ", iMaxNPCFactionListID: " << iMaxNPCFactionListID << endl;
-				cout << "Fix this by increasing the MMF_MAX_NPCFactionList_ID define statement" << endl;
-				mysql_free_result(result);
-				return false;
-			}
-			if (atoi(row[1]) != iNPCFactionListCount) {
-				cout << "Error: number of NPCFactionLists in memshare doesnt match database." << endl;
-				cout << "Count(*): " << atoi(row[1]) << ", iNPCFactionListCount: " << iNPCFactionListCount << endl;
-				mysql_free_result(result);
-				return false;
-			}
-			npcfactionlist_max = atoi(row[0]);
-			mysql_free_result(result);
-			NPCFactionList tmpnfl;
-			if (RunQuery(query, MakeAnyLenString(&query, "SELECT id, primaryfaction, ignore_primary_assist from npc_faction"), errbuf, &result)) {
-				safe_delete_array(query);
-				while((row = mysql_fetch_row(result))) {
-					memset(&tmpnfl, 0, sizeof(NPCFactionList));
-					tmpnfl.id = atoi(row[0]);
-					tmpnfl.primaryfaction = atoi(row[1]);
-					//if we have ignore_primary_assist set to non-zero then we will not assist our own faction
-					//else we will assist (this is the default)
-					tmpnfl.assistprimaryfaction = (atoi(row[2]) == 0) ? true : false;
-					if (!EMuShareMemDLL.NPCFactionList.cbAddNPCFactionList(tmpnfl.id, &tmpnfl)) {
-						mysql_free_result(result);
-						cout << "Error: SharedDatabase::DBLoadNPCFactionLists: !EMuShareMemDLL.NPCFactionList.cbAddNPCFactionList" << endl;
-						return false;
-					}
+        uint32 list_count = 0;
+        uint32 max_lists = 0;
+        GetFactionListInfo(list_count, max_lists);
+        if(list_count == 0) {
+            EQ_EXCEPT("SharedDatabase", "Database returned no result");
+        }
+        uint32 size = static_cast<uint32>(EQEmu::FixedMemoryHashSet<NPCFactionList>::estimated_size(
+            list_count, max_lists));
 
-					Sleep(0);
-				}
-				mysql_free_result(result);
-			}
-			else {
-				cerr << "Error in DBLoadNPCFactionLists query2 '" << query << "' " << errbuf << endl;
-				safe_delete_array(query);
-				return false;
-			}
-			if (RunQuery(query, MakeAnyLenString(&query, "SELECT npc_faction_id, faction_id, value, npc_value, temp FROM npc_faction_entries order by npc_faction_id"), errbuf, &result)) {
-				safe_delete_array(query);
-				int8 i = 0;
-				uint32 curflid = 0;
-				uint32 tmpflid = 0;
-				uint32 tmpfactionid[MAX_NPC_FACTIONS];
-				int32 tmpfactionvalue[MAX_NPC_FACTIONS];
-				int8 tmpfactionnpcvalue[MAX_NPC_FACTIONS];
-				uint8 tmpfactiontemp[MAX_NPC_FACTIONS];
+        if(faction_mmf->Size() != size) {
+            EQ_EXCEPT("SharedDatabase", "Couldn't load npc factions because faction_mmf->Size() != size");
+        }
 
-				memset(tmpfactionid, 0, sizeof(tmpfactionid));
-				memset(tmpfactionvalue, 0, sizeof(tmpfactionvalue));
-				memset(tmpfactionnpcvalue, 0, sizeof(tmpfactionnpcvalue));
-				memset(tmpfactiontemp, 0, sizeof(tmpfactiontemp));
-				
-				while((row = mysql_fetch_row(result))) {
-					tmpflid = atoi(row[0]);
-					if (curflid != tmpflid && curflid != 0) {
-						if (!EMuShareMemDLL.NPCFactionList.cbSetFaction(curflid, tmpfactionid, tmpfactionvalue, tmpfactionnpcvalue, tmpfactiontemp)) {
-							mysql_free_result(result);
-							cout << "Error: SharedDatabase::DBLoadNPCFactionLists: !EMuShareMemDLL.NPCFactionList.cbSetFaction" << endl;
-							return false;
-						}
-						memset(tmpfactionid, 0, sizeof(tmpfactionid));
-						memset(tmpfactionvalue, 0, sizeof(tmpfactionvalue));
-						memset(tmpfactionnpcvalue, 0, sizeof(tmpfactionnpcvalue));
-						memset(tmpfactiontemp, 0, sizeof(tmpfactiontemp));
-						i = 0;
-					}
-					curflid = tmpflid;
-					tmpfactionid[i] = atoi(row[1]);
-					tmpfactionvalue[i] = atoi(row[2]);
-					tmpfactionnpcvalue[i] = atoi(row[3]);
-					tmpfactiontemp[i] = atoi(row[4]);
-					i++;
-					if (i >= MAX_NPC_FACTIONS) {
-						cerr << "Error in DBLoadNPCFactionLists: More than MAX_NPC_FACTIONS factions returned, flid=" << tmpflid << endl;
-						break;
-					}
-					Sleep(0);
-				}
-				if (tmpflid) {
-					EMuShareMemDLL.NPCFactionList.cbSetFaction(curflid, tmpfactionid, tmpfactionvalue, tmpfactionnpcvalue, tmpfactiontemp);
-				}
+        faction_hash = new EQEmu::FixedMemoryHashSet<NPCFactionList>(reinterpret_cast<uint8*>(faction_mmf->Get()), size);
+        mutex.Unlock();
+    } catch(std::exception& ex) {
+        LogFile->write(EQEMuLog::Error, "Error Loading npc factions: %s", ex.what());
+        return false;
+    }
 
-				mysql_free_result(result);
-			}
-			else {
-				cerr << "Error in DBLoadNPCFactionLists query3 '" << query << "' " << errbuf << endl;
-				safe_delete_array(query);
-				return false;
-			}
-		}
-		else {
-			mysql_free_result(result);
-			//return false;
-		}
-	}
-	else {
-		cerr << "Error in DBLoadNPCFactionLists query1 '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
-		return false;
-	}
-	return true;
+    return true;
 }
 
 // Get the player profile and inventory for the given account "account_id" and
@@ -1459,37 +1400,6 @@ int32 SharedDatabase::DeleteStalePlayerBackups() {
 	return affected_rows;
 }
 
-int32 SharedDatabase::GetNPCFactionListsCount(uint32* oMaxID) {
-	char errbuf[MYSQL_ERRMSG_SIZE];
-    char *query = 0;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
-	query = new char[256];
-	strcpy(query, "SELECT MAX(id), count(*) FROM npc_faction");
-	if (RunQuery(query, strlen(query), errbuf, &result)) {
-		safe_delete_array(query);
-		row = mysql_fetch_row(result);
-		if (row != NULL && row[1] != 0) {
-			int32 ret = atoi(row[1]);
-			if (oMaxID) {
-				if (row[0])
-					*oMaxID = atoi(row[0]);
-				else
-					*oMaxID = 0;
-			}
-			mysql_free_result(result);
-			return ret;
-		}
-	}
-	else {
-		cerr << "Error in GetNPCFactionListsCount query '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
-		return -1;
-	}
-	
-	return -1;
-}
-
 bool SharedDatabase::GetCommandSettings(map<string,uint8> &commands) {
 	char errbuf[MYSQL_ERRMSG_SIZE];
     char *query = 0;
@@ -1514,101 +1424,149 @@ bool SharedDatabase::GetCommandSettings(map<string,uint8> &commands) {
 	return false;
 }
 
-bool SharedDatabase::extDBLoadSkillCaps() {
-	return s_usedb->DBLoadSkillCaps();
-}
-
 bool SharedDatabase::LoadSkillCaps() {
-	if (!EMuShareMemDLL.Load())
-		return false;
-	
-	uint8 class_count = PLAYER_CLASS_COUNT;
-	uint8 skill_count = HIGHEST_SKILL+1;
-	uint8 level_count = HARD_LEVEL_CAP+1;
+    if(skill_caps_mmf)
+        return true;
 
-	return EMuShareMemDLL.SkillCaps.LoadSkillCaps(&extDBLoadSkillCaps,
-			 sizeof(uint16), class_count, skill_count, level_count);
+	uint32 class_count = PLAYER_CLASS_COUNT;
+	uint32 skill_count = HIGHEST_SKILL + 1;
+	uint32 level_count = HARD_LEVEL_CAP + 1;
+    uint32 size = (class_count * skill_count * level_count * sizeof(uint16));
+
+    try {
+        EQEmu::IPCMutex mutex("skill_caps");
+        mutex.Lock();
+        skill_caps_mmf = new EQEmu::MemoryMappedFile("shared/skill_caps");
+        if(skill_caps_mmf->Size() != size) {
+            EQ_EXCEPT("SharedDatabase", "Unable to load skill caps: skill_caps_mmf->Size() != size");
+        }
+
+        mutex.Unlock();
+    } catch(std::exception &ex) {
+        LogFile->write(EQEMuLog::Error, "Error loading skill caps: %s", ex.what());
+        return false;
+    }
+
+    return true;
 }
 
-bool SharedDatabase::DBLoadSkillCaps() {
-	LogFile->write(EQEMuLog::Status, "Loading skill caps from database...");
-	
-	uint8 class_count = PLAYER_CLASS_COUNT;
-	uint8 skill_count = HIGHEST_SKILL+1;
-	uint8 level_count = HARD_LEVEL_CAP+1;
-	
-	char errbuf[MYSQL_ERRMSG_SIZE];
+void SharedDatabase::LoadSkillCaps(void *data) {
+    uint32 class_count = PLAYER_CLASS_COUNT;
+	uint32 skill_count = HIGHEST_SKILL + 1;
+	uint32 level_count = HARD_LEVEL_CAP + 1;
+    uint16 *skill_caps_table = reinterpret_cast<uint16*>(data);
+
+    char errbuf[MYSQL_ERRMSG_SIZE];
     char *query = 0;
     MYSQL_RES *result;
     MYSQL_ROW row;
-	if (RunQuery(query, MakeAnyLenString(&query, 
-		"SELECT skillID,class,level,cap FROM skill_caps ORDER BY skillID,class,level"), 
-		errbuf, &result)) {
-		safe_delete_array(query);
-		
-		while ((row = mysql_fetch_row(result))) {
-			uint8 skillID = atoi(row[0]);
-			uint8 class_ = atoi(row[1])-1;	//classes are base 1... 
-			uint8 level = atoi(row[2]);
-			uint16 cap = atoi(row[3]);
-			if(skillID >= skill_count || class_ >= class_count || level >= level_count)
-				continue;
-			EMuShareMemDLL.SkillCaps.SetSkillCap(class_, skillID, level, cap);
+	if(RunQuery(query, MakeAnyLenString(&query, 
+        "SELECT skillID, class, level, cap FROM skill_caps ORDER BY skillID, class, level"), 
+        errbuf, &result)) {
+        safe_delete_array(query);
+        
+        while((row = mysql_fetch_row(result))) {
+            uint8 skillID = atoi(row[0]);
+            uint8 class_ = atoi(row[1]) - 1;
+            uint8 level = atoi(row[2]);
+            uint16 cap = atoi(row[3]);
+            if(skillID >= skill_count || class_ >= class_count || level >= level_count)
+                continue;
+
+            uint32 index = (((class_ * skill_count) + skillID) * level_count) + level;
+            skill_caps_table[index] = cap;
 		}
 		mysql_free_result(result);
-	}
-	else {
-		cerr << "Error in DBLoadSkillCaps (memshare) #2 query '" << query << "' " << errbuf << endl;
-		safe_delete_array(query);
-		return false;
-	}
-
-	return true;
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error loading skill caps from database: %s", errbuf);
+        safe_delete_array(query);
+    }
 }
 
 uint16 SharedDatabase::GetSkillCap(uint8 Class_, SkillType Skill, uint8 Level) {
-	if(Class_ == 0)
-		return(0);
-	int SkillMaxLevel = RuleI(Character, SkillCapMaxLevel);
-	if (SkillMaxLevel < 1) {
-		SkillMaxLevel = RuleI(Character, MaxLevel);
-	}
-	if(Level > SkillMaxLevel){
-		return EMuShareMemDLL.SkillCaps.GetSkillCap(Class_-1, Skill, SkillMaxLevel);
-	}
-	else{
-		return EMuShareMemDLL.SkillCaps.GetSkillCap(Class_-1, Skill, Level);
-	}
+    if(!skill_caps_mmf) {
+        return 0;
+    }
+
+    if(Class_ == 0)
+        return 0;
+
+    int SkillMaxLevel = RuleI(Character, SkillCapMaxLevel);
+    if(SkillMaxLevel < 1) {
+        SkillMaxLevel = RuleI(Character, MaxLevel);
+    }
+
+    uint32 class_count = PLAYER_CLASS_COUNT;
+	uint32 skill_count = HIGHEST_SKILL + 1;
+	uint32 level_count = HARD_LEVEL_CAP + 1;
+    if(Class_ > class_count || static_cast<uint32>(Skill) > skill_count || Level > level_count) {
+        return 0;
+    }
+
+    if(Level > static_cast<uint8>(SkillMaxLevel)){
+        Level = static_cast<uint8>(SkillMaxLevel);
+    }
+
+    uint32 index = ((((Class_ - 1) * skill_count) + Skill) * level_count) + Level;
+    uint16 *skill_caps_table = reinterpret_cast<uint16*>(skill_caps_mmf->Get());
+    return skill_caps_table[index];
 }
 
 uint8 SharedDatabase::GetTrainLevel(uint8 Class_, SkillType Skill, uint8 Level) {
-	if(Class_ == 0)
-		return(0);
+    if(!skill_caps_mmf) {
+        return 0;
+    }
 
-	uint8 ret = 0;
-	int SkillMaxLevel = RuleI(Character, SkillCapMaxLevel);
-	if (SkillMaxLevel < 1) {
-		SkillMaxLevel = RuleI(Character, MaxLevel);
-	}
-	if(Level > SkillMaxLevel) {
-		ret = EMuShareMemDLL.SkillCaps.GetTrainLevel(Class_-1, Skill, SkillMaxLevel);
+    if(Class_ == 0)
+        return 0;
+
+    int SkillMaxLevel = RuleI(Character, SkillCapMaxLevel);
+    if (SkillMaxLevel < 1) {
+        SkillMaxLevel = RuleI(Character, MaxLevel);
+    }
+
+    uint32 class_count = PLAYER_CLASS_COUNT;
+	uint32 skill_count = HIGHEST_SKILL + 1;
+	uint32 level_count = HARD_LEVEL_CAP + 1;
+    if(Class_ > class_count || static_cast<uint32>(Skill) > skill_count || Level > level_count) {
+        return 0;
+    }
+    
+    uint8 ret = 0;
+	if(Level > static_cast<uint8>(SkillMaxLevel)) {
+        uint32 index = ((((Class_ - 1) * skill_count) + Skill) * level_count);
+        uint16 *skill_caps_table = reinterpret_cast<uint16*>(skill_caps_mmf->Get());
+        for(uint8 x = 0; x < Level; x++){
+            if(skill_caps_table[index + x]){
+                ret = x;
+                break;
+            }
+        }
 	}
 	else
 	{
-		ret = EMuShareMemDLL.SkillCaps.GetTrainLevel(Class_-1, Skill, Level);
+        uint32 index = ((((Class_ - 1) * skill_count) + Skill) * level_count);
+        uint16 *skill_caps_table = reinterpret_cast<uint16*>(skill_caps_mmf->Get());
+        for(int x = 0; x < SkillMaxLevel; x++){
+            if(skill_caps_table[index + x]){
+                ret = x;
+                break;
+            }
+        }
 	}
-	if(ret > GetSkillCap(Class_, Skill, Level))
-		ret = GetSkillCap(Class_, Skill, Level);
+    
+    if(ret > GetSkillCap(Class_, Skill, Level))
+        ret = static_cast<uint8>(GetSkillCap(Class_, Skill, Level));
 
-	return ret;
+    return ret;
 }
 
-void SharedDatabase::DBLoadDamageShieldTypes(SPDat_Spell_Struct* sp, int32 iMaxSpellID) {
+void SharedDatabase::LoadDamageShieldTypes(SPDat_Spell_Struct* sp, int32 iMaxSpellID) {
 
-	const char *DSQuery = "SELECT `spellid`, `type` from `damageshieldtypes` WHERE `spellid` >0 "
+	const char *DSQuery = "SELECT `spellid`, `type` from `damageshieldtypes` WHERE `spellid` > 0 "
 	                         "AND `spellid` <= %i";
 
-	const char *ERR_MYSQLERROR = "Error in DBLoadDamageShieldTypes: %s %s";
+	const char *ERR_MYSQLERROR = "Error in LoadDamageShieldTypes: %s %s";
 
 	char errbuf[MYSQL_ERRMSG_SIZE];
 	char* query = 0;
@@ -1635,6 +1593,367 @@ void SharedDatabase::DBLoadDamageShieldTypes(SPDat_Spell_Struct* sp, int32 iMaxS
 
 const EvolveInfo* SharedDatabase::GetEvolveInfo(uint32 loregroup) {
 	return NULL;	// nothing here for now... database and/or sharemem pulls later
+}
+
+int SharedDatabase::GetMaxSpellID() {
+	char errbuf[MYSQL_ERRMSG_SIZE];
+    char *query = NULL;
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+	int32 ret = 0;
+	if(RunQuery(query, MakeAnyLenString(&query, "SELECT MAX(id) FROM spells_new"), 
+		errbuf, &result)) {
+		safe_delete_array(query);
+		row = mysql_fetch_row(result);
+		ret = atoi(row[0]);
+		mysql_free_result(result);
+	} else {
+		_log(SPELLS__LOAD_ERR, "Error in GetMaxSpellID query '%s' %s", query, errbuf);
+		safe_delete_array(query);
+		ret = -1;
+	}
+	return ret;
+}
+
+void SharedDatabase::LoadSpells(void *data, int max_spells) {
+    SPDat_Spell_Struct *sp = reinterpret_cast<SPDat_Spell_Struct*>(data);
+	char errbuf[MYSQL_ERRMSG_SIZE];
+    char *query = 0;
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+
+    if(RunQuery(query, MakeAnyLenString(&query, 
+		"SELECT * FROM spells_new ORDER BY id ASC"), 
+		errbuf, &result)) {
+		safe_delete_array(query);
+        
+        int tempid = 0;
+		int counter = 0;
+        while (row = mysql_fetch_row(result)) {
+            tempid = atoi(row[0]);
+            if(tempid >= max_spells) {
+                _log(SPELLS__LOAD_ERR, "Non fatal error: spell.id >= max_spells, ignoring.");
+                continue;
+            }
+
+            ++counter;
+            strn0cpy(sp[tempid].name, row[1], sizeof(sp[tempid].name));
+            strn0cpy(sp[tempid].player_1, row[2], sizeof(sp[tempid].player_1));
+            strn0cpy(sp[tempid].teleport_zone, row[3], sizeof(sp[tempid].teleport_zone));
+            strn0cpy(sp[tempid].you_cast,  row[4], sizeof(sp[tempid].you_cast));
+            strn0cpy(sp[tempid].other_casts, row[5], sizeof(sp[tempid].other_casts));
+            strn0cpy(sp[tempid].cast_on_you, row[6], sizeof(sp[tempid].cast_on_you));
+            strn0cpy(sp[tempid].cast_on_other, row[7], sizeof(sp[tempid].cast_on_other));
+            strn0cpy(sp[tempid].spell_fades, row[8], sizeof(sp[tempid].spell_fades));
+
+            sp[tempid].range=static_cast<float>(atof(row[9]));
+            sp[tempid].aoerange=static_cast<float>(atof(row[10]));
+            sp[tempid].pushback=static_cast<float>(atof(row[11]));
+            sp[tempid].pushup=static_cast<float>(atof(row[12]));
+            sp[tempid].cast_time=atoi(row[13]);
+            sp[tempid].recovery_time=atoi(row[14]);
+            sp[tempid].recast_time=atoi(row[15]);
+            sp[tempid].buffdurationformula=atoi(row[16]);
+            sp[tempid].buffduration=atoi(row[17]);
+            sp[tempid].AEDuration=atoi(row[18]);
+            sp[tempid].mana=atoi(row[19]);
+            
+            int y=0;
+            for(y=0; y< EFFECT_COUNT;y++)
+                sp[tempid].base[y]=atoi(row[20+y]);    // effect_base_value
+            for(y=0; y < EFFECT_COUNT; y++)
+                sp[tempid].base2[y]=atoi(row[32+y]);    // effect_limit_value
+            for(y=0; y< EFFECT_COUNT;y++)
+                sp[tempid].max[y]=atoi(row[44+y]);
+                        
+            for(y=0; y< 4;y++)
+                sp[tempid].components[y]=atoi(row[58+y]);
+            
+            for(y=0; y< 4;y++)
+                sp[tempid].component_counts[y]=atoi(row[62+y]);
+            
+            for(y=0; y< 4;y++)
+                sp[tempid].NoexpendReagent[y]=atoi(row[66+y]);
+            
+            for(y=0; y< EFFECT_COUNT;y++)
+                sp[tempid].formula[y]=atoi(row[70+y]);
+            
+            sp[tempid].goodEffect=atoi(row[83]);
+            sp[tempid].Activated=atoi(row[84]);
+            sp[tempid].resisttype=atoi(row[85]);
+            
+            for(y=0; y< EFFECT_COUNT;y++)
+                sp[tempid].effectid[y]=atoi(row[86+y]);
+            
+            sp[tempid].targettype = (SpellTargetType) atoi(row[98]);
+            sp[tempid].basediff=atoi(row[99]);
+            int tmp_skill = atoi(row[100]);;
+            if(tmp_skill < 0 || tmp_skill > HIGHEST_SKILL)
+                sp[tempid].skill = BEGGING;    /* not much better we can do. */
+            else
+                sp[tempid].skill = (SkillType) tmp_skill;
+            sp[tempid].zonetype=atoi(row[101]);
+            sp[tempid].EnvironmentType=atoi(row[102]);
+            sp[tempid].TimeOfDay=atoi(row[103]);
+            
+            for(y=0; y < PLAYER_CLASS_COUNT;y++)
+                sp[tempid].classes[y]=atoi(row[104+y]);
+            
+            sp[tempid].CastingAnim=atoi(row[120]);
+            sp[tempid].SpellAffectIndex=atoi(row[123]);
+            sp[tempid].disallow_sit=atoi(row[124]);
+
+            for (y = 0; y < 16; y++)
+                sp[tempid].deities[y]=atoi(row[126+y]);
+
+            sp[tempid].uninterruptable=atoi(row[146]);
+            sp[tempid].ResistDiff=atoi(row[147]);
+            sp[tempid].RecourseLink = atoi(row[150]);
+
+            sp[tempid].short_buff_box = atoi(row[154]);
+            sp[tempid].descnum = atoi(row[155]);
+            sp[tempid].effectdescnum = atoi(row[157]);
+            
+            sp[tempid].bonushate=atoi(row[162]);
+
+            sp[tempid].EndurCost=atoi(row[166]);
+            sp[tempid].EndurTimerIndex=atoi(row[167]);
+            sp[tempid].HateAdded=atoi(row[173]);
+            sp[tempid].EndurUpkeep=atoi(row[174]);
+            sp[tempid].numhits = atoi(row[176]);
+            sp[tempid].pvpresistbase=atoi(row[177]);
+            sp[tempid].pvpresistcalc=atoi(row[178]);
+            sp[tempid].pvpresistcap=atoi(row[179]);
+            sp[tempid].spell_category=atoi(row[180]);
+            sp[tempid].can_mgb=atoi(row[185]);
+            sp[tempid].dispel_flag = atoi(row[186]);
+            sp[tempid].MinResist = atoi(row[189]);
+            sp[tempid].MaxResist = atoi(row[190]);
+            sp[tempid].viral_targets = atoi(row[191]);
+            sp[tempid].viral_timer = atoi(row[192]);
+            sp[tempid].NimbusEffect = atoi(row[193]);
+            sp[tempid].directional_start = (float)atoi(row[194]);
+            sp[tempid].directional_end = (float)atoi(row[195]);
+            sp[tempid].spellgroup=atoi(row[207]);
+            sp[tempid].powerful_flag=atoi(row[209]);
+            sp[tempid].CastRestriction = atoi(row[211]);
+            sp[tempid].AllowRest = atoi(row[212]) != 0;
+            sp[tempid].DamageShieldType = 0;
+        }
+        mysql_free_result(result);
+
+        LoadDamageShieldTypes(sp, max_spells);
+    } else {
+		_log(SPELLS__LOAD_ERR, "Error in LoadSpells query '%s' %s", query, errbuf);
+		safe_delete_array(query);
+	}
+}
+
+void SharedDatabase::GetLootTableInfo(uint32 &loot_table_count, uint32 &max_loot_table, uint32 &loot_table_entries) {
+    loot_table_count = 0;
+    max_loot_table = 0;
+    loot_table_entries = 0;
+    const char *query = "SELECT COUNT(*), MAX(id), (SELECT COUNT(*) FROM loottable_entries) FROM loottable";
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        if(row = mysql_fetch_row(result)) {
+            loot_table_count = static_cast<uint32>(atoul(row[0]));
+            max_loot_table = static_cast<uint32>(atoul(row[1]));
+            loot_table_entries = static_cast<uint32>(atoul(row[2]));
+        }
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting loot table info from database: %s, %s", query, errbuf);
+    }
+}
+
+void SharedDatabase::GetLootDropInfo(uint32 &loot_drop_count, uint32 &max_loot_drop, uint32 &loot_drop_entries) {
+    loot_drop_count = 0;
+    max_loot_drop = 0;
+    loot_drop_entries = 0;
+    const char *query = "SELECT COUNT(*), MAX(id), (SELECT COUNT(*) FROM lootdrop_entries) FROM lootdrop";
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        if(row = mysql_fetch_row(result)) {
+            loot_drop_count = static_cast<uint32>(atoul(row[0]));
+            max_loot_drop = static_cast<uint32>(atoul(row[1]));
+            loot_drop_entries = static_cast<uint32>(atoul(row[2]));
+        }
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting loot table info from database: %s, %s", query, errbuf);
+    }
+}
+
+void SharedDatabase::LoadLootTables(void *data, uint32 size) {
+    EQEmu::FixedMemoryVariableHashSet<LootTable_Struct> hash(reinterpret_cast<uint8*>(data), size);
+    const char *query = "SELECT loottable.id, loottable.mincash, loottable.maxcash, loottable.avgcoin,"
+        " loottable_entries.lootdrop_id, loottable_entries.multiplier, loottable_entries.droplimit, "
+        "loottable_entries.mindrop, loottable_entries.probability FROM loottable LEFT JOIN loottable_entries"
+        " ON loottable.id = loottable_entries.loottable_id ORDER BY id";
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    uint8 loot_table[sizeof(LootTable_Struct) + (sizeof(LootTableEntries_Struct) * 128)];
+    LootTable_Struct *lt = reinterpret_cast<LootTable_Struct*>(loot_table);
+
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        uint32 current_id = 0;
+        uint32 current_entry = 0;
+        while(row = mysql_fetch_row(result)) {
+            uint32 id = static_cast<uint32>(atoul(row[0]));
+            if(id != current_id) {
+                if(current_id != 0) {
+                    hash.insert(current_id, loot_table, (sizeof(LootTable_Struct) + 
+                        (sizeof(LootTableEntries_Struct) * lt->NumEntries)));
+                }
+            
+                memset(loot_table, 0, sizeof(LootTable_Struct) + (sizeof(LootTableEntries_Struct) * 128));
+                current_entry = 0;
+                current_id = id;
+                lt->mincash = static_cast<uint32>(atoul(row[1]));
+                lt->maxcash = static_cast<uint32>(atoul(row[2]));
+                lt->avgcoin = static_cast<uint32>(atoul(row[3]));
+            }
+            
+            if(current_entry > 128) {
+               continue;
+            }
+
+            if(!row[4]) {
+                continue;
+            }
+            
+            lt->Entries[current_entry].lootdrop_id = static_cast<uint32>(atoul(row[4]));
+            lt->Entries[current_entry].multiplier = static_cast<uint8>(atoi(row[5]));
+            lt->Entries[current_entry].droplimit = static_cast<uint8>(atoi(row[6]));
+            lt->Entries[current_entry].mindrop = static_cast<uint8>(atoi(row[7]));
+            lt->Entries[current_entry].probability = static_cast<float>(atof(row[8]));
+            
+            ++(lt->NumEntries);
+            ++current_entry;
+        }
+        if(current_id != 0) {
+            hash.insert(current_id, loot_table, (sizeof(LootTable_Struct) + 
+                (sizeof(LootTableEntries_Struct) * lt->NumEntries)));
+        }
+
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting loot table info from database: %s, %s", query, errbuf);
+    }
+}
+
+void SharedDatabase::LoadLootDrops(void *data, uint32 size) {
+    EQEmu::FixedMemoryVariableHashSet<LootDrop_Struct> hash(reinterpret_cast<uint8*>(data), size);
+    const char *query = "SELECT lootdrop.id, lootdrop_entries.item_id, lootdrop_entries.item_charges, "
+        "lootdrop_entries.equip_item, lootdrop_entries.chance, lootdrop_entries.minlevel, "
+        "lootdrop_entries.maxlevel, lootdrop_entries.multiplier FROM lootdrop JOIN lootdrop_entries "
+        "ON lootdrop.id = lootdrop_entries.lootdrop_id ORDER BY lootdrop_id";
+    char errbuf[MYSQL_ERRMSG_SIZE];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+
+    uint8 loot_drop[sizeof(LootDrop_Struct) + (sizeof(LootDropEntries_Struct) * 1260)];
+    LootDrop_Struct *ld = reinterpret_cast<LootDrop_Struct*>(loot_drop);
+    if(RunQuery(query, strlen(query), errbuf, &result)) {
+        uint32 current_id = 0;
+        uint32 current_entry = 0;
+        while(row = mysql_fetch_row(result)) {
+            uint32 id = static_cast<uint32>(atoul(row[0]));
+            if(id != current_id) {
+                if(current_id != 0) {
+                    hash.insert(current_id, loot_drop, (sizeof(LootDrop_Struct) + 
+                        (sizeof(LootDropEntries_Struct) * ld->NumEntries)));
+                }
+
+                memset(loot_drop, 0, sizeof(LootDrop_Struct) + (sizeof(LootDropEntries_Struct) * 1260));
+                current_entry = 0;
+                current_id = id;
+            }
+
+            if(current_entry > 1260) {
+               continue;
+            }
+
+            ld->Entries[current_entry].item_id = static_cast<uint32>(atoul(row[1]));
+            ld->Entries[current_entry].item_charges = static_cast<int8>(atoi(row[2]));
+            ld->Entries[current_entry].equip_item = static_cast<uint8>(atoi(row[3]));
+            ld->Entries[current_entry].chance = static_cast<float>(atof(row[4]));
+            ld->Entries[current_entry].minlevel = static_cast<uint8>(atoi(row[5]));
+            ld->Entries[current_entry].maxlevel = static_cast<uint8>(atoi(row[6]));
+            ld->Entries[current_entry].multiplier = static_cast<uint8>(atoi(row[7]));
+
+            ++(ld->NumEntries);
+            ++current_entry;
+        }
+        if(current_id != 0) {
+            hash.insert(current_id, loot_drop, (sizeof(LootDrop_Struct) + 
+                (sizeof(LootDropEntries_Struct) * ld->NumEntries)));
+        }
+
+        mysql_free_result(result);
+    } else {
+        LogFile->write(EQEMuLog::Error, "Error getting loot drop info from database: %s, %s", query, errbuf);
+    }
+}
+
+bool SharedDatabase::LoadLoot() {
+    if(loot_table_mmf || loot_drop_mmf)
+        return true;
+
+    try {
+        EQEmu::IPCMutex mutex("loot");
+        mutex.Lock();
+        loot_table_mmf = new EQEmu::MemoryMappedFile("shared/loot_table");
+        loot_table_hash = new EQEmu::FixedMemoryVariableHashSet<LootTable_Struct>(
+            reinterpret_cast<uint8*>(loot_table_mmf->Get()), 
+            loot_table_mmf->Size());
+        loot_drop_mmf = new EQEmu::MemoryMappedFile("shared/loot_drop");
+        loot_drop_hash = new EQEmu::FixedMemoryVariableHashSet<LootDrop_Struct>(
+            reinterpret_cast<uint8*>(loot_drop_mmf->Get()), 
+            loot_drop_mmf->Size());
+        mutex.Unlock();
+    } catch(std::exception &ex) {
+        LogFile->write(EQEMuLog::Error, "Error loading loot: %s", ex.what());
+        return false;
+    }
+
+    return true;
+}
+
+const LootTable_Struct* SharedDatabase::GetLootTable(uint32 loottable_id) {
+	if(!loot_table_hash)
+        return NULL;
+
+    try {
+        if(loot_table_hash->exists(loottable_id)) {
+            return &loot_table_hash->at(loottable_id);
+        }
+    } catch(std::exception &ex) {
+        LogFile->write(EQEMuLog::Error, "Could not get loot table: %s", ex.what());
+    }
+    return NULL;
+}
+
+const LootDrop_Struct* SharedDatabase::GetLootDrop(uint32 lootdrop_id) {
+	if(!loot_drop_hash)
+        return NULL;
+
+    try {
+        if(loot_drop_hash->exists(lootdrop_id)) {
+            return &loot_drop_hash->at(lootdrop_id);
+        }
+    } catch(std::exception &ex) {
+        LogFile->write(EQEMuLog::Error, "Could not get loot drop: %s", ex.what());
+    }
+    return NULL;
 }
 
 void SharedDatabase::GetPlayerInspectMessage(char* playername, InspectMessage_Struct* message) {

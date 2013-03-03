@@ -56,7 +56,7 @@
 #include "masterentity.h"
 #include "map.h"
 #include "watermap.h"
-#include "features.h"
+#include "../common/features.h"
 #include "pathing.h"
 #include "client_logs.h"
 #include "guild_mgr.h"
@@ -65,8 +65,8 @@
 
 // these should be in the headers...
 extern WorldServer worldserver;	
-extern bool spells_loaded;
 extern TaskManager *taskmanager;
+void CatchSignal(int sig_num);
 
 #include "QuestParserCollection.h"
 
@@ -157,7 +157,6 @@ int command_init(void) {
 		command_add("incstat","- Increases or Decreases a client's stats permanently.",200,command_incstat) ||
 		command_add("help","[search term] - List available commands and their description, specify partial command as argument to search",0,command_help) ||
 		command_add("version","- Display current version of EQEmu server",0,command_version) ||
-		command_add("eitem","- Changes item stats",200,command_eitem) ||
 		command_add("setfaction","[faction number] - Sets targeted NPC's faction in the database",170,command_setfaction) ||
 		command_add("serversidename","- Prints target's server side name",0,command_serversidename) ||
 		command_add("testspawn","[memloc] [value] - spawns a NPC for you only, with the specified values set in the spawn struct",200,command_testspawn) ||
@@ -220,7 +219,6 @@ int command_init(void) {
 		command_add("spoff","- Sends OP_ManaChange",80,command_spoff) ||
 		command_add("itemtest","- merth's test function",250,command_itemtest) ||
 		command_add("gassign","[id] - Assign targetted NPC to predefined wandering grid id",100,command_gassign) ||
-		command_add("setitemstatus","[itemid] [status] - Set the minimum admin status required to use itemid",100,command_setitemstatus) ||
 		command_add("ai","[factionid/spellslist/con/guard/roambox/stop/start] - Modify AI on NPC target",100,command_ai) ||
 		command_add("worldshutdown","- Shut down world and all zones",200,command_worldshutdown) ||
 		command_add("sendzonespawns","- Refresh spawn list for all clients in zone",150,command_sendzonespawns) ||
@@ -381,7 +379,6 @@ int command_init(void) {
 		command_add("opcode","- opcode management",250,command_opcode) || 
 		command_add("logs","[status|normal|error|debug|quest|all] - Subscribe to a log type",250,command_logs) ||
 		command_add("nologs","[status|normal|error|debug|quest|all] - Unsubscribe to a log type",250,command_nologs) ||
-		command_add("datarate","[rate] - Query/set datarate",100,command_datarate) ||
 		command_add("ban","[name] - Ban by character name",150,command_ban) ||
 		command_add("suspend","[name][days] - Suspend by character name and for specificed number of days",150,command_suspend) ||
 		command_add("ipban","[IP address] - Ban IP by character name",200,command_ipban) ||
@@ -922,20 +919,6 @@ void command_version(Client *c, const Seperator *sep)
 	c->Message(0, "	Last modified on: %s", LAST_MODIFIED);
 }
 
-void command_eitem(Client *c, const Seperator *sep)
-{
-#ifdef SHAREMEM
-	c->Message(0, "Error: Function doesnt work in ShareMem mode");
-#else
-	char hehe[255];
-	if(strstr(sep->arg[2],"classes"))
-		snprintf(hehe,255,"%s %s",sep->arg[3],strstr(sep->argplus[0],sep->arg[3]));
-	else
-		strcpy(hehe,sep->arg[3]);
-	database.SetItemAtt(sep->arg[2],hehe,atoi(sep->arg[1]));
-#endif
-}
-
 void command_setfaction(Client *c, const Seperator *sep)
 {
 	if((sep->arg[1][0] == 0 || strcasecmp(sep->arg[1],"*")==0) || ((c->GetTarget()==0) || (c->GetTarget()->IsClient())))
@@ -1122,7 +1105,7 @@ void command_showpetspell(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == 0)
 		c->Message(0, "Usage: #ShowPetSpells [spellid | searchstring]");
-	else if (!spells_loaded)
+	else if (SPDAT_RECORDS <= 0)
 		c->Message(0, "Spells not loaded");
 	else if (Seperator::IsNumber(sep->argplus[1]))
 	{
@@ -2164,27 +2147,6 @@ void command_gassign(Client *c, const Seperator *sep)
 		c->Message(0,"Usage: #gassign [num] - must have an npc target!");
 }
 
-void command_setitemstatus(Client *c, const Seperator *sep)
-{
-	if (sep->IsNumber(1) && sep->IsNumber(2)) {
-		uint32 tmp = atoi(sep->arg[1]);
-		if (tmp >= 0xFFFF)
-			c->Message(0, "Item# out of range");
-		else if (!database.DBSetItemStatus(tmp, atoi(sep->arg[2])))
-			c->Message(0, "DB query failed");
-		else {
-			c->Message(0, "Item updated");
-			ServerPacket* pack = new ServerPacket(ServerOP_ItemStatus, 5);
-			*((uint32*) &pack->pBuffer[0]) = tmp;
-			*((uint8*) &pack->pBuffer[4]) = atoi(sep->arg[2]);
-			worldserver.SendPacket(pack);
-			delete pack;
-		}
-	}
-	else
-		c->Message(0, "Usage: #setitemstatus [itemid] [status]");
-}
-
 void command_ai(Client *c, const Seperator *sep)
 {
 	Mob *target=c->GetTarget();
@@ -2557,7 +2519,7 @@ void command_findspell(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == 0)
 		c->Message(0, "Usage: #FindSpell [spellname]");
-	else if (!spells_loaded)
+	else if (SPDAT_RECORDS <= 0)
 		c->Message(0, "Spells not loaded");
 	else if (Seperator::IsNumber(sep->argplus[1])) {
 		int spellid = atoi(sep->argplus[1]);
@@ -3630,12 +3592,12 @@ void command_listpetition(Client *c, const Seperator *sep)
 	char *query = 0;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
-	int blahloopcount=0;
+	bool header = false;
 	if (database.RunQuery(query, MakeAnyLenString(&query, "SELECT petid, charname, accountname from petitions order by petid"), errbuf, &result)) {
 		LogFile->write(EQEMuLog::Normal,"Petition list requested by %s", c->GetName());
 		while ((row = mysql_fetch_row(result))) {
-			if (blahloopcount==0) {
-				blahloopcount=1;
+			if(!header) {
+				header = true;
 				c->Message(13,"	ID : Character Name , Account Name");
 			}
 			c->Message(15, " %s:	%s , %s ",row[0],row[1],row[2]);
@@ -4259,13 +4221,10 @@ void command_spellinfo(Client *c, const Seperator *sep)
 		c->Message(0, "  base[12]: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", s->base[0], s->base[1], s->base[2], s->base[3], s->base[4], s->base[5], s->base[6], s->base[7], s->base[8], s->base[9], s->base[10], s->base[11]);
 		c->Message(0, "  base22[12]: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", s->base2[0], s->base2[1], s->base2[2], s->base2[3], s->base2[4], s->base2[5], s->base2[6], s->base2[7], s->base2[8], s->base2[9], s->base2[10], s->base2[11]);
 		c->Message(0, "  max[12]: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d", s->max[0], s->max[1], s->max[2], s->max[3], s->max[4], s->max[5], s->max[6], s->max[7], s->max[8], s->max[9], s->max[10], s->max[11]);
-		c->Message(0, "  icon: %d", s->icon);
-		c->Message(0, "  memicon: %d", s->memicon);
 		c->Message(0, "  components[4]: %d, %d, %d, %d", s->components[0], s->components[1], s->components[2], s->components[3]);
 		c->Message(0, "  component_counts[4]: %d, %d, %d, %d", s->component_counts[0], s->component_counts[1], s->component_counts[2], s->component_counts[3]);
 		c->Message(0, "  NoexpendReagent[4]: %d, %d, %d, %d", s->NoexpendReagent[0], s->NoexpendReagent[1], s->NoexpendReagent[2], s->NoexpendReagent[3]);
 		c->Message(0, "  formula[12]: 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x", s->formula[0], s->formula[1], s->formula[2], s->formula[3], s->formula[4], s->formula[5], s->formula[6], s->formula[7], s->formula[8], s->formula[9], s->formula[10], s->formula[11]);
-		c->Message(0, "  LightType: %d", s->LightType);
 		c->Message(0, "  goodEffect: %d", s->goodEffect);
 		c->Message(0, "  Activated: %d", s->Activated);
 		c->Message(0, "  resisttype: %d", s->resisttype);
@@ -4281,7 +4240,6 @@ void command_spellinfo(Client *c, const Seperator *sep)
 			s->classes[5], s->classes[6], s->classes[7], s->classes[8], s->classes[9],
 			s->classes[10], s->classes[11], s->classes[12], s->classes[13], s->classes[14]);
 		c->Message(0, "  CastingAnim: %d", s->CastingAnim);
-		c->Message(0, "  TargetAnim: %d", s->TargetAnim);
 		c->Message(0, "  SpellAffectIndex: %d", s->SpellAffectIndex);
 		c->Message(0, " RecourseLink: %d", s->RecourseLink);
 	}
@@ -4828,7 +4786,7 @@ void command_iteminfo(Client *c, const Seperator *sep)
 		c->Message(0, "  Lore: %s  ND: %i  NS: %i  Type: %i", (item->LoreFlag) ? "true":"false", item->NoDrop, item->NoRent, item->ItemClass);
 		c->Message(0, "  IDF: %s  Size: %i  Weight: %i  icon_id: %i  Price: %i", item->IDFile, item->Size, item->Weight, item->Icon, item->Price);
 		if (c->Admin() >= 200)
-			c->Message(0, "MinStatus: %i", database.GetItemStatus(item->ID));
+            c->Message(0, "MinStatus: %i", item->MinStatus);
 		if (item->ItemClass==ItemClassBook)
 			c->Message(0, "  This item is a Book: %s", item->Filename);
 		else if (item->ItemClass==ItemClassContainer)
@@ -6400,7 +6358,13 @@ void command_summonitem(Client *c, const Seperator *sep)
 		c->Message(0, "Usage: #summonitem [item id] [charges], charges are optional");
 	else {
 		uint32 itemid = atoi(sep->arg[1]);
-		if (database.GetItemStatus(itemid) > c->Admin())
+        int16 item_status = 0;
+        const Item_Struct* item = database.GetItem(itemid);
+        if(item) {
+            item_status = static_cast<int16>(item->MinStatus);
+        }
+
+		if (item_status > c->Admin())
 			c->Message(13, "Error: Insufficient status to summon this item.");
 		else if (sep->argnum==2 && sep->IsNumber(2)) {
 			c->SummonItem(itemid, atoi(sep->arg[2]) );
@@ -6431,7 +6395,13 @@ void command_giveitem(Client *c, const Seperator *sep)
 	} else {
 		Client *t = c->GetTarget()->CastToClient();
 		uint32 itemid = atoi(sep->arg[1]);
-		if (database.GetItemStatus(itemid) > c->Admin())
+        int16 item_status = 0;
+        const Item_Struct* item = database.GetItem(itemid);
+        if(item) {
+            item_status = static_cast<int16>(item->MinStatus);
+        }
+
+		if (item_status > c->Admin())
 			c->Message(13, "Error: Insufficient status to summon this item.");
 		else if (sep->argnum==2 && sep->IsNumber(2)) {
 			t->SummonItem(itemid, atoi(sep->arg[2]) );
@@ -6497,9 +6467,8 @@ void command_itemsearch(Client *c, const Seperator *sep)
 				c->Message(0, "Item #%s not found", search_criteria);
 			return;
 		}
-#ifdef SHAREMEM
-		int count=0;
-		//int iSearchLen = strlen(search_criteria)+1;
+
+		int count = 0;
 		char sName[64];
 		char sCriteria[255];
 		strn0cpy(sCriteria, search_criteria, sizeof(sCriteria));
@@ -6532,27 +6501,8 @@ void command_itemsearch(Client *c, const Seperator *sep)
 			c->Message(0, "50 items shown...too many results.");
 		else
 			c->Message(0, "%i items found", count);
-#endif
-	}
-}
 
-void command_datarate(Client *c, const Seperator *sep)
-{
-//	EQStream *eqs = c->Connection();
-
-	if (sep->arg[1][0] == 0) {
-		//c->Message(0, "Datarate: %1.1f", eqs->GetDataRate());
-		//if (c->Admin() >= commandChangeDatarate) {
-			//c->Message(0, "Dataflow: %i", eqs->GetDataFlow());
-			//c->Message(0, "Datahigh: %i", eqs->GetDataHigh());
-		//}
 	}
-	else if (sep->IsNumber(1) && atof(sep->arg[1]) > 0 && (c->Admin() >= commandChangeDatarate || atof(sep->arg[1]) <= 25)) {
-		//eqs->SetDataRate(atof(sep->arg[1]));
-		//c->Message(0, "Datarate: %1.1f", eqs->GetDataRate());
-	}
-	else
-		c->Message(0, "Usage: #DataRate [new data rate in kb/sec, max 25]");
 }
 
 void command_setaaxp(Client *c, const Seperator *sep)
@@ -8746,10 +8696,11 @@ void command_rules(Client *c, const Seperator *sep) {
 	}
 	
 	if(!strcasecmp(sep->arg[1], "current")) {
-		c->Message(0, "Currently running ruleset '%s' (%d)", rules->GetActiveRuleset(), rules->GetActiveRulesetID());
+		c->Message(0, "Currently running ruleset '%s' (%d)", RuleManager::Instance()->GetActiveRuleset(), 
+            RuleManager::Instance()->GetActiveRulesetID());
 	} else if(!strcasecmp(sep->arg[1], "listsets")) {
 		std::map<int, std::string> sets;
-		if(!rules->ListRulesets(&database, sets)) {
+		if(!RuleManager::Instance()->ListRulesets(&database, sets)) {
 			c->Message(13, "Failed to list rule sets!");
 			return;
 		}
@@ -8762,11 +8713,12 @@ void command_rules(Client *c, const Seperator *sep) {
 			c->Message(0, "(%d) %s", cur->first, cur->second.c_str());
 		}
 	} else if(!strcasecmp(sep->arg[1], "reload")) {
-		rules->LoadRules(&database, rules->GetActiveRuleset());
-		c->Message(0, "The active ruleset (%s (%d)) has been reloaded", rules->GetActiveRuleset(), rules->GetActiveRulesetID());
+		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
+		c->Message(0, "The active ruleset (%s (%d)) has been reloaded", RuleManager::Instance()->GetActiveRuleset(), 
+            RuleManager::Instance()->GetActiveRulesetID());
 	} else if(!strcasecmp(sep->arg[1], "switch")) {
 		//make sure this is a valid rule set..
-		int rsid = rules->GetRulesetID(&database, sep->arg[2]);
+		int rsid = RuleManager::Instance()->GetRulesetID(&database, sep->arg[2]);
 		if(rsid < 0) {
 			c->Message(13, "Unknown rule set '%s'", sep->arg[2]);
 			return;
@@ -8777,27 +8729,27 @@ void command_rules(Client *c, const Seperator *sep) {
 		}
 		
 		//TODO: we likely want to reload this ruleset everywhere...
-		rules->LoadRules(&database, sep->arg[2]);
+		RuleManager::Instance()->LoadRules(&database, sep->arg[2]);
 		
 		c->Message(0, "The selected ruleset has been changed to (%s (%d)) and reloaded locally", sep->arg[2], rsid);
 	} else if(!strcasecmp(sep->arg[1], "load")) {
 		//make sure this is a valid rule set..
-		int rsid = rules->GetRulesetID(&database, sep->arg[2]);
+		int rsid = RuleManager::Instance()->GetRulesetID(&database, sep->arg[2]);
 		if(rsid < 0) {
 			c->Message(13, "Unknown rule set '%s'", sep->arg[2]);
 			return;
 		}
-		rules->LoadRules(&database, sep->arg[2]);
+		RuleManager::Instance()->LoadRules(&database, sep->arg[2]);
 		c->Message(0, "Loaded ruleset '%s' (%d) locally", sep->arg[2], rsid);
 	} else if(!strcasecmp(sep->arg[1], "store")) {
 		if(sep->argnum == 1) {
 			//store current rule set.
-			rules->SaveRules(&database);
+			RuleManager::Instance()->SaveRules(&database);
 			c->Message(0, "Rules saved");
 		} else if(sep->argnum == 2) {
-			rules->SaveRules(&database, sep->arg[2]);
-			int prersid = rules->GetActiveRulesetID();
-			int rsid = rules->GetRulesetID(&database, sep->arg[2]);
+			RuleManager::Instance()->SaveRules(&database, sep->arg[2]);
+			int prersid = RuleManager::Instance()->GetActiveRulesetID();
+			int rsid = RuleManager::Instance()->GetRulesetID(&database, sep->arg[2]);
 			if(rsid < 0) {
 				c->Message(13, "Unable to query ruleset ID after store, it most likely failed.");
 			} else {
@@ -8811,7 +8763,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			return;
 		}
 	} else if(!strcasecmp(sep->arg[1], "reset")) {
-		rules->ResetRules();
+		RuleManager::Instance()->ResetRules();
 		c->Message(0, "The running ruleset has been set to defaults");
 
 	} else if(!strcasecmp(sep->arg[1], "get")) {
@@ -8820,7 +8772,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			return;
 		}
 		std::string value;
-		if(!rules->GetRule(sep->arg[2], value))
+		if(!RuleManager::Instance()->GetRule(sep->arg[2], value))
 			c->Message(13, "Unable to find rule %s", sep->arg[2]);
 		else
 			c->Message(0, "%s - %s", sep->arg[2], value.c_str());
@@ -8830,7 +8782,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			c->Message(13, "Invalid argument count, see help.");
 			return;
 		}
-		if(!rules->SetRule(sep->arg[2], sep->arg[3])) {
+		if(!RuleManager::Instance()->SetRule(sep->arg[2], sep->arg[3])) {
 			c->Message(13, "Failed to modify rule");
 		} else {
 			c->Message(0, "Rule modified locally.");
@@ -8840,7 +8792,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			c->Message(13, "Invalid argument count, see help.");
 			return;
 		}
-		if(!rules->SetRule(sep->arg[2], sep->arg[3], &database, true)) {
+		if(!RuleManager::Instance()->SetRule(sep->arg[2], sep->arg[3], &database, true)) {
 			c->Message(13, "Failed to modify rule");
 		} else {
 			c->Message(0, "Rule modified locally and in the database.");
@@ -8848,7 +8800,7 @@ void command_rules(Client *c, const Seperator *sep) {
 	} else if(!strcasecmp(sep->arg[1], "list")) {
 		if(sep->argnum == 1) {
 			std::vector<const char *> rule_list;
-			if(!rules->ListCategories(rule_list)) {
+			if(!RuleManager::Instance()->ListCategories(rule_list)) {
 				c->Message(13, "Failed to list categories!");
 				return;
 			}
@@ -8864,7 +8816,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			if(std::string("all") != sep->arg[2])
 				catfilt = sep->arg[2];
 			std::vector<const char *> rule_list;
-			if(!rules->ListRules(catfilt, rule_list)) {
+			if(!RuleManager::Instance()->ListRules(catfilt, rule_list)) {
 				c->Message(13, "Failed to list rules!");
 				return;
 			}
@@ -8887,7 +8839,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			if(std::string("all") != sep->arg[2])
 				catfilt = sep->arg[2];
 			std::vector<const char *> rule_list;
-			if(!rules->ListRules(catfilt, rule_list)) {
+			if(!RuleManager::Instance()->ListRules(catfilt, rule_list)) {
 				c->Message(13, "Failed to list rules!");
 				return;
 			}
@@ -8896,7 +8848,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			cur = rule_list.begin();
 			end = rule_list.end();
 			for(std::string tmp_value; cur != end; cur++) {
-				if (rules->GetRule(*cur, tmp_value))
+				if (RuleManager::Instance()->GetRule(*cur, tmp_value))
 					c->Message(0, " %s - %s", *cur, tmp_value.c_str());
 			}
 		}
@@ -11833,8 +11785,13 @@ void command_zopp(Client *c, const Seperator *sep)
 			c->Message(13, "Error: Item [%u] is not a valid item id.", itemid);
 			return;
 		}
-				
-		if (database.GetItemStatus(itemid) > c->Admin()) {
+	    
+        int16 item_status = 0;
+        const Item_Struct* item = database.GetItem(itemid);
+        if(item) {
+            item_status = static_cast<int16>(item->MinStatus);
+        }
+		if (item_status > c->Admin()) {
 			c->Message(13, "Error: Insufficient status to use this command.");
 			return;
 		}

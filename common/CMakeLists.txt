@@ -13,11 +13,11 @@ SET(common_sources
     DBMemLeak.cpp
     debug.cpp
     emu_opcodes.cpp
-    EMuShareMem.cpp
     EmuTCPConnection.cpp
     EmuTCPServer.cpp
     EQDB.cpp
     EQDBRes.cpp
+    eqemu_exception.cpp
     EQEmuConfig.cpp
     EQEMuError.cpp
     EQPacket.cpp
@@ -27,12 +27,15 @@ SET(common_sources
     EQStreamProxy.cpp
     eqtime.cpp
     extprofile.cpp
+	faction.cpp
     guild_base.cpp
     guilds.cpp
+    ipc_mutex.cpp
     Item.cpp
     logsys.cpp
     logsys_eqemu.cpp
     md5.cpp
+    memory_mapped_file.cpp
     misc.cpp
     MiscFunctions.cpp
     moremath.cpp
@@ -51,7 +54,7 @@ SET(common_sources
     rulesys.cpp
     serverinfo.cpp
     shareddb.cpp
-    SharedLibrary.cpp
+    spdat.cpp
     StructStrategy.cpp
     TCPConnection.cpp
     TCPServer.cpp
@@ -104,14 +107,13 @@ SET(common_headers
     deity.h
     emu_opcodes.h
     emu_oplist.h
-    EMuShareMem.h
     EmuTCPConnection.h
     EmuTCPServer.h
     eq_constants.h
-    eq_opcodes.h
     eq_packet_structs.h
     EQDB.h
     EQDBRes.h
+    eqemu_exception.h
     EQEmuConfig.h
     EQEmuConfig_elements.h
     EQEMuError.h
@@ -126,8 +128,13 @@ SET(common_headers
     eqtime.h
     errmsg.h
     extprofile.h
+	faction.h
+    features.h
+    fixed_memory_hash_set.h
+    fixed_memory_variable_hash_set.h
     guild_base.h
     guilds.h
+    ipc_mutex.h
     Item.h
     item_fieldlist.h
     item_struct.h
@@ -135,8 +142,10 @@ SET(common_headers
     linked_list.h
     logsys.h
     logtypes.h
+    loottable.h
     mail_oplist.h
     md5.h
+    memory_mapped_file.h
     misc.h
     MiscFunctions.h
     moremath.h
@@ -159,8 +168,8 @@ SET(common_headers
     serverinfo.h
     servertalk.h
     shareddb.h
-    SharedLibrary.h
     skills.h
+    spdat.h
     StructStrategy.h
     TCPBasicServer.h
     TCPConnection.h

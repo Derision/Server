@@ -32,13 +32,9 @@ using namespace std;
 #include "StringIDs.h"
 #include "../common/MiscFunctions.h"
 #include "../common/rulesys.h"
-#include "features.h"
+#include "../common/features.h"
 #include "QuestParserCollection.h"
 #include "watermap.h"
-
-#if !defined(NEW_LoadSPDat) && !defined(DB_LoadSPDat)
-	extern SPDat_Spell_Struct spells[SPDAT_RECORDS];
-#endif
 
 extern EntityList entity_list;
 

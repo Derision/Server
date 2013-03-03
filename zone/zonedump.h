@@ -26,7 +26,7 @@ spawn2 mediumblob, npcs mediumblob, npc_loot mediumblob, gmspawntype mediumblob,
 
 #ifndef ZONEDUMP_H
 #define ZONEDUMP_H
-#include "faction.h"
+#include "../common/faction.h"
 #include "../common/eq_packet_structs.h"
 #include "../common/Item.h"
 
@@ -160,20 +160,6 @@ create table player_corpses (id int(11) unsigned not null auto_increment primary
 charname varchar(30) not null, zonename varchar(16)not null, x float not null, y float not null, z float not null,
 heading float not null, data blob not null, time timestamp(14), index zonename (zonename));
 */
-
-struct ServerLootItem_Struct {
-	uint32	item_id;
-	int16	equipSlot;
-	uint8	charges;
-	uint16	lootslot;
-	uint32 aug1;
-	uint32 aug2;
-	uint32 aug3;
-	uint32 aug4;
-	uint32 aug5;
-	uint8 minlevel;
-	uint8 maxlevel;
-};
 
 namespace player_lootitem
 {

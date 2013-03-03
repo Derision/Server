@@ -21,7 +21,6 @@ SET(zone_sources
     embxs.cpp
     entity.cpp
     exp.cpp
-    faction.cpp
     fearpath.cpp
     forage.cpp
     groups.cpp
@@ -65,7 +64,6 @@ SET(zone_sources
     spawn2.cpp
     spawn2.h
     spawngroup.cpp
-    spdat.cpp
     special_attacks.cpp
     spell_effects.cpp
     spells.cpp
@@ -92,7 +90,6 @@ SET(zone_headers
     AA.h
     basic_functions.h
     beacon.h
-    blah.h
     bot.h
     botStructs.h
     client.h
@@ -107,14 +104,11 @@ SET(zone_headers
     entity.h
     errmsg.h
     event_codes.h
-    faction.h
-    features.h
     forage.h
     groups.h
     guild_mgr.h
     hate_list.h
     horse.h
-    loottable.h
     map.h
     masterentity.h
     maxskill.h
@@ -142,7 +136,6 @@ SET(zone_headers
     spawn2.cpp
     spawn2.h
     spawngroup.h
-    spdat.h
     StringIDs.h
     tasks.h
     titles.h

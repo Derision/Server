@@ -19,9 +19,9 @@ Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
 #include <stdlib.h>
 #include <math.h>
 #include "masterentity.h"
-#include "faction.h"
+#include "../common/faction.h"
 #include "map.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "../common/skills.h"
 #include "../common/MiscFunctions.h"
 #include "../common/rulesys.h"
@@ -1450,7 +1450,7 @@ bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
 
 	if(IsCharmSpell(spell_id)) {
 
-		if (spells[spell_id].field209 == -1) //If charm spell has this set(-1), it can not break till end of duration.
+		if (spells[spell_id].powerful_flag == -1) //If charm spell has this set(-1), it can not break till end of duration.
 			return true;
 
 		//1: The mob has a default 25% chance of being allowed a resistance check against the charm.

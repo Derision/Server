@@ -16,7 +16,7 @@ Copyright (C) 2001-2004  EQEMu Development Team (http://eqemu.org)
 	  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include "../common/debug.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "masterentity.h"
 #include "../common/packet_dump.h"
 #include "../common/moremath.h"
@@ -38,13 +38,7 @@ Copyright (C) 2001-2004  EQEMu Development Team (http://eqemu.org)
 
 extern Zone* zone;
 extern volatile bool ZoneLoaded;
-#if !defined(NEW_LoadSPDat) && !defined(DB_LoadSPDat)
-	extern SPDat_Spell_Struct spells[SPDAT_RECORDS];
-#endif
-extern bool spells_loaded;
 extern WorldServer worldserver;
-//uchar blah[]={0x0D,0x00,0x00,0x00,0x01,0x00,0x00,0x00};
-//uchar blah2[]={0x12,0x00,0x00,0x00,0x16,0x01,0x00,0x00};
 
 
 // the spell can still fail here, if the buff can't stack
@@ -747,7 +741,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial)
 
 				// define spells with fixed duration
 				// charm spells with -1 in field 209 are all of fixed duration, so lets use that instead of spell_ids
-				if(spells[spell_id].field209 == -1)
+				if(spells[spell_id].powerful_flag == -1)
 					bBreak = true;
 
 				if (!bBreak)

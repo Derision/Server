@@ -35,7 +35,7 @@ using namespace std;
 #include "../common/eq_packet_structs.h"
 #include "../common/eq_constants.h"
 #include "../common/skills.h"
-#include "spdat.h"
+#include "../common/spdat.h"
 #include "zone.h"
 #include "StringIDs.h"
 #include "../common/MiscFunctions.h"
@@ -52,10 +52,6 @@ extern WorldServer worldserver;
 #endif
 
 extern EntityList entity_list;
-#if !defined(NEW_LoadSPDat) && !defined(DB_LoadSPDat)
-	extern SPDat_Spell_Struct spells[SPDAT_RECORDS];
-#endif
-
 extern Zone* zone;
 
 bool Mob::AttackAnimation(SkillType &skillinuse, int Hand, const ItemInst* weapon)

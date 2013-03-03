@@ -794,14 +794,6 @@ void WorldServer::Process() {
 				client->SetWID(scw->newwid);
 			break;
 		}
-		case ServerOP_ItemStatus: {
-			if (pack->size != 5) {
-				cout << "Wrong size on ServerChangeWID_Struct. Got: " << pack->size << ", Expected: 5" << endl;
-				break;
-			}
-			database.SetItemStatus(*((uint32*) &pack->pBuffer[0]), *((uint8*) &pack->pBuffer[4]));
-			break;
-		}
 		case ServerOP_OOCMute: {
 			oocmuted = *(pack->pBuffer);
 			break;
@@ -1754,7 +1746,7 @@ void WorldServer::Process() {
 		}
 		case ServerOP_ReloadRules:
 		{
-			rules->LoadRules(&database, rules->GetActiveRuleset());
+			RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
 			break;
 		}
 		case ServerOP_CameraShake:

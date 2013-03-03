@@ -35,7 +35,7 @@ using namespace std;
 #endif
 
 #include "masterentity.h"
-#include "features.h"
+#include "../common/features.h"
 #include "spawngroup.h"
 #include "spawn2.h"
 #include "zone.h"
@@ -118,21 +118,21 @@ bool Zone::Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 	//int char_num = 0;
 	//unsigned long* lengths;
 	if (database.GetVariable("loglevel",tmp, 9)) {
-		int blah[4];
+		int log_levels[4];
 		if (atoi(tmp)>9){ //Server is using the new code
 			for(int i=0;i<4;i++){
 				if (((int)tmp[i]>=48) && ((int)tmp[i]<=57))
-					blah[i]=(int)tmp[i]-48; //get the value to convert it to an int from the ascii value
+					log_levels[i]=(int)tmp[i]-48; //get the value to convert it to an int from the ascii value
 				else
-					blah[i]=0; //set to zero on a bogue char
+					log_levels[i]=0; //set to zero on a bogue char
 			}
-			zone->loglevelvar = blah[0];
+			zone->loglevelvar = log_levels[0];
 			LogFile->write(EQEMuLog::Status, "General logging level: %i", zone->loglevelvar);
-			zone->merchantvar = blah[1];
+			zone->merchantvar = log_levels[1];
 			LogFile->write(EQEMuLog::Status, "Merchant logging level: %i", zone->merchantvar);
-			zone->tradevar = blah[2];
+			zone->tradevar = log_levels[2];
 			LogFile->write(EQEMuLog::Status, "Trade logging level: %i", zone->tradevar);
-			zone->lootvar = blah[3];
+			zone->lootvar = log_levels[3];
 			LogFile->write(EQEMuLog::Status, "Loot logging level: %i", zone->lootvar);
 		}
 		else {
@@ -1155,12 +1155,12 @@ bool Zone::Init(bool iStaticZone) {
 	if (!LoadZoneCFG(zone->GetShortName(), zone->GetInstanceVersion(), true)) // try loading the zone name...
 		LoadZoneCFG(zone->GetFileName(), zone->GetInstanceVersion()); // if that fails, try the file name, then load defaults
 
-	if(rules->GetActiveRulesetID() != default_ruleset)
+	if(RuleManager::Instance()->GetActiveRulesetID() != default_ruleset)
 	{
-		string r_name = rules->GetRulesetName(&database, default_ruleset);
+		string r_name = RuleManager::Instance()->GetRulesetName(&database, default_ruleset);
 		if(r_name.size() > 0)
 		{
-			rules->LoadRules(&database, r_name.c_str());
+			RuleManager::Instance()->LoadRules(&database, r_name.c_str());
 		}
 	}
 		
@@ -1223,7 +1223,7 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 	{
 		map_name = NULL;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind, 
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, default_ruleset, &map_name)) 
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, allow_mercs, default_ruleset, &map_name)) 
 		{
 			LogFile->write(EQEMuLog::Error, "Error loading the Zone Config."); 
 			return false;
@@ -1234,11 +1234,11 @@ bool Zone::LoadZoneCFG(const char* filename, uint16 instance_id, bool DontLoadDe
 		//Fall back to base zone if we don't find the instance version.
 		map_name = NULL;
 		if(!database.GetZoneCFG(database.GetZoneID(filename), instance_id, &newzone_data, can_bind, 
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, default_ruleset, &map_name)) 
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, allow_mercs, default_ruleset, &map_name)) 
 		{
 			safe_delete_array(map_name);
 			if(!database.GetZoneCFG(database.GetZoneID(filename), 0, &newzone_data, can_bind, 
-			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, default_ruleset, &map_name)) 
+			can_combat, can_levitate, can_castoutdoor, is_city, is_hotzone, allow_mercs, default_ruleset, &map_name)) 
 			{
 				LogFile->write(EQEMuLog::Error, "Error loading the Zone Config."); 
 				return false;
