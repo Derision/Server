@@ -5165,12 +5165,9 @@ bool Merc::Unsuspend(bool setMaxStats) {
 	return true;
 }
 
-bool Merc::Dismiss() {
-	Client* mercOwner;
+bool Merc::Dismiss(){
 
-	if(GetMercOwner()) {
-		mercOwner = GetMercOwner();
-	}
+	Client* mercOwner = GetMercOwner();
 
 	if(!mercOwner)
 		return false;
@@ -5453,7 +5450,7 @@ void NPC::LoadMercTypes(){
 		mysql_free_result(DatasetResult);
 	}
 
-	safe_delete(Query);
+	safe_delete_array(Query);
 	Query = 0;
 
 	if(!errorMessage.empty()) {
@@ -5489,7 +5486,7 @@ void NPC::LoadMercs(){
 		mysql_free_result(DatasetResult);
 	}
 
-	safe_delete(Query);
+	safe_delete_array(Query);
 	Query = 0;
 
 	if(!errorMessage.empty()) {
