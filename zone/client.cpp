@@ -7059,7 +7059,7 @@ void Client::SetMaxXTargets(uint8 NewMax)
 	FastQueuePacket(&outapp);
 }
 
-char* Client::GetRacePlural(Client* client) {
+const char* Client::GetRacePlural(Client* client) {
 
 	switch (client->CastToMob()->GetRace()) {
 		case HUMAN:
@@ -7099,7 +7099,7 @@ char* Client::GetRacePlural(Client* client) {
 	}
 }
 
-char* Client::GetClassPlural(Client* client) {
+const char* Client::GetClassPlural(Client* client) {
 
 	switch (client->CastToMob()->GetClass()) {
 		case WARRIOR:
