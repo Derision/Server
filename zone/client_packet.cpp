@@ -13523,7 +13523,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		for (spacer = 0; spacer < 77; spacer++) { //More Item stats, but some seem to be off based on packet check
 			outapp->WriteUInt8(0);
 		}
-		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(0xFFFFFFFF); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt32(0); //Unknown
 		for (spacer = 0; spacer < 5; spacer++) { //Augment stuff
 			outapp->WriteUInt32(item->AugSlotType[spacer]);
@@ -13540,7 +13540,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		for (spacer = 0; spacer < 11; spacer++) { //unknowns
 			outapp->WriteUInt8(0);
 		}
-		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(0xFFFFFFFF); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt16(0); //Unknown
 		outapp->WriteUInt32(item->Favor); // Tribute
 		for (spacer = 0; spacer < 17; spacer++) { //unknowns
@@ -13548,7 +13548,7 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		}
 		outapp->WriteUInt32(item->GuildFavor); // Tribute
 		outapp->WriteUInt32(0); //Unknown
-		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(0xFFFFFFFF); //Unknown but always seen as FF FF FF FF
 		for (spacer = 0; spacer < 11; spacer++) { //unknowns
 			outapp->WriteUInt8(0);
 		}
@@ -13563,13 +13563,13 @@ void Client::Handle_OP_ItemPreview(const EQApplicationPacket *app)
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt32(1); // Always seen as 1
 		outapp->WriteUInt32(0); //unknown
-		outapp->WriteUInt32(3452750909u); //0x3DCCCCCD/3452750909
+		outapp->WriteUInt32(0xCDCCCC3D); //0x3DCCCCCD/3452750909
 		outapp->WriteUInt32(0);
 		outapp->WriteUInt16(8256); //0x4020/8256
 		outapp->WriteUInt16(0);
-		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(0xFFFFFFFF); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt16(0);
-		outapp->WriteUInt32(4294967295u); //Unknown but always seen as FF FF FF FF
+		outapp->WriteUInt32(0xFFFFFFFF); //Unknown but always seen as FF FF FF FF
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt32(0); //unknown
 		outapp->WriteUInt16(0); //unknown
