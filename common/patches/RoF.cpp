@@ -4065,6 +4065,24 @@ ENCODE(OP_BeginCast)
 	FINISH_ENCODE();
 }
 
+ENCODE(OP_RezzRequest)
+{
+	SETUP_DIRECT_ENCODE(Resurrect_Struct, structs::Resurrect_Struct);
+
+	OUT(zone_id);
+	OUT(instance_id);
+	OUT(y);
+	OUT(x);
+	OUT(z);
+	OUT_str(your_name);
+	OUT_str(rezzer_name);
+	OUT(spellid);
+	OUT_str(corpse_name);
+	OUT(action);
+
+	FINISH_ENCODE();
+}
+
 DECODE(OP_BuffRemoveRequest)
 {
 	// This is to cater for the fact that short buff box buffs start at 30 as opposed to 25 in prior clients.
@@ -4929,6 +4947,25 @@ DECODE(OP_GuildBank)
 		default:
 			break;
 	}
+}
+
+DECODE(OP_RezzAnswer)
+{
+	DECODE_LENGTH_EXACT(structs::Resurrect_Struct);
+	SETUP_DIRECT_DECODE(Resurrect_Struct, structs::Resurrect_Struct);
+
+	IN(zone_id);
+	IN(instance_id);
+	IN(y);
+	IN(x);
+	IN(z);
+	memcpy(emu->your_name, eq->your_name, sizeof(emu->your_name));
+	memcpy(emu->rezzer_name, eq->rezzer_name, sizeof(emu->rezzer_name));
+	IN(spellid);
+	memcpy(emu->corpse_name, eq->corpse_name, sizeof(emu->corpse_name));
+	IN(action);
+
+	FINISH_DIRECT_DECODE();
 }
 
 uint32 NextItemInstSerialNumber = 1;
