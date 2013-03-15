@@ -101,6 +101,7 @@ E(OP_GuildMemberUpdate)
 E(OP_GuildBank)
 E(OP_GMLastName)
 E(OP_BeginCast)
+E(OP_RezzRequest)
 //list of packets we need to decode on the way in:
 D(OP_SetServerFilter)
 D(OP_CharacterCreate)
@@ -158,5 +159,6 @@ D(OP_GuildStatus)
 D(OP_GuildBank)
 D(OP_Trader)
 D(OP_GMLastName)
+D(OP_RezzAnswer)
 #undef E
 #undef D
