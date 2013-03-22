@@ -69,8 +69,8 @@ using namespace std;
 
 
 
-#ifndef MAX_QUADRENT_FACES
-#ifndef MIN_QUADRENT_SIZE
+#ifndef MAX_QUADRANT_FACES
+#ifndef MIN_QUADRANT_SIZE
 #error Umm... your asking for trouble by turning off both stopping criteria
 #endif
 #endif
@@ -539,8 +539,8 @@ void QTNode::divideYourself(int depth) {
 
 	unsigned long cc;
 	cc = faces.size();
-#ifdef MAX_QUADRENT_FACES
-	if(cc <= MAX_QUADRENT_FACES) {
+#ifdef MAX_QUADRANT_FACES
+	if(cc <= MAX_QUADRANT_FACES) {
 #ifdef SPLIT_DEBUG
 printf("Stopping (facecount) on box (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d faces.\n",
 		minx, maxx, miny, maxy, depth, cc);
@@ -550,8 +550,8 @@ printf("Stopping (facecount) on box (%.2f -> %.2f, %.2f -> %.2f) at depth %d wit
 	}
 #endif
 
-#ifdef MIN_QUADRENT_SIZE
-	if((maxx - minx) < MIN_QUADRENT_SIZE || (maxy - miny) < MIN_QUADRENT_SIZE) {
+#ifdef MIN_QUADRANT_SIZE
+	if((maxx - minx) < MIN_QUADRANT_SIZE || (maxy - miny) < MIN_QUADRANT_SIZE) {
 #ifdef SPLIT_DEBUG
 printf("Stopping on box (size) (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d faces.\n",
 		minx, maxx, miny, maxy, depth, cc);
@@ -570,7 +570,7 @@ printf("Stopping on box (size) (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d 
 	c3 = node3? node3->faces.size() : 0;
 	c4 = node4? node4->faces.size() : 0;
 
-#ifdef MIN_QUADRENT_GAIN
+#ifdef MIN_QUADRANT_GAIN
 	int miss = 0;
 	float gain1 = 1.0 - c1 / cc;
 	float gain2 = 1.0 - c2 / cc;
@@ -578,16 +578,16 @@ printf("Stopping on box (size) (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d 
 	float gain4 = 1.0 - c4 / cc;
 
 	//see how many missed the gain mark
-	if(gain1 < MIN_QUADRENT_GAIN)
+	if(gain1 < MIN_QUADRANT_GAIN)
 		miss++;
-	if(gain2 < MIN_QUADRENT_GAIN)
+	if(gain2 < MIN_QUADRANT_GAIN)
 		miss++;
-	if(gain3 < MIN_QUADRENT_GAIN)
+	if(gain3 < MIN_QUADRANT_GAIN)
 		miss++;
-	if(gain4 < MIN_QUADRENT_GAIN)
+	if(gain4 < MIN_QUADRANT_GAIN)
 		miss++;
 
-	if(miss > MAX_QUADRENT_MISSES) {
+	if(miss > MAX_QUADRANT_MISSES) {
 #ifdef SPLIT_DEBUG
 printf("Stopping (gain) on box (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d faces.\n",
 		minx, maxx, miny, maxy, depth, cc);

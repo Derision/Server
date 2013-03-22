@@ -24,10 +24,10 @@ using namespace std;
 #define MAP_VERSION 0x01000000
 
 //quadtree stopping criteria, comment any to disable them
-#define MAX_QUADRENT_FACES 50	//if box has fewer than this, stop
-#define MIN_QUADRENT_SIZE 25.0f	//if box has a dimention smaller than this, stop
-#define MIN_QUADRENT_GAIN 0.3f	//minimum split ratio before stopping
-#define MAX_QUADRENT_MISSES 2	//maximum number of quads which can miss their gains
+#define MAX_QUADRANT_FACES 50	//if box has fewer than this, stop
+#define MIN_QUADRANT_SIZE 25.0f	//if box has a dimention smaller than this, stop
+#define MIN_QUADRANT_GAIN 0.3f	//minimum split ratio before stopping
+#define MAX_QUADRANT_MISSES 2	//maximum number of quads which can miss their gains
 								//1 or 2 make sense, others are less useful
 
 //attepmt to trim the data a little
