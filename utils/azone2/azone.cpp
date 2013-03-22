@@ -240,7 +240,7 @@ bool QTBuilder::build(const char *shortname) {
 
 
 
-	faceBlock = new FACE[faceCount];
+	faceBlock = new FILEFACE[faceCount];
 	//im not going to assume I know vectors are stored in contiguous blocks
 	for(r = 0; r < faceCount; r++) {
 		faceBlock[r] = _FaceList[r];
@@ -302,7 +302,7 @@ bool QTBuilder::build(const char *shortname) {
 	}
 
 	//build our initial set of faces... all of them:
-	FACE *faceptr = faceBlock;
+	FILEFACE *faceptr = faceBlock;
 	_root->faces.resize(faceCount);
 	for(r = 0; r < faceCount; r++) {
 		_root->faces[r].face = faceptr;
@@ -358,10 +358,16 @@ bool QTBuilder::writeMap(const char *file) {
 
 	printf("Map header: Version: 0x%08lX. %lu faces, %u nodes, %lu facelists\n", head.version, head.face_count, head.node_count, head.facelist_count);
 
-
+	for(int i = 0; i < faceCount; ++i)
+	{
+		printf("Face: %i, (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f),(%8.3f, %8.3f, %8.3f)\n", i,
+			faceBlock[i].a.x, faceBlock[i].a.y, faceBlock[i].a.z,
+			faceBlock[i].b.x, faceBlock[i].b.y, faceBlock[i].b.z,
+			faceBlock[i].c.x, faceBlock[i].c.y, faceBlock[i].c.z);
+	}
 
 	//write faceBlock
-	if(fwrite(faceBlock, sizeof(FACE), faceCount, out) != faceCount) {
+	if(fwrite(faceBlock, sizeof(FILEFACE), faceCount, out) != faceCount) {
 		printf("Error writing map file faces.\n");
 		fclose(out);
 		return(1);
@@ -742,7 +748,7 @@ bool PointInTriangle(VERTEX *polygon, float px, float py)
 }
 
 //quick function which got too messy in the loop below.
-bool QTBuilder::FaceInNode(const QTNode *q, const FACE *f) {
+bool QTBuilder::FaceInNode(const QTNode *q, const FILEFACE *f) {
 	const VERTEX *v1 = &f->a;
 	const VERTEX *v2 = &f->b;
 	const VERTEX *v3 = &f->c;
@@ -894,7 +900,7 @@ void QTNode::doSplit() {
 }
 
 void QTBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3) {
-	FACE f;
+	FILEFACE f;
 
 #ifdef MAX_Z
 	if(v1.z > MAX_Z && v2.z > MAX_Z && v3.z > MAX_Z)
@@ -1061,7 +1067,7 @@ int QTBuilder::ClipPolygon(POLYGON *poly, GVector *plane) {
 }
 
 
-void QTBuilder::NormalizeN(FACE *p) {
+void QTBuilder::NormalizeN(FILEFACE *p) {
 	float len = sqrt(p->nx*p->nx + p->ny*p->ny + p->nz*p->nz);
 	p->nx /= len;
 	p->ny /= len;

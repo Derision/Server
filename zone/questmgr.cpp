@@ -207,7 +207,13 @@ void QuestManager::echo(int colour, const char *str) {
    entity_list.MessageClose(initiator, false, 200, colour, str);
 }
 
-void QuestManager::say(const char *str) {
+void QuestManager::say(const char *str)
+{
+	if(!owner)
+	{
+		LogFile->write(EQEMuLog::Quest, "QuestManager::say called with NULL owner. Probably syntax error in quest file.");
+		return;
+	}
 
        if(RuleB(NPC, EnableNPCQuestJournal) && initiator)
                owner->QuestJournalledSay(initiator, str);

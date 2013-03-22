@@ -213,6 +213,7 @@ const char *__zp_names[ZoneProfiler::MaxZoneProfilerId] = {
 		"Mob_AI_Process_roambox",
 		"Mob_AI_Process_roamer",
 		"Mob_AI_Process_guard",
+		"NPC_Check_Signal",
 #ifdef EQBOTS
 		"Mob_BOT_Process",
 		"Mob_BOT_Process_IsEngaged",

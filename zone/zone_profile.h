@@ -126,6 +126,7 @@ public:
 		Mob_AI_Process_roambox,
 		Mob_AI_Process_roamer,
 		Mob_AI_Process_guard,
+		NPC_CheckSignal,
 
 		
 		

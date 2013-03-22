@@ -141,12 +141,27 @@ bool Map::loadMap(FILE *fp) {
 	//this was changed to this loop from the single read because valgrind was
 	//hanging on this read otherwise... I dont pretend to understand it.
 #ifdef SLOW_AND_CRAPPY_MAKES_VALGRIND_HAPPY
+	FILEFACE ff;
 	uint32 r;
 	for(r = 0; r < m_Faces; r++) {
-		if(fread(mFinalFaces+r, sizeof(FACE), 1, fp) != 1) {
+		//if(fread(mFinalFaces+r, sizeof(FACE), 1, fp) != 1) {
+		if(fread(&ff, sizeof(FILEFACE), 1, fp) != 1) {
 			printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
 			return(false);
 		}
+		mFinalFaces[r].a = ff.a;
+		mFinalFaces[r].b = ff.b;
+		mFinalFaces[r].c = ff.c;
+		mFinalFaces[r].nx = ff.nx;
+		mFinalFaces[r].ny = ff.ny;
+		mFinalFaces[r].nz = ff.nz;
+		mFinalFaces[r].nd = ff.nd;
+		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
 	}
 #else
 	uint32 count;
@@ -196,7 +211,10 @@ bool Map::loadMap(FILE *fp) {
 			_maxx = v;
 		v = Vmin3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
 		if(v < _minx)
+		{
+			printf("_minx of face %i is %8.3f\n", i, v);
 			_minx = v;
+		}
 		v = Vmax3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
 		if(v > _maxy)
 			_maxy = v;
@@ -498,6 +516,7 @@ bool Map::LineIntersectsNode( NodeRef node_r, VERTEX p1, VERTEX p2, VERTEX *resu
 
 float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) const {
 	_ZP(Map_FindBestZ);
+	
 
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
 
@@ -544,7 +563,36 @@ printf("Start finding best Z...\n");
 		               continue;       //watch for invalid lists, they seem to happen, e.g. in eastwastes.map
 
 			cur = &mFinalFaces[ *cfl ];
-//printf("Intersecting with face %lu\n", *cfl);
+
+			if(cur->minz > p1.z)
+			{
+				cfl++;
+				continue;
+			}
+
+			if(cur->maxx < p1.x)
+			{
+				cfl++;
+				continue;
+			}
+
+			if(cur->minx > p1.x)
+			{
+				cfl++;
+				continue;
+			}
+
+			if(cur->maxy < p1.y)
+			{
+				cfl++;
+				continue;
+			}
+
+			if(cur->miny > p1.y)
+			{
+				cfl++;
+				continue;
+			}
 			if(LineIntersectsFace(cur, p1, p2, result)) {
 #ifdef DEBUG_BEST_Z
 					printf("  %lu (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
@@ -585,26 +633,20 @@ bool Map::LineIntersectsFace( PFACE cface, VERTEX p1, VERTEX p2, VERTEX *result)
 	const VERTEX &pc = cface->c;
 	
 	//quick bounding box checks
-	float tbb;
+	//float tbb;
 	
-	tbb = Vmin3(x, pa, pb, pc);
-	if(p1.x < tbb && p2.x < tbb)
+	if(p1.x < cface->minx && p2.x < cface->minx)
 		return(false);
-	tbb = Vmin3(y, pa, pb, pc);
-	if(p1.y < tbb && p2.y < tbb)
+	if(p1.y < cface->miny && p2.y < cface->miny)
 		return(false);
-	tbb = Vmin3(z, pa, pb, pc);
-	if(p1.z < tbb && p2.z < tbb)
+	if(p1.z < cface->minz && p2.z < cface->minz)
 		return(false);
 	
-	tbb = Vmax3(x, pa, pb, pc);
-	if(p1.x > tbb && p2.x > tbb)
+	if(p1.x > cface->maxx && p2.x > cface->maxx)
 		return(false);
-	tbb = Vmax3(y, pa, pb, pc);
-	if(p1.y > tbb && p2.y > tbb)
+	if(p1.y > cface->maxy && p2.y > cface->maxy)
 		return(false);
-	tbb = Vmax3(z, pa, pb, pc);
-	if(p1.z > tbb && p2.z > tbb)
+	if(p1.z > cface->maxz && p2.z > cface->maxz)
 		return(false);
 	
 	//begin attempt 2

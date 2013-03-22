@@ -51,12 +51,21 @@ typedef struct _vertex{
 
 }VERTEX, *PVERTEX;
 
-typedef struct _face{
-//	unsigned long a, b, c;	//vertexs
+struct FILEFACE
+{
 	VERTEX a;
 	VERTEX b;
 	VERTEX c;
 	float nx, ny, nz, nd;
+};
+
+typedef struct _face
+{
+	VERTEX a;
+	VERTEX b;
+	VERTEX c;
+	float nx, ny, nz, nd;
+	float minx, maxx, miny, maxy, minz, maxz;
 }FACE, *PFACE;
 
 typedef struct _mapHeader {

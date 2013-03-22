@@ -77,13 +77,18 @@ int64 RDTSC_Timer::rdtsc() {
 #else
 	//gnu version
 	__asm__ __volatile__ ("rdtsc" : "=A" (res));
-#endif
+#endif //WIN32
 #else
 	//fall back to get time of day
 	timeval t;
 	gettimeofday(&t, NULL);
 	res = ((int64)t.tv_sec) * 1000 + t.tv_usec;
-#endif
+#endif //USR_RDTSC
+#else
+	//fall back to get time of day
+	timeval t;
+	gettimeofday(&t, NULL);
+	res = ((int64)t.tv_sec) * 1000 + t.tv_usec;
 #endif
 	return(res);
 }
@@ -117,7 +122,6 @@ void RDTSC_Timer::init() {
 	//if using gettimeofday, this is fixed at 1000
 	_ticsperms = 1000;
 #endif
-//	printf("Tics per milisecond: %llu \n", _ticsperms);
 	
 	_inited = true;	//only want to do this once	
 }
@@ -125,12 +129,14 @@ void RDTSC_Timer::init() {
 //start the timer
 void RDTSC_Timer::start() {
 	_start = rdtsc();
+	//printf("Setting _start to %llu\n", _start);
 	_end = 0;
 }
 
 //stop the timer
 void RDTSC_Timer::stop() {
 	_end = rdtsc();
+	//printf("Setting _end to %llu\n", _end);
 }
 
 //calculate the elapsed duration
@@ -148,8 +154,13 @@ RDTSC_Collector::RDTSC_Collector(bool start_it) : RDTSC_Timer(start_it) {
 	
 void RDTSC_Collector::stop() {
 	RDTSC_Timer::stop();
-	_sum += RDTSC_Timer::getTicks();
 	_count++;
+	if(RDTSC_Timer::getTicks() < 0)
+	{
+		//printf("Sum is %llu, adding %d\n", _sum, RDTSC_Timer::getTicks());
+		return;
+	}
+	_sum += RDTSC_Timer::getTicks();
 }
 
 //calculate the elapsed duration

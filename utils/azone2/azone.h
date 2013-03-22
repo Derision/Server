@@ -25,7 +25,7 @@ using namespace std;
 
 //quadtree stopping criteria, comment any to disable them
 #define MAX_QUADRENT_FACES 50	//if box has fewer than this, stop
-#define MIN_QUADRENT_SIZE 100.0f	//if box has a dimention smaller than this, stop
+#define MIN_QUADRENT_SIZE 25.0f	//if box has a dimention smaller than this, stop
 #define MIN_QUADRENT_GAIN 0.3f	//minimum split ratio before stopping
 #define MAX_QUADRENT_MISSES 2	//maximum number of quads which can miss their gains
 								//1 or 2 make sense, others are less useful
@@ -94,7 +94,7 @@ public:
 };
 
 struct FaceRecord {
-	FACE *face;
+	FILEFACE *face;
 	unsigned long index;
 };
 
@@ -114,7 +114,7 @@ public:
 	void TranslateVertex(VERTEX &v, float XOffset, float YOffset, float ZOffset);
 	bool writeMap(const char *file);
 	
-	bool FaceInNode(const QTNode *q, const FACE *f);
+	bool FaceInNode(const QTNode *q, const FILEFACE *f);
 protected:
 	
 	void AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3);
@@ -123,19 +123,19 @@ protected:
 	
 	//dynamic during load
 //	vector<VERTEX> _VertexList;
-	vector<FACE> _FaceList;
+	vector<FILEFACE> _FaceList;
 	
 	//static once loaded
 //	unsigned long vertexCount;
 	unsigned long faceCount;
 //	VERTEX * vertexBlock;
-	FACE * faceBlock;
+	FILEFACE * faceBlock;
 	
 	VERTEX tempvtx[MAX_POLY_VTX];
 	
 	QTNode *_root;
 	
-	static void NormalizeN(FACE *p);
+	static void NormalizeN(FILEFACE *p);
 
 #ifdef COUNT_MACTHES
 	unsigned long gEasyMatches;

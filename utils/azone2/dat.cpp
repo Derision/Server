@@ -32,7 +32,7 @@ float HeightWithinQuad(VERTEX p1, VERTEX p2, VERTEX p3, VERTEX p4, float x, floa
 	printf("\n\nPoint:	%8.3f, %8.3f\n", x, y);
 	*/
 
-	FACE f;
+	FILEFACE f;
 
 	int inTriangle = 0;
 

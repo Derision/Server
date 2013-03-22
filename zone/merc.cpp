@@ -1566,7 +1566,7 @@ void Merc::AI_Process() {
 
 	if(IsEngaged())
 	{
-		_ZP(Mob_BOT_Process_IsEngaged);
+		//_ZP(Mob_BOT_Process_IsEngaged);
 
 		if(rest_timer.Enabled())
 			rest_timer.Disable();
@@ -1935,7 +1935,7 @@ bool Merc::AI_EngagedCastCheck() {
 	bool failedToCast = false;
 
 	if (GetTarget() && AIautocastspell_timer->Check(false)) {
-		_ZP(Merc_AI_Process_engaged_cast);
+		//_ZP(Merc_AI_Process_engaged_cast);
 
 		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
 
@@ -1993,7 +1993,7 @@ bool Merc::AI_IdleCastCheck() {
 	bool failedToCast = false;
 
 	if (AIautocastspell_timer->Check(false)) {
-		_ZP(Merc_AI_IdleCastCheck);
+		//_ZP(Merc_AI_IdleCastCheck);
 #if MobAI_DEBUG_Spells >= 25
 		cout << "Non-Engaged autocast check triggered: " << this->GetCleanName() << endl;
 #endif
@@ -2040,7 +2040,7 @@ bool Merc::AI_IdleCastCheck() {
 }
 
 bool EntityList::Merc_AICheckCloseBeneficialSpells(Merc* caster, uint8 iChance, float iRange, uint32 iSpellTypes) {
-	_ZP(EntityList_Merc_AICheckCloseBeneficialSpells);
+	//_ZP(EntityList_Merc_AICheckCloseBeneficialSpells);
 
 	if((iSpellTypes&SpellTypes_Detrimental) != 0) {
 		//according to live, you can buff and heal through walls...
@@ -2150,7 +2150,7 @@ bool Merc::AIDoSpellCast(uint16 spellid, Mob* tar, int32 mana_cost, uint32* oDon
 }
 
 bool Merc::AICastSpell(int8 iChance, int32 iSpellTypes) {
-	_ZP(Bot_AICastSpell);
+	//_ZP(Bot_AICastSpell);
 
 	if(!AI_HasSpells())
 		return false;

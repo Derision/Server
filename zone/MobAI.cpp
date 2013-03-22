@@ -2138,6 +2138,7 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 }
 
 void NPC::CheckSignal() {
+	_ZP(NPC_CheckSignal);
 	if (!signal_q.empty()) {
 		int signal_id = signal_q.front();
 		signal_q.pop_front();
