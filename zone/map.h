@@ -19,6 +19,7 @@
 #define MAP_H
 
 #include <stdio.h>
+#include "RaycastMesh.h"
 
 //this is the current version number to expect from the map header
 #define MAP_VERSION 0x01000000
@@ -190,6 +191,7 @@ private:
 	float _minx, _miny, _maxx, _maxy;
 	
 	static void Normalize(VERTEX *p);
+	RaycastMesh *rm;
 
 //	void	RecLoadNode( PNODE	_node, FILE *l_f );
 //	void	RecFreeNode( PNODE	_node );

@@ -40,6 +40,7 @@ typedef unsigned long  DWORD;
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+#include <algorithm>
 //#include "EQWldData.h"
 #include "types.h"
 #include "azone.h"
@@ -357,7 +358,7 @@ bool QTBuilder::writeMap(const char *file) {
 	}
 
 	printf("Map header: Version: 0x%08lX. %lu faces, %u nodes, %lu facelists\n", head.version, head.face_count, head.node_count, head.facelist_count);
-
+	/*
 	for(int i = 0; i < faceCount; ++i)
 	{
 		printf("Face: %i, (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f),(%8.3f, %8.3f, %8.3f)\n", i,
@@ -365,6 +366,7 @@ bool QTBuilder::writeMap(const char *file) {
 			faceBlock[i].b.x, faceBlock[i].b.y, faceBlock[i].b.z,
 			faceBlock[i].c.x, faceBlock[i].c.y, faceBlock[i].c.z);
 	}
+	*/
 
 	//write faceBlock
 	if(fwrite(faceBlock, sizeof(FILEFACE), faceCount, out) != faceCount) {
@@ -374,7 +376,8 @@ bool QTBuilder::writeMap(const char *file) {
 	}
 
 	//make our node blocks to write out...
-	nodeHeader *nodes = new nodeHeader[head.node_count];
+	nodeHeader *nodes = new(nothrow) nodeHeader[head.node_count];
+	//memset(nodes, 0, sizeof(nodeHeader) * head.node_count);
 	unsigned long *facelist = new unsigned long[head.facelist_count];
 	if(nodes == NULL || facelist == NULL) {
 		printf("Error allocating temporary memory for output.\n");
@@ -445,6 +448,7 @@ void QTNode::clearNodes() {
 
 //assumes that both supplied arrays are big enough per countNodes/Facelists
 void QTNode::fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &hindex, unsigned long &findex) {
+	//printf("\n\n\n");
 	nodeHeader *head = &heads[hindex];
 	hindex++;
 
@@ -455,13 +459,24 @@ void QTNode::fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &
 	head->flags = 0;
 //printf("Node %u: (%.2f -> %.2f, %.2f -> %.2f)\n", hindex-1, head->minx, head->maxx, head->miny, head->maxy);
 	if(final) {
+		unsigned long r;
+		/*
+		printf("\nBefore sort\n");
+		for(r = 0; r < faces.size(); r++) {
+			printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", faces[r].index, faces[r].face->a.z, faces[r].face->b.z, faces[r].face->c.z,
+		Vmin3(z, faces[r].face->a, faces[r].face->b, faces[r].face->c));
+		}
+		*/
+		std::sort(faces.begin(), faces.end(), SortFaceRecordHighestZ);
 		head->flags |= nodeFinal;
 		head->faces.count = faces.size();
 		head->faces.offset = findex;
 //printf("	Final node with %u faces, list offset %lu.\n", head->faces.count, head->faces.offset);
-		unsigned long r;
+		//printf("\nAfter sort\n");
 		for(r = 0; r < head->faces.count; r++) {
 			flist[findex] = faces[r].index;
+			//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", faces[r].index, faces[r].face->a.z, faces[r].face->b.z, faces[r].face->c.z,
+			//	Vmin3(z, faces[r].face->a, faces[r].face->b, faces[r].face->c));
 			findex++;
 		}
 //		findex += head->faces.count;
@@ -539,6 +554,7 @@ void QTNode::divideYourself(int depth) {
 
 	unsigned long cc;
 	cc = faces.size();
+	//printf("Facecount is %i\n", cc);
 #ifdef MAX_QUADRANT_FACES
 	if(cc <= MAX_QUADRANT_FACES) {
 #ifdef SPLIT_DEBUG
@@ -550,6 +566,7 @@ printf("Stopping (facecount) on box (%.2f -> %.2f, %.2f -> %.2f) at depth %d wit
 	}
 #endif
 
+	//printf("Quadrant size is %8.3f by %8.3f\n", maxx - minx, maxy - miny);
 #ifdef MIN_QUADRANT_SIZE
 	if((maxx - minx) < MIN_QUADRANT_SIZE || (maxy - miny) < MIN_QUADRANT_SIZE) {
 #ifdef SPLIT_DEBUG
@@ -587,6 +604,7 @@ printf("Stopping on box (size) (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d 
 	if(gain4 < MIN_QUADRANT_GAIN)
 		miss++;
 
+	//printf("Gains are %8.3f, %8.3f, %8.3f, %8.3f\n", gain1, gain2, gain3, gain4);
 	if(miss > MAX_QUADRANT_MISSES) {
 #ifdef SPLIT_DEBUG
 printf("Stopping (gain) on box (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d faces.\n",

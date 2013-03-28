@@ -228,6 +228,34 @@ bool Map::loadMap(FILE *fp) {
 		if(v < _minz)
 			_minz = v;
 	}
+	printf("Building raycast mesh\n"); fflush(stdout);
+	RmReal *vertices = new RmReal[m_Faces * 9];
+	RmUint32 *indices = new RmUint32[m_Faces * 3];
+
+	uint32 vindex = 0, tindex = 0;
+	
+	for(r = 0; r < m_Faces; r++)
+	{
+		vertices[vindex++] = mFinalFaces[r].a.x;
+		vertices[vindex++] = mFinalFaces[r].a.y;
+		vertices[vindex++] = mFinalFaces[r].a.z;
+
+		vertices[vindex++] = mFinalFaces[r].b.x;
+		vertices[vindex++] = mFinalFaces[r].b.y;
+		vertices[vindex++] = mFinalFaces[r].b.z;
+
+		vertices[vindex++] = mFinalFaces[r].c.x;
+		vertices[vindex++] = mFinalFaces[r].c.y;
+		vertices[vindex++] = mFinalFaces[r].c.z;
+
+		indices[tindex] = tindex++;
+		indices[tindex] = tindex++;
+		indices[tindex] = tindex++;
+	}
+
+	rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
+
+	printf("Done building raycast mesh\n"); fflush(stdout);
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 	return(true);
@@ -517,8 +545,37 @@ bool Map::LineIntersectsNode( NodeRef node_r, VERTEX p1, VERTEX p2, VERTEX *resu
 float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) const {
 	_ZP(Map_FindBestZ);
 	
-
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
+
+	if(!result && !on)
+	{
+		RmReal from[3] = { p1.x, p1.y, p1.z };
+		RmReal to[3] = { p1.x, p1.y, BEST_Z_INVALID };
+		RmReal hitLocation[3];
+		RmReal normal[3];
+		RmReal hitDistance;
+
+		bool hit = rm->raycast(from,to,hitLocation,NULL,&hitDistance);
+
+		if(hit)
+		{
+			//printf("Used Raycastmesh\n");
+			return (float)hitLocation[2];
+		}
+
+		from[2] = from[2] + 10;
+	
+		hit = rm->raycast(from,to,hitLocation,NULL,&hitDistance);
+
+		if(hit)
+		{
+			//printf("Used Raycastmesh\n");
+			return (float)hitLocation[2];
+		}
+
+		return BEST_Z_INVALID;
+	}
+
 
 	if(RuleB(Map, UseClosestZ))
 		return FindClosestZ(p1);
@@ -537,6 +594,7 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 	VERTEX tmp_result;	//dummy placeholder if they do not ask for a result.
 	if(result == NULL)
 		result = &tmp_result;
+
 	
 	VERTEX p2(p1);
 	p2.z = BEST_Z_INVALID;
@@ -565,9 +623,10 @@ printf("Start finding best Z...\n");
 			cur = &mFinalFaces[ *cfl ];
 
 			if(cur->minz > p1.z)
-			{
-				cfl++;
-				continue;
+			{	
+				break;
+				//cfl++;
+				//continue;
 			}
 
 			if(cur->maxx < p1.x)
@@ -605,11 +664,12 @@ printf("Start finding best Z...\n");
 					if(on != NULL)
 						*on = cur;
 					best_z = result->z;
+					return best_z;
 				}
 			}
 			cfl++;
 		}
-
+		//printf("Total Checks: %i, Redundant Checks: %i\n", TotalChecks, RedundantChecks);
 		if(best_z != BEST_Z_INVALID) return best_z;
 
 		 p1.z = p1.z + 10 ;   // If we can't find a best Z, the NPC is probably just under the world. Try again from 10 units higher up.

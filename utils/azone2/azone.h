@@ -24,8 +24,8 @@ using namespace std;
 #define MAP_VERSION 0x01000000
 
 //quadtree stopping criteria, comment any to disable them
-#define MAX_QUADRANT_FACES 50	//if box has fewer than this, stop
-#define MIN_QUADRANT_SIZE 25.0f	//if box has a dimention smaller than this, stop
+#define MAX_QUADRANT_FACES 1000	//if box has fewer than this, stop
+//#define MIN_QUADRANT_SIZE 100.0f	//if box has a dimension smaller than this, stop
 #define MIN_QUADRANT_GAIN 0.3f	//minimum split ratio before stopping
 #define MAX_QUADRANT_MISSES 2	//maximum number of quads which can miss their gains
 								//1 or 2 make sense, others are less useful
@@ -97,6 +97,15 @@ struct FaceRecord {
 	FILEFACE *face;
 	unsigned long index;
 };
+
+#define Vmin3(o, a, b, c) ((a.o<b.o)? (a.o<c.o?a.o:c.o) : (b.o<c.o?b.o:c.o))
+
+bool SortFaceRecordHighestZ(FaceRecord a, FaceRecord b)
+{
+	float amz = Vmin3(z, a.face->a, a.face->b, a.face->c);
+	float bmz = Vmin3(z, b.face->a, b.face->b, b.face->c);
+	return bmz > amz;
+}
 
 class QTNode;
 
