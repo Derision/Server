@@ -188,13 +188,12 @@ bool Client::Process() {
 
 		if(linkdead_timer.Check()){
 			Save();
-			LeaveGroup();
 			if (GetMerc())
 			{
 				GetMerc()->Save();
-				GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
 				GetMerc()->Depop();
 			}
+			LeaveGroup();
 			Raid *myraid = entity_list.GetRaidByClient(this);
 			if (myraid)
 			{
@@ -209,7 +208,6 @@ bool Client::Process() {
 			if (GetMerc())
 			{
 				GetMerc()->Save();
-				GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
 				GetMerc()->Depop();
 			}
 			instalog = true;
@@ -249,7 +247,7 @@ bool Client::Process() {
 				UpdateMercTimer();
 		}
 
-		if(GetMercInfo().MercTemplateID != 0)
+		if(GetMercInfo().MercTemplateID != 0 && GetMercInfo().IsSuspended)
 		{
 			if(p_timers.Expired(&database, pTimerMercSuspend, false)) {
 					CheckMercSuspendTimer();
@@ -678,7 +676,6 @@ bool Client::Process() {
 			if (GetMerc())
 			{
 				GetMerc()->Save();
-				GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
 				GetMerc()->Depop();
 			}
 			return false;
@@ -727,7 +724,6 @@ bool Client::Process() {
 		}
 		if (GetMerc())
 		{
-			GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
 			GetMerc()->Depop();
 		}
 		adverrorinfo = 811;
@@ -1307,7 +1303,7 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	uint64 value = 0, amount_to_take = 0, amount_to_add = 0;
 	int32 *from_bucket = 0, *to_bucket = 0;
 	Mob* trader = trade->With();
-	
+
 	// could just do a range, but this is clearer and explicit
 	if
 	(

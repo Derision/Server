@@ -50,7 +50,6 @@ Merc::Merc(const NPCType* d, float x, float y, float z, float heading)
 	_lost_confidence = false;
 	_hatedCount = 0;
 
-	ourNPCData = d;
 	memset(equipment, 0, sizeof(equipment));
 
 	SetMercID(0);
@@ -74,7 +73,6 @@ Merc::Merc(const NPCType* d, float x, float y, float z, float heading)
 
 Merc::~Merc() {
 	AI_Stop();
-	safe_delete(ourNPCData); //Since mercs are dynamically alloc'd we should probably safe_delete the data they were made from. I'm not entirely sure this is safe to delete a const.
 	entity_list.RemoveMerc(this->GetID());
 	UninitializeBuffSlots();
 }
@@ -1915,9 +1913,9 @@ void Merc::AI_Start(int32 iMoveDelay) {
 		AIautocastspell_timer->Start(RandomTimer(0, 2000), false);
 	}
 
-	if (ourNPCData) {
+	if (NPCTypedata_ours) {
 		//AI_AddNPCSpells(ourNPCData->npc_spells_id);
-		NPCSpecialAttacks(ourNPCData->npc_attacks,0);
+		NPCSpecialAttacks(NPCTypedata_ours->npc_attacks,0);
 	}
 
 	SendTo(GetX(), GetY(), GetZ());
@@ -4917,7 +4915,6 @@ void Merc::Death(Mob* killerMob, int32 damage, uint16 spell, SkillType attack_sk
 
 	if(Suspend())
 	{
-		//todo: perl event?
 	}
 }
 
@@ -5310,7 +5307,7 @@ void Client::UpdateMercTimer()
 
 	if(merc && !merc->IsSuspended())
 	{
-		if(merc_timer.Check())
+		if(GetMercTimer()->Check())
 		{
 			uint32 upkeep = Merc::CalcUpkeepCost(merc->GetMercTemplateID(), GetLevel());
 
@@ -5325,8 +5322,9 @@ void Client::UpdateMercTimer()
 			}
 
 			GetMercInfo().MercTimerRemaining = RuleI(Mercs, UpkeepIntervalMS);
-			SendMercTimerPacket(GetMercID(), 5, 0, RuleI(Mercs, UpkeepIntervalMS), RuleI(Mercs, SuspendIntervalMS));
-			merc_timer.Start(RuleI(Mercs, UpkeepIntervalMS));
+			SendMercTimerPacket(GetMercID(), 5, 0, GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
+			GetMercTimer()->Start(RuleI(Mercs, UpkeepIntervalMS));			
+			GetMercTimer()->SetTimer(GetMercInfo().MercTimerRemaining);
 
 			// Send upkeep charge message and reset the upkeep timer
 			if (GetClientVersion() < EQClientRoF)
@@ -5507,6 +5505,12 @@ bool Client::CheckCanUnsuspendMerc() {
 		return false;
 	}
 
+	if(!GetPTimers().Expired(&database, pTimerMercSuspend, false))
+	{
+		SendMercMerchantResponsePacket(16);
+		Message(0, "You must wait %i seconds before unsuspending your mercenary.", GetPTimers().GetRemainingTime(pTimerMercSuspend)); //todo: find this packet response and tell them properly.
+		return false;	
+	}
 	return true;
 }
 
@@ -5528,9 +5532,7 @@ void Client::CheckMercSuspendTimer()
 {
 	if(GetMercInfo().SuspendedTime != 0) {
 			if(time(NULL) >= GetMercInfo().SuspendedTime){
-			GetMercInfo().SuspendedTime = 0;
-			SendMercSuspendResponsePacket(GetMercInfo().SuspendedTime);
-			p_timers.Start(pTimerMercSuspend, RuleI(Mercs, SuspendIntervalS));
+			SendMercSuspendResponsePacket(0);
 		}
 	}
 }
@@ -5596,12 +5598,13 @@ void Client::SpawnMercOnZone()
 			if(database.LoadMercInfo(this)) {
 				Merc* merc = Merc::LoadMerc(this, &zone->merc_templates[GetMercInfo().MercTemplateID], 0, true);
 				SpawnMerc(merc, false);
+				SendMercTimerPacket(merc->GetID(), 5, GetMercInfo().SuspendedTime, GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
 			}
 		}
 		else
 		{
 			// Send Mercenary Status/Timer packet
-			SendMercTimerPacket(0, 1, GetMercInfo().SuspendedTime, RuleI(Mercs, UpkeepIntervalMS), RuleI(Mercs, SuspendIntervalMS));
+			SendMercTimerPacket(0, 1, GetMercInfo().SuspendedTime, GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
 
 			SendMercPersonalInfo();
 
@@ -5637,22 +5640,18 @@ bool Merc::Suspend() {
 
 	SetSuspended(true);
 
-	/*if(HasGroup()) {
-		RemoveMercFromGroup(this, GetGroup());
-	}*/
-
-	Save();
-
 	mercOwner->GetMercInfo().IsSuspended = true;
 	mercOwner->GetMercInfo().SuspendedTime = time(NULL) + RuleI(Mercs, SuspendIntervalS);
-	mercOwner->GetMercInfo().MercTimerRemaining = mercOwner->GetMercTimer().GetRemainingTime();
+	mercOwner->GetMercInfo().MercTimerRemaining = mercOwner->GetMercTimer()->GetRemainingTime();
 	mercOwner->GetMercInfo().Stance = GetStance();
-	mercOwner->GetMercTimer().Disable();
-	//mercOwner->UpdateMercTimer();
+	Save();
+	mercOwner->GetMercTimer()->Disable();
+
 	mercOwner->SendMercSuspendResponsePacket(mercOwner->GetMercInfo().SuspendedTime);
 
 	Depop();
 
+	mercOwner->SendMercTimerPacket(0, 1, mercOwner->GetMercInfo().SuspendedTime, mercOwner->GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
 	return true;
 }
 
@@ -5675,15 +5674,13 @@ bool Merc::Unsuspend(bool setMaxStats) {
 
 		mercOwner->GetMercInfo().mercid = GetMercID();
 		mercOwner->GetMercInfo().IsSuspended = false;
-		mercOwner->GetMercInfo().SuspendedTime = 0;
 
 		mercOwner->SendMercenaryUnsuspendPacket(0);
 		mercOwner->SendMercenaryUnknownPacket(1);
-
-		mercOwner->SendMercTimerPacket(GetID(), mercState, suspendedTime, RuleI(Mercs, UpkeepIntervalMS), RuleI(Mercs, SuspendIntervalMS));
-
-		mercOwner->GetMercTimer().Start(mercOwner->GetMercInfo().MercTimerRemaining);
-
+		mercOwner->GetMercInfo().SuspendedTime = 0;
+		mercOwner->GetMercTimer()->Start(RuleI(Mercs, UpkeepIntervalMS));			
+		mercOwner->GetMercTimer()->SetTimer(mercOwner->GetMercInfo().MercTimerRemaining);
+		mercOwner->SendMercTimerPacket(GetID(), mercState, suspendedTime, mercOwner->GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
 		if(!mercOwner->GetPTimers().Expired(&database, pTimerMercSuspend, false))
 			mercOwner->GetPTimers().Clear(&database, pTimerMercSuspend);
 
@@ -5756,7 +5753,6 @@ bool Merc::Dismiss(){
 		return false;
 
 	mercOwner->SendClearMercInfo();
-	mercOwner->SendMercTimerPacket(GetID(), 5, 0, RuleI(Mercs, UpkeepIntervalMS), RuleI(Mercs, SuspendIntervalMS));
 
 	//SetMercEntityID(0);
 
@@ -5776,11 +5772,11 @@ void Merc::Zone() {
 
 void Merc::Depop() {
 	WipeHateList();
-
+	entity_list.RemoveMerc(this->GetID());
 	entity_list.RemoveFromHateLists(this);
 
 	if(HasGroup())
-		RemoveMercFromGroup(this, GetGroup());
+		Merc::RemoveMercFromGroup(this, GetGroup());
 
 	if(HasPet()) {
 		GetPet()->Depop();
@@ -5841,18 +5837,17 @@ bool Merc::AddMercToGroup(Merc* merc, Group* group) {
 	if(merc && group) {
 		// Remove merc from current group if any
 		if(merc->HasGroup()) {
-			merc->RemoveMercFromGroup(merc, merc->GetGroup());
+			Merc::RemoveMercFromGroup(merc, merc->GetGroup());
 		}
-		// Add merc to this group
-		if(group->AddMember(merc)) {
-			merc->SetFollowID(merc->GetMercOwner()->GetID());
-			Result = true;
+		//Try and add the member, followed by checking if the merc owner exists.
+		if(group->AddMember(merc) && merc->GetMercOwner() != NULL) { 
+				merc->SetFollowID(merc->GetMercOwner()->GetID());
+				Result = true;
 		}
-		else
-		{
+		else {
+			//Suspend it if the member is not added and the merc's owner is not valid.
 			merc->Suspend();
 		}
-
 	}
 
 	return Result;
@@ -5923,7 +5918,6 @@ void Client::SetMerc(Merc* newmerc) {
 		GetMercInfo().SuspendedTime = 0;
 		GetMercInfo().Gender = 0;
 		GetMercInfo().State = 0;
-		GetMercInfo().MercTimerRemaining = 0;
 		memset(GetMercInfo().merc_name, 0, 64);
 		memset(GetEPP().merc_name, 0, 64);
 	} else {
@@ -5940,7 +5934,6 @@ void Client::SetMerc(Merc* newmerc) {
 		GetMercInfo().SuspendedTime = 0;
 		GetMercInfo().Gender = newmerc->GetGender();
 		//GetMercInfo().State = newmerc->GetStance(); 
-		GetMercInfo().MercTimerRemaining = 0;
 	}
 }
 
@@ -5982,18 +5975,14 @@ void Client::SendMercSuspendResponsePacket(uint32 suspended_time) {
 
 void Client::SendMercTimerPacket(int32 entity_id, int32 merc_state, int32 suspended_time, int32 update_interval, int32 unk01) {
 
-	if (GetClientVersion() == EQClientSoD) {
-		update_interval = GetMercInfo().MercTimerRemaining;
-	}
-
 	// Send Mercenary Status/Timer packet
 	EQApplicationPacket *outapp = new EQApplicationPacket(OP_MercenaryTimer, sizeof(MercenaryStatus_Struct));
 	MercenaryStatus_Struct* mss = (MercenaryStatus_Struct*)outapp->pBuffer;
 	mss->MercEntityID = entity_id; // Seen 0 (no merc spawned) or unknown value when merc is spawned
-	mss->UpdateInterval = update_interval; // Seen 900000 - 15 minutes in ms
-	mss->MercUnk01 = unk01; // Seen 180000 - 3 minutes in ms - Used for the unsuspend button refresh timer
 	mss->MercState = merc_state; // Seen 5 (normal) or 1 (suspended)
 	mss->SuspendedTime = suspended_time; // Seen 0 for not suspended or Unix Timestamp for suspended merc
+	mss->UpdateInterval = update_interval; // Seen 900000 - 15 minutes in ms
+	mss->MercUnk01 = unk01; // Seen 180000 - 3 minutes in ms - Used for the unsuspend button refresh timer
 	FastQueuePacket(&outapp);
 }
 
