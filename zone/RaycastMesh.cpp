@@ -65,13 +65,65 @@ typedef std::vector< uint32 > TriVector;
 //! Integer representation of a floating-point value.
 #define IR(x)	((uint32&)x)
 
-bool intersectRayAABB(const float MinB[3],const float MaxB[3],const float origin[3],const float dir[3],float coord[3])
+bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTEX coord)
 {
 	bool Inside = true;
-	float MaxT[3];
-	MaxT[0]=MaxT[1]=MaxT[2]=-1.0f;
+	VERTEX MaxT;
+	MaxT.x = MaxT.y = MaxT.z = -1.0f;
 
 	// Find candidate planes.
+
+	if(origin.x < MinB.x)
+	{
+		coord.x	= MinB.x;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.x))	MaxT.x = (MinB.x - origin.x) / dir.x;
+	}
+	else if(origin.x > MaxB.x)
+	{
+		coord.x	= MaxB.x;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.x))	MaxT.x = (MaxB.x - origin.x) / dir.x;
+	}
+
+	if(origin.y < MinB.y)
+	{
+		coord.y	= MinB.y;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.y))	MaxT.y = (MinB.y - origin.y) / dir.y;
+	}
+	else if(origin.y > MaxB.y)
+	{
+		coord.y	= MaxB.y;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.y))	MaxT.y = (MaxB.y - origin.y) / dir.y;
+	}
+
+	if(origin.z < MinB.z)
+	{
+		coord.z	= MinB.z;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.z))	MaxT.z = (MinB.z - origin.z) / dir.z;
+	}
+	else if(origin.z > MaxB.z)
+	{
+		coord.z	= MaxB.z;
+		Inside		= false;
+
+		// Calculate T distances to candidate planes
+		if(IR(dir.z))	MaxT.z = (MaxB.z - origin.z) / dir.z;
+	}
+	/*
 	for(uint32 i=0;i<3;i++)
 	{
 		if(origin[i] < MinB[i])
@@ -91,33 +143,34 @@ bool intersectRayAABB(const float MinB[3],const float MaxB[3],const float origin
 			if(IR(dir[i]))	MaxT[i] = (MaxB[i] - origin[i]) / dir[i];
 		}
 	}
+	*/
 
 	// Ray origin inside bounding box
 	if(Inside)
 	{
-		coord[0] = origin[0];
-		coord[1] = origin[1];
-		coord[2] = origin[2];
+		coord.x = origin.x;
+		coord.y = origin.y;
+		coord.z = origin.z;
 		return true;
 	}
 
 	// Get largest of the maxT's for final choice of intersection
 	uint32 WhichPlane = 0;
-	if(MaxT[1] > MaxT[WhichPlane])	WhichPlane = 1;
-	if(MaxT[2] > MaxT[WhichPlane])	WhichPlane = 2;
+	if(MaxT.axis[1] > MaxT.axis[WhichPlane])	WhichPlane = 1;
+	if(MaxT.axis[2] > MaxT.axis[WhichPlane])	WhichPlane = 2;
 
 	// Check final candidate actually inside box
-	if(IR(MaxT[WhichPlane])&0x80000000) return false;
+	if(IR(MaxT.axis[WhichPlane])&0x80000000) return false;
 
 	for(uint32 i=0;i<3;i++)
 	{
 		if(i!=WhichPlane)
 		{
-			coord[i] = origin[i] + MaxT[WhichPlane] * dir[i];
+			coord.axis[i] = origin.axis[i] + MaxT.axis[WhichPlane] * dir.axis[i];
 			#ifdef RAYAABB_EPSILON
-			if(coord[i] < MinB[i] - RAYAABB_EPSILON || coord[i] > MaxB[i] + RAYAABB_EPSILON)	return false;
+			if(coord.axis[i] < MinB.axis[i] - RAYAABB_EPSILON || coord.axis[i] > MaxB.axis[i] + RAYAABB_EPSILON)	return false;
 			#else
-			if(coord[i] < MinB[i] || coord[i] > MaxB[i])	return false;
+			if(coord.axis[i] < MinB.axis[i] || coord.axis[i] > MaxB.axi[i])	return false;
 			#endif
 		}
 	}
@@ -127,7 +180,7 @@ bool intersectRayAABB(const float MinB[3],const float MaxB[3],const float origin
 
 
 
-bool intersectLineSegmentAABB(const float bmin[3],const float bmax[3],const float p1[3],const float dir[3],float &dist,float intersect[3])
+bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,float &dist,VERTEX intersect)
 {
 	bool ret = false;
 
@@ -136,9 +189,9 @@ bool intersectLineSegmentAABB(const float bmin[3],const float bmax[3],const floa
 		ret = intersectRayAABB(bmin,bmax,p1,dir,intersect);
 		if ( ret )
 		{
-			float dx = p1[0]-intersect[0];
-			float dy = p1[1]-intersect[1];
-			float dz = p1[2]-intersect[2];
+			float dx = p1.x-intersect.x;
+			float dy = p1.y-intersect.y;
+			float dz = p1.z-intersect.z;
 			float d = dx*dx+dy*dy+dz*dz;
 			if ( d < dist*dist )
 			{
@@ -155,24 +208,24 @@ bool intersectLineSegmentAABB(const float bmin[3],const float bmax[3],const floa
 
 /* a = b - c */
 #define vector(a,b,c) \
-	(a)[0] = (b)[0] - (c)[0];	\
-	(a)[1] = (b)[1] - (c)[1];	\
-	(a)[2] = (b)[2] - (c)[2];
+	(a).x = (b).x - (c).x;	\
+	(a).y = (b).y - (c).y;	\
+	(a).z = (b).z - (c).z;
 
 #define innerProduct(v,q) \
-	((v)[0] * (q)[0] + \
-	(v)[1] * (q)[1] + \
-	(v)[2] * (q)[2])
+	((v).x * (q).x + \
+	(v).y * (q).y + \
+	(v).z * (q).z)
 
 #define crossProduct(a,b,c) \
-	(a)[0] = (b)[1] * (c)[2] - (c)[1] * (b)[2]; \
-	(a)[1] = (b)[2] * (c)[0] - (c)[2] * (b)[0]; \
-	(a)[2] = (b)[0] * (c)[1] - (c)[0] * (b)[1];
+	(a).x = (b).y * (c).z - (c).y * (b).z; \
+	(a).y = (b).z * (c).x - (c).z * (b).x; \
+	(a).z = (b).x * (c).y - (c).x * (b).y;
 
 
-static inline bool rayIntersectsTriangle(const float *p,const float *d,const float *v0,const float *v1,const float *v2,float &t)
+static inline bool rayIntersectsTriangle(VERTEX p,VERTEX d, VERTEX v0, VERTEX v1, VERTEX v2,float &t)
 {
-	float e1[3],e2[3],h[3],s[3],q[3];
+	VERTEX e1,e2,h,s,q;
 	float a,f,u,v;
 
 	vector(e1,v1,v0);
@@ -204,15 +257,15 @@ static inline bool rayIntersectsTriangle(const float *p,const float *d,const flo
 		return (false);
 }
 
-static float computePlane(const float *A,const float *B,const float *C,float *n) // returns D
+static float computePlane(VERTEX A,VERTEX B, VERTEX C, VERTEX *n) // returns D
 {
-	float vx = (B[0] - C[0]);
-	float vy = (B[1] - C[1]);
-	float vz = (B[2] - C[2]);
+	float vx = (B.x - C.x);
+	float vy = (B.y - C.y);
+	float vz = (B.z - C.z);
 
-	float wx = (A[0] - B[0]);
-	float wy = (A[1] - B[1]);
-	float wz = (A[2] - B[2]);
+	float wx = (A.x - B.x);
+	float wy = (A.y - B.y);
+	float wz = (A.z - B.z);
 
 	float vw_x = vy * wz - vz * wy;
 	float vw_y = vz * wx - vx * wz;
@@ -234,11 +287,11 @@ static float computePlane(const float *A,const float *B,const float *C,float *n)
 	float z = vw_z * mag;
 
 
-	float D = 0.0f - ((x*A[0])+(y*A[1])+(z*A[2]));
+	float D = 0.0f - ((x*A.x)+(y*A.y)+(z*A.z));
 
-	n[0] = x;
-	n[1] = y;
-	n[2] = z;
+	n->x = x;
+	n->y = y;
+	n->z = z;
 
 	return D;
 }
@@ -269,76 +322,76 @@ class BoundsAABB
 public:
 
 
-	void setMin(const float *v)
+	void setMin(VERTEX v)
 	{
-		mMin[0] = v[0];
-		mMin[1] = v[1];
-		mMin[2] = v[2];
+		mMin.x = v.x;
+		mMin.y = v.y;
+		mMin.z = v.z;
 	}
 
-	void setMax(const float *v)
+	void setMax(VERTEX v)
 	{
-		mMax[0] = v[0];
-		mMax[1] = v[1];
-		mMax[2] = v[2];
+		mMax.x = v.x;
+		mMax.y = v.y;
+		mMax.z = v.z;
 	}
 
 	void setMin(float x,float y,float z)
 	{
-		mMin[0] = x;
-		mMin[1] = y;
-		mMin[2] = z;
+		mMin.x = x;
+		mMin.y = y;
+		mMin.z = z;
 	}
 
 	void setMax(float x,float y,float z)
 	{
-		mMax[0] = x;
-		mMax[1] = y;
-		mMax[2] = z;
+		mMax.x = x;
+		mMax.y = y;
+		mMax.z = z;
 	}
 
-	void include(const float *v)
+	void include(VERTEX v)
 	{
-		if ( v[0] < mMin[0] ) mMin[0] = v[0];
-		if ( v[1] < mMin[1] ) mMin[1] = v[1];
-		if ( v[2] < mMin[2] ) mMin[2] = v[2];
+		if ( v.x < mMin.x ) mMin.x = v.x;
+		if ( v.y < mMin.y ) mMin.y = v.y;
+		if ( v.z < mMin.z ) mMin.z = v.z;
 
-		if ( v[0] > mMax[0] ) mMax[0] = v[0];
-		if ( v[1] > mMax[1] ) mMax[1] = v[1];
-		if ( v[2] > mMax[2] ) mMax[2] = v[2];
+		if ( v.x > mMax.x ) mMax.x = v.x;
+		if ( v.y > mMax.y ) mMax.y = v.y;
+		if ( v.z > mMax.z ) mMax.z = v.z;
 	}
 
-	void getCenter(float *center) const
+	void getCenter(VERTEX *center) const
 	{
-		center[0] = (mMin[0]+mMax[0])*0.5f;
-		center[1] = (mMin[1]+mMax[1])*0.5f;
-		center[2] = (mMin[2]+mMax[2])*0.5f;
+		center->x = (mMin.x + mMax.x)*0.5f;
+		center->y = (mMin.y + mMax.y)*0.5f;
+		center->z = (mMin.z + mMax.z)*0.5f;
 	}
 
 	bool intersects(const BoundsAABB &b) const
 	{
-		if ((mMin[0] > b.mMax[0]) || (b.mMin[0] > mMax[0])) return false;
-		if ((mMin[1] > b.mMax[1]) || (b.mMin[1] > mMax[1])) return false;
-		if ((mMin[2] > b.mMax[2]) || (b.mMin[2] > mMax[2])) return false;
+		if ((mMin.x > b.mMax.x) || (b.mMin.x > mMax.x)) return false;
+		if ((mMin.y > b.mMax.y) || (b.mMin.y > mMax.y)) return false;
+		if ((mMin.z > b.mMax.z) || (b.mMin.z > mMax.z)) return false;
 		return true;
 	}
 
-	bool containsTriangle(const float *p1,const float *p2,const float *p3) const
+	bool containsTriangle(FACE f) const
 	{
 		BoundsAABB b;
-		b.setMin(p1);
-		b.setMax(p1);
-		b.include(p2);
-		b.include(p3);
+		b.setMin(f.a);
+		b.setMax(f.a);
+		b.include(f.b);
+		b.include(f.c);
 		return intersects(b);
 	}
 
-	bool containsTriangleExact(const float *p1,const float *p2,const float *p3,uint32 &orCode) const
+	bool containsTriangleExact(FACE f,uint32 &orCode) const
 	{
 		bool ret = false;
 
 		uint32 andCode;
-		orCode = getClipCode(p1,p2,p3,andCode);
+		orCode = getClipCode(f, andCode);
 		if ( andCode == 0 )
 		{
 			ret = true;
@@ -347,45 +400,45 @@ public:
 		return ret;
 	}
 
-	inline uint32 getClipCode(const float *p1,const float *p2,const float *p3,uint32 &andCode) const
+	inline uint32 getClipCode(FACE f, uint32 &andCode) const
 	{
 		andCode = 0xFFFFFFFF;
-		uint32 c1 = getClipCode(p1);
-		uint32 c2 = getClipCode(p2);
-		uint32 c3 = getClipCode(p3);
+		uint32 c1 = getClipCode(f.a);
+		uint32 c2 = getClipCode(f.b);
+		uint32 c3 = getClipCode(f.c);
 		andCode&=c1;
 		andCode&=c2;
 		andCode&=c3;
 		return c1|c2|c3;
 	}
 
-	inline uint32 getClipCode(const float *p) const
+	inline uint32 getClipCode(VERTEX p) const
 	{
 		uint32 ret = 0;
 
-		if ( p[0] < mMin[0] ) 
+		if ( p.x < mMin.x ) 
 		{
 			ret|=CC_MINX;
 		}
-		else if ( p[0] > mMax[0] )
+		else if ( p.x > mMax.x )
 		{
 			ret|=CC_MAXX;
 		}
 
-		if ( p[1] < mMin[1] ) 
+		if ( p.y < mMin.y ) 
 		{
 			ret|=CC_MINY;
 		}
-		else if ( p[1] > mMax[1] )
+		else if ( p.y > mMax.y )
 		{
 			ret|=CC_MAXY;
 		}
 
-		if ( p[2] < mMin[2] ) 
+		if ( p.z < mMin.z ) 
 		{
 			ret|=CC_MINZ;
 		}
-		else if ( p[2] > mMax[2] )
+		else if ( p.z > mMax.z )
 		{
 			ret|=CC_MAXZ;
 		}
@@ -395,16 +448,16 @@ public:
 
 	inline void clamp(const BoundsAABB &aabb)
 	{
-		if ( mMin[0] < aabb.mMin[0] ) mMin[0] = aabb.mMin[0];
-		if ( mMin[1] < aabb.mMin[1] ) mMin[1] = aabb.mMin[1];
-		if ( mMin[2] < aabb.mMin[2] ) mMin[2] = aabb.mMin[2];
-		if ( mMax[0] > aabb.mMax[0] ) mMax[0] = aabb.mMax[0];
-		if ( mMax[1] > aabb.mMax[1] ) mMax[1] = aabb.mMax[1];
-		if ( mMax[2] > aabb.mMax[2] ) mMax[2] = aabb.mMax[2];
+		if ( mMin.x < aabb.mMin.x ) mMin.x = aabb.mMin.x;
+		if ( mMin.y < aabb.mMin.y ) mMin.y = aabb.mMin.y;
+		if ( mMin.z < aabb.mMin.z ) mMin.z = aabb.mMin.z;
+		if ( mMax.x > aabb.mMax.x ) mMax.x = aabb.mMax.x;
+		if ( mMax.y > aabb.mMax.y ) mMax.y = aabb.mMax.y;
+		if ( mMax.z > aabb.mMax.z ) mMax.z = aabb.mMax.z;
 	}
 
-	float		mMin[3];
-	float		mMax[3];
+	VERTEX mMin;
+	VERTEX mMax;
 };
 
 
@@ -414,7 +467,7 @@ class NodeInterface
 {
 public:
 	virtual NodeAABB * getNode(void) = 0;
-	virtual void getFaceNormal(uint32 tri,float *faceNormal) = 0;
+	virtual void getFaceNormal(uint32 tri, VERTEX *faceNormal) = 0;
 };
 
 
@@ -431,7 +484,7 @@ public:
 			mLeafTriangleIndex= TRI_EOF;
 		}
 
-		NodeAABB(uint32 vcount,const float *vertices,uint32 tcount,uint32 *indices,
+		NodeAABB(uint32 FaceCount,PFACE Faces,
 			uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
 			uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
 			float	minAxisSize,
@@ -443,20 +496,29 @@ public:
 			mRight = NULL;
 			mLeafTriangleIndex = TRI_EOF;
 			TriVector triangles;
-			triangles.reserve(tcount);
-			for (uint32 i=0; i<tcount; i++)
+			triangles.reserve(FaceCount);
+			for (uint32 i=0; i<FaceCount; i++)
 			{
 				triangles.push_back(i);
 			}
-			mBounds.setMin( vertices );
-			mBounds.setMax( vertices );
+			mBounds.setMin( Faces[0].a );
+			mBounds.setMax( Faces[0].a );
+
+			for(uint32 i = 0; i < FaceCount; ++i)
+			{
+				mBounds.include(Faces[i].a);
+				mBounds.include(Faces[i].b);
+				mBounds.include(Faces[i].c);
+			}
+			/*
 			const float *vtx = vertices+3;
 			for (uint32 i=1; i<vcount; i++)
 			{
 				mBounds.include( vtx );
 				vtx+=3;
 			}
-			split(triangles,vcount,vertices,tcount,indices,0,maxDepth,minLeafSize,minAxisSize,callback,leafTriangles);
+			*/
+			split(triangles, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 		}
 
 		NodeAABB(const BoundsAABB &aabb)
@@ -472,11 +534,7 @@ public:
 		}
 
 		// here is where we split the mesh..
-		void split(const TriVector &triangles,
-			uint32 vcount,
-			const float *vertices,
-			uint32 tcount,
-			const uint32 *indices,
+		void split(const TriVector &triangles, uint32 FaceCount, PFACE Faces,
 			uint32 depth,
 			uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
 			uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
@@ -486,9 +544,9 @@ public:
 
 		{
 			// Find the longest axis of the bounding volume of this node
-			float dx = mBounds.mMax[0] - mBounds.mMin[0];
-			float dy = mBounds.mMax[1] - mBounds.mMin[1];
-			float dz = mBounds.mMax[2] - mBounds.mMin[2];
+			float dx = mBounds.mMax.x - mBounds.mMin.x;
+			float dy = mBounds.mMax.y - mBounds.mMin.y;
+			float dz = mBounds.mMax.z - mBounds.mMin.z;
 
 			AxisAABB axis = AABB_XAXIS;
 			float laxis = dx;
@@ -513,7 +571,7 @@ public:
 			// we create the leaf node and copy the triangles into the leaf node triangle array.
 			if ( count < minLeafSize || depth >= maxDepth || laxis < minAxisSize )
 			{ 
-				printf("Created leaf node with %i triangles\n", count);
+				//printf("Created leaf node with %i triangles\n", count);
 				// Copy the triangle indices into the leaf triangles array
 				mLeafTriangleIndex = leafTriangles.size(); // assign the array start location for these leaf triangles.
 				leafTriangles.push_back(count);
@@ -525,8 +583,8 @@ public:
 			}
 			else
 			{
-				float center[3];
-				mBounds.getCenter(center);
+				VERTEX center;
+				mBounds.getCenter(&center);
 				BoundsAABB b1,b2;
 				splitRect(axis,mBounds,b1,b2,center);
 
@@ -546,6 +604,7 @@ public:
 					uint32 tri = (*i); 
 
 					{
+						/*
 						uint32 i1 = indices[tri*3+0];
 						uint32 i2 = indices[tri*3+1];
 						uint32 i3 = indices[tri*3+2];
@@ -553,34 +612,35 @@ public:
 						const float *p1 = &vertices[i1*3];
 						const float *p2 = &vertices[i2*3];
 						const float *p3 = &vertices[i3*3];
+						*/
 
 						uint32 addCount = 0;
 						uint32 orCode=0xFFFFFFFF;
-						if ( b1.containsTriangleExact(p1,p2,p3,orCode))
+						if ( b1.containsTriangleExact(Faces[tri],orCode))
 						{
 							addCount++;
 							if ( leftTriangles.empty() )
 							{
-								leftBounds.setMin(p1);
-								leftBounds.setMax(p1);
+								leftBounds.setMin(Faces[tri].a);
+								leftBounds.setMax(Faces[tri].a);
 							}
-							leftBounds.include(p1);
-							leftBounds.include(p2);
-							leftBounds.include(p3);
+							leftBounds.include(Faces[tri].a);
+							leftBounds.include(Faces[tri].b);
+							leftBounds.include(Faces[tri].c);
 							leftTriangles.push_back(tri); // Add this triangle to the 'left triangles' array and revise the left triangles bounding volume
 						}
 						// if the orCode is zero; meaning the triangle was fully self-contiained int he left bounding box; then we don't need to test against the right
-						if ( orCode && b2.containsTriangleExact(p1,p2,p3,orCode))
+						if ( orCode && b2.containsTriangleExact(Faces[tri],orCode))
 						{
 							addCount++;
 							if ( rightTriangles.empty() )
 							{
-								rightBounds.setMin(p1);
-								rightBounds.setMax(p1);
+								rightBounds.setMin(Faces[tri].a);
+								rightBounds.setMax(Faces[tri].a);
 							}
-							rightBounds.include(p1);
-							rightBounds.include(p2);
-							rightBounds.include(p3);
+							rightBounds.include(Faces[tri].a);
+							rightBounds.include(Faces[tri].b);
+							rightBounds.include(Faces[tri].c);
 							rightTriangles.push_back(tri); // Add this triangle to the 'right triangles' array and revise the right triangles bounding volume.
 						}
 						assert( addCount );
@@ -593,7 +653,7 @@ public:
 					mLeft = callback->getNode();	// get a new AABB node
 					new ( mLeft ) NodeAABB(leftBounds);		// initialize it to default constructor values.  
 					// Then recursively split this node.
-					mLeft->split(leftTriangles,vcount,vertices,tcount,indices,depth+1,maxDepth,minLeafSize,minAxisSize,callback,leafTriangles);
+					mLeft->split(leftTriangles, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 				}
 
 				if ( !rightTriangles.empty() ) // If there are triangles in the right half then..
@@ -602,40 +662,40 @@ public:
 					mRight = callback->getNode(); // allocate and default initialize a new node
 					new ( mRight ) NodeAABB(rightBounds);
 					// Recursively split this node.
-					mRight->split(rightTriangles,vcount,vertices,tcount,indices,depth+1,maxDepth,minLeafSize,minAxisSize,callback,leafTriangles);
+					mRight->split(rightTriangles, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 				}
 
 			}
 		}
 
-		void splitRect(AxisAABB axis,const BoundsAABB &source,BoundsAABB &b1,BoundsAABB &b2,const float *midpoint)
+		void splitRect(AxisAABB axis,const BoundsAABB &source,BoundsAABB &b1,BoundsAABB &b2,VERTEX midpoint)
 		{
 			switch ( axis )
 			{
 				case AABB_XAXIS:
 					{
 						b1.setMin( source.mMin );
-						b1.setMax( midpoint[0], source.mMax[1], source.mMax[2] );
+						b1.setMax( midpoint.x, source.mMax.y, source.mMax.z );
 
-						b2.setMin( midpoint[0], source.mMin[1], source.mMin[2] );
+						b2.setMin( midpoint.x, source.mMin.y, source.mMin.z );
 						b2.setMax(source.mMax);
 					}
 					break;
 				case AABB_YAXIS:
 					{
 						b1.setMin(source.mMin);
-						b1.setMax(source.mMax[0], midpoint[1], source.mMax[2]);
+						b1.setMax(source.mMax.x, midpoint.y, source.mMax.z);
 
-						b2.setMin(source.mMin[0], midpoint[1], source.mMin[2]);
+						b2.setMin(source.mMin.x, midpoint.y, source.mMin.z);
 						b2.setMax(source.mMax);
 					}
 					break;
 				case AABB_ZAXIS:
 					{
 						b1.setMin(source.mMin);
-						b1.setMax(source.mMax[0], source.mMax[1], midpoint[2]);
+						b1.setMax(source.mMax.x, source.mMax.y, midpoint.z);
 
-						b2.setMin(source.mMin[0], source.mMin[1], midpoint[2]);
+						b2.setMin(source.mMin.x, source.mMin.y, midpoint.z);
 						b2.setMax(source.mMax);
 					}
 					break;
@@ -644,14 +704,13 @@ public:
 
 
 		virtual void raycast(bool &hit,
-							const float *from,
-							const float *to,
-							const float *dir,
-							float *hitLocation,
-							float *hitNormal,
+							VERTEX from,
+							VERTEX to,
+							VERTEX dir,
+							VERTEX *hitLocation,
+							VERTEX *hitNormal,
 							float *hitDistance,
-							const float *vertices,
-							const uint32 *indices,
+							PFACE Faces,
 							float &nearestDistance,
 							NodeInterface *callback,
 							uint32 *raycastTriangles,
@@ -659,7 +718,7 @@ public:
 							const TriVector &leafTriangles,
 							uint32 &nearestTriIndex)
 		{
-			float sect[3];
+			VERTEX sect;
 			float nd = nearestDistance;
 			if ( !intersectLineSegmentAABB(mBounds.mMin,mBounds.mMax,from,dir,nd,sect) )
 			{
@@ -677,6 +736,7 @@ public:
 					if ( raycastTriangles[tri] != raycastFrame )
 					{
 						raycastTriangles[tri] = raycastFrame;
+						/*
 						uint32 i1 = indices[tri*3+0];
 						uint32 i2 = indices[tri*3+1];
 						uint32 i3 = indices[tri*3+2];
@@ -684,9 +744,10 @@ public:
 						const float *p1 = &vertices[i1*3];
 						const float *p2 = &vertices[i2*3];
 						const float *p3 = &vertices[i3*3];
+						*/
 
 						float t;
-						if ( rayIntersectsTriangle(from,dir,p1,p2,p3,t))
+						if ( rayIntersectsTriangle(from, dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t))
 						{
 							bool accept = false;
 							if ( t == nearestDistance && tri < nearestTriIndex )
@@ -698,9 +759,9 @@ public:
 								nearestDistance = t;
 								if ( hitLocation )
 								{
-									hitLocation[0] = from[0]+dir[0]*t;
-									hitLocation[1] = from[1]+dir[1]*t;
-									hitLocation[2] = from[2]+dir[2]*t;
+									hitLocation->x = from.x + dir.x * t;
+									hitLocation->y = from.y + dir.y * t;
+									hitLocation->z = from.z + dir.z * t;
 								}
 								if ( hitNormal )
 								{
@@ -721,13 +782,28 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,vertices,indices,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance,vertices,indices,nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
 				}
 			}
+		}
+
+		void Dump(uint32 Depth)
+		{
+			//if(Depth > 3)
+			//	return;
+
+			printf("Dump at depth %i, mLeafTriangleIndex is %i\n", Depth, mLeafTriangleIndex);
+			if((mLeafTriangleIndex != 0) && (mLeafTriangleIndex != 0xFFFFFFFF))
+				abort();
+			if(mLeft)
+				mLeft->Dump(Depth + 1);
+
+			if(mRight)
+				mLeft->Dump(Depth + 1);
 		}
 
 		NodeAABB		*mLeft;			// left node
@@ -740,7 +816,7 @@ class MyRaycastMesh : public RaycastMesh, public NodeInterface
 {
 public:
 
-	MyRaycastMesh(uint32 vcount, float *vertices,uint32 tcount, uint32 *indices,uint32 maxDepth,uint32 minLeafSize,float minAxisSize)
+	MyRaycastMesh(uint32 FaceCount, PFACE Faces, uint32 maxDepth,uint32 minLeafSize,float minAxisSize)
 	{
 		mRaycastFrame = 0;
 		if ( maxDepth < 2 )
@@ -757,49 +833,50 @@ public:
 		{
 			mMaxNodeCount+=pow2Table[i];
 		}
+		printf("MyRayCastMesh constructor, allocating new NodeAABB[%i]\n", mMaxNodeCount);
 		mNodes = new NodeAABB[mMaxNodeCount];
 		mNodeCount = 0;
-		mVcount = vcount;
-		//mVertices = (float *)::malloc(sizeof(float)*3*vcount);
-		//memcpy(mVertices,vertices,sizeof(float)*3*vcount);
-		mVertices = vertices;
-		mTcount = tcount;
-		//mIndices = (uint32 *)::malloc(sizeof(uint32)*tcount*3);
-		//memcpy(mIndices,indices,sizeof(uint32)*tcount*3);
-		mIndices = indices;
-		mRaycastTriangles = (uint32 *)::malloc(tcount*sizeof(uint32));
-		memset(mRaycastTriangles,0,tcount*sizeof(uint32));
+		mFaceCount = FaceCount;
+		mFaces = Faces;
+		mRaycastTriangles = (uint32 *)::malloc(mFaceCount*sizeof(uint32));
+		memset(mRaycastTriangles,0,mFaceCount*sizeof(uint32));
 		mRoot = getNode();
+		printf("mRoot is %8X\n", mRoot);
 		mFaceNormals = NULL;
-		new ( mRoot ) NodeAABB(mVcount,mVertices,mTcount,mIndices,maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
+		new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
 	}
 
 	~MyRaycastMesh(void)
 	{
 		delete []mNodes;
-		::free(mVertices);
-		::free(mIndices);
 		::free(mFaceNormals);
 		::free(mRaycastTriangles);
 	}
+	
+	void Dump(uint32 Depth)
+	{
+		mRoot->Dump(Depth);
+	}
 
-	virtual bool raycast(const float *from,const float *to,float *hitLocation,float *hitNormal,float *hitDistance)
+	virtual bool raycast(VERTEX from, VERTEX to,VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance)
 	{
 		bool ret = false;
 
-		float dir[3];
+		VERTEX dir(to.x - from .x, to.y - from.y, to.z - from.z);
+		/*
 		dir[0] = to[0] - from[0];
 		dir[1] = to[1] - from[1];
 		dir[2] = to[2] - from[2];
-		float distance = sqrtf( dir[0]*dir[0] + dir[1]*dir[1]+dir[2]*dir[2] );
+		*/
+		float distance = sqrtf( dir.x*dir.x + dir.y*dir.y+dir.z*dir.z );
 		if ( distance < 0.0000000001f ) return false;
 		float recipDistance = 1.0f / distance;
-		dir[0]*=recipDistance;
-		dir[1]*=recipDistance;
-		dir[2]*=recipDistance;
+		dir.x*=recipDistance;
+		dir.y*=recipDistance;
+		dir.z*=recipDistance;
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mVertices,mIndices,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
 		return ret;
 	}
 
@@ -808,11 +885,11 @@ public:
 		delete this;
 	}
 
-	virtual const float * getBoundMin(void) const // return the minimum bounding box
+	virtual const VERTEX getBoundMin(void) const // return the minimum bounding box
 	{
 		return mRoot->mBounds.mMin;
 	}
-	virtual const float * getBoundMax(void) const // return the maximum bounding box.
+	virtual const VERTEX getBoundMax(void) const // return the maximum bounding box.
 	{
 		return mRoot->mBounds.mMax;
 	}
@@ -825,11 +902,12 @@ public:
 		return ret;
 	}
 
-	virtual void getFaceNormal(uint32 tri,float *faceNormal) 
+	virtual void getFaceNormal(uint32 tri, VERTEX *faceNormal) 
 	{
 		if ( mFaceNormals == NULL )
 		{
-			mFaceNormals = (float *)::malloc(sizeof(float)*3*mTcount);
+			mFaceNormals = (VERTEX *)::malloc(sizeof(VERTEX) * mFaceCount);
+			/*
 			for (uint32 i=0; i<mTcount; i++)
 			{
 				uint32 i1		= mIndices[i*3+0];
@@ -841,35 +919,47 @@ public:
 				float *dest	= &mFaceNormals[i*3];
 				computePlane(p3,p2,p1,dest);
 			}
+			*/
+			for (uint32 i = 0; i < mFaceCount; ++i)
+			{
+				VERTEX *dest = &mFaceNormals[i];
+				computePlane(mFaces[i].c, mFaces[i].b, mFaces[i].a, dest);
+			}
 		}
+		VERTEX *src = &mFaceNormals[tri];
+		faceNormal = src;
+
+		/*
 		const float *src = &mFaceNormals[tri*3];
 		faceNormal[0] = src[0];
 		faceNormal[1] = src[1];
 		faceNormal[2] = src[2];
+		*/
 	}
 
-	virtual bool bruteForceRaycast(const float *from,const float *to,float *hitLocation,float *hitNormal,float *hitDistance)
+	virtual bool bruteForceRaycast(VERTEX from, VERTEX to,VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance)
 	{
 		bool ret = false;
 
-		float dir[3];
+		VERTEX dir;
 
-		dir[0] = to[0] - from[0];
-		dir[1] = to[1] - from[1];
-		dir[2] = to[2] - from[2];
+		dir.x = to.x - from.x;
+		dir.y = to.y - from.y;
+		dir.z = to.z - from.z;
 
-		float distance = sqrtf( dir[0]*dir[0] + dir[1]*dir[1]+dir[2]*dir[2] );
+		float distance = sqrtf( dir.x*dir.x + dir.y*dir.y+dir.z*dir.z );
 		if ( distance < 0.0000000001f ) return false;
 		float recipDistance = 1.0f / distance;
-		dir[0]*=recipDistance;
-		dir[1]*=recipDistance;
-		dir[2]*=recipDistance;
-		const uint32 *indices = mIndices;
-		const float *vertices = mVertices;
+		dir.x*=recipDistance;
+		dir.y*=recipDistance;
+		dir.z*=recipDistance;
+		//const uint32 *indices = mIndices;
+		//const float *vertices = mVertices;
 		float nearestDistance = distance;
 
-		for (uint32 tri=0; tri<mTcount; tri++)
+		for (uint32 tri=0; tri<mFaceCount; ++tri)
 		{
+			/*
 			uint32 i1 = indices[tri*3+0];
 			uint32 i2 = indices[tri*3+1];
 			uint32 i3 = indices[tri*3+2];
@@ -877,18 +967,19 @@ public:
 			const float *p1 = &vertices[i1*3];
 			const float *p2 = &vertices[i2*3];
 			const float *p3 = &vertices[i3*3];
+			*/
 
 			float t;
-			if ( rayIntersectsTriangle(from,dir,p1,p2,p3,t))
+			if ( rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t))
 			{
 				if ( t < nearestDistance )
 				{
 					nearestDistance = t;
 					if ( hitLocation )
 					{
-						hitLocation[0] = from[0]+dir[0]*t;
-						hitLocation[1] = from[1]+dir[1]*t;
-						hitLocation[2] = from[2]+dir[2]*t;
+						hitLocation->x = from.x+dir.x*t;
+						hitLocation->y = from.y+dir.y*t;
+						hitLocation->z = from.z+dir.z*t;
 					}
 
 					if ( hitNormal )
@@ -909,16 +1000,14 @@ public:
 
 	uint32		mRaycastFrame;
 	uint32		*mRaycastTriangles;
-	uint32		mVcount;
-	float			*mVertices;
-	float			*mFaceNormals;
-	uint32		mTcount;
-	uint32		*mIndices;
-	NodeAABB		*mRoot;
+	PFACE		mFaces;
+	uint32		mFaceCount;
+	VERTEX		*mFaceNormals;
+	NodeAABB	*mRoot;
 	uint32		mNodeCount;
 	uint32		mMaxNodeCount;
-	NodeAABB		*mNodes;
-	TriVector		mLeafTriangles;
+	NodeAABB	*mNodes;
+	TriVector	mLeafTriangles;
 };
 
 };
@@ -928,16 +1017,14 @@ public:
 using namespace RAYCAST_MESH;
 
 
-RaycastMesh * createRaycastMesh(uint32 vcount,		// The number of vertices in the source triangle mesh
-								float *vertices,		// The array of vertex positions in the format x1,y1,z1..x2,y2,z2.. etc.
-								uint32 tcount,		// The number of triangles in the source triangle mesh
-								uint32 *indices, // The triangle indices in the format of i1,i2,i3 ... i4,i5,i6, ...
-								uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
-								uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
-								float	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
-								)
+RaycastMesh * createRaycastMesh(uint32 FaceCount,
+				PFACE Faces,
+				uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
+				uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+				float	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
+				)
 {
-	MyRaycastMesh *m = new MyRaycastMesh(vcount,vertices,tcount,indices,maxDepth,minLeafSize,minAxisSize);
+	MyRaycastMesh *m = new MyRaycastMesh(FaceCount,Faces,maxDepth,minLeafSize,minAxisSize);
 	return static_cast< RaycastMesh * >(m);
 }
 

@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../common/types.h"
+#include "map_types.h"
 
 //typedef float float;
 //typedef unsigned int uint32;
@@ -39,25 +40,24 @@
 class RaycastMesh
 {
 public:
-	virtual bool raycast(const float *from,const float *to,float *hitLocation,float *hitNormal,float *hitDistance) = 0;
-	virtual bool bruteForceRaycast(const float *from,const float *to,float *hitLocation,float *hitNormal,float *hitDistance) = 0;
+	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance) = 0;
+	virtual bool bruteForceRaycast(VERTEX from, VERTEX to, VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance) = 0;
 
-	virtual const float * getBoundMin(void) const = 0; // return the minimum bounding box
-	virtual const float * getBoundMax(void) const = 0; // return the maximum bounding box.
+	virtual const VERTEX getBoundMin(void) const = 0; // return the minimum bounding box
+	virtual const VERTEX getBoundMax(void) const = 0; // return the maximum bounding box.
 	virtual void release(void) = 0;
+	virtual void Dump(uint32 Depth) = 0;
 protected:
 	virtual ~RaycastMesh(void) { };
 };
 
 
-RaycastMesh * createRaycastMesh(uint32 vcount,		// The number of vertices in the source triangle mesh
-								float *vertices,		// The array of vertex positions in the format x1,y1,z1..x2,y2,z2.. etc.
-								uint32 tcount,		// The number of triangles in the source triangle mesh
-								uint32 *indices, // The triangle indices in the format of i1,i2,i3 ... i4,i5,i6, ...
-								uint32 maxDepth=15,	// Maximum recursion depth for the triangle mesh.
-								uint32 minLeafSize=4,	// minimum triangles to treat as a 'leaf' node.
-								float	minAxisSize=0.01f	// once a particular axis is less than this size, stop sub-dividing.
-								);
+RaycastMesh * createRaycastMesh(uint32 FaceCount,
+				PFACE Faces,
+				uint32 maxDepth=15,	// Maximum recursion depth for the triangle mesh.
+				uint32 minLeafSize=4,	// minimum triangles to treat as a 'leaf' node.
+				float	minAxisSize=0.01f	// once a particular axis is less than this size, stop sub-dividing.
+				);
 
 
 #endif

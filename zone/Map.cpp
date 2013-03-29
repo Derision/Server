@@ -253,11 +253,15 @@ bool Map::loadMap(FILE *fp) {
 		indices[tindex] = tindex++;
 	}
 
-	rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
+	//rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
+	rm = createRaycastMesh(m_Faces, mFinalFaces);
 
 	printf("Done building raycast mesh\n"); fflush(stdout);
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
+
+	rm->Dump(0);
+
 	return(true);
 }
 
@@ -549,28 +553,35 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 
 	if(!result && !on)
 	{
+		/*
 		float from[3] = { p1.x, p1.y, p1.z };
 		float to[3] = { p1.x, p1.y, BEST_Z_INVALID };
 		float hitLocation[3];
 		float normal[3];
+		*/
+		VERTEX from(p1.x, p1.y, p1.z);
+		VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
+		VERTEX hitLocation;
+		VERTEX normal;
+
 		float hitDistance;
 
-		bool hit = rm->raycast(from,to,hitLocation,NULL,&hitDistance);
+		bool hit = rm->raycast(from,to,&hitLocation,NULL,&hitDistance);
 
 		if(hit)
 		{
 			//printf("Used Raycastmesh\n");
-			return (float)hitLocation[2];
+			return hitLocation.z;
 		}
 
-		from[2] = from[2] + 10;
+		from.z = from.z + 10;
 	
-		hit = rm->raycast(from,to,hitLocation,NULL,&hitDistance);
+		hit = rm->raycast(from,to,&hitLocation,NULL,&hitDistance);
 
 		if(hit)
 		{
 			//printf("Used Raycastmesh\n");
-			return (float)hitLocation[2];
+			return hitLocation.z;
 		}
 
 		return BEST_Z_INVALID;
