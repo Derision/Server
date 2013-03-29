@@ -2818,20 +2818,16 @@ float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
 	float ret = -999999;
 	if (zone->zonemap != 0)
 	{
-		NodeRef pnode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), new_x, new_y );
-		if (pnode != NODE_NONE)
+		VERTEX me;
+		me.x = new_x;
+		me.y = new_y;
+		me.z = z_pos+z_offset;
+		VERTEX hit;
+		FACE *onhit;
+		float best_z = zone->zonemap->FindBestZ(me, &hit, &onhit);
+		if (best_z != -999999)
 		{
-			VERTEX me;
-			me.x = new_x;
-			me.y = new_y;
-			me.z = z_pos+z_offset;
-			VERTEX hit;
-			FACE *onhit;
-			float best_z = zone->zonemap->FindBestZ(pnode, me, &hit, &onhit);
-			if (best_z != -999999)
-			{
-				ret = best_z;
-			}
+			ret = best_z;
 		}
 	}
 	return ret;
@@ -2843,20 +2839,16 @@ float Mob::GetGroundZ(float new_x, float new_y, float z_offset)
 	float ret = -999999;
 	if (zone->zonemap != 0)
 	{
-		NodeRef pnode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), new_x, new_y );
-		if (pnode != NODE_NONE)
+		VERTEX me;
+		me.x = new_x;
+		me.y = new_y;
+		me.z = z_pos+z_offset;
+		VERTEX hit;
+		FACE *onhit;
+		float best_z = zone->zonemap->FindBestZ(me, &hit, &onhit);
+		if (best_z != -999999)
 		{
-			VERTEX me;
-			me.x = new_x;
-			me.y = new_y;
-			me.z = z_pos+z_offset;
-			VERTEX hit;
-			FACE *onhit;
-			float best_z = zone->zonemap->FindBestZ(pnode, me, &hit, &onhit);
-			if (best_z != -999999)
-			{
-				ret = best_z;
-			}
+			ret = best_z;
 		}
 	}
 	return ret;

@@ -1159,7 +1159,7 @@ bool PathManager::NoHazards(VERTEX From, VERTEX To)
 	//
 	VERTEX MidPoint((From.x + To.x) / 2, (From.y + To.y) / 2, From.z);
 
-	float NewZ = zone->zonemap->FindBestZ(MAP_ROOT_NODE, MidPoint, NULL, NULL);
+	float NewZ = zone->zonemap->FindBestZ(MidPoint, NULL, NULL);
 
 	if(ABS(NewZ - From.z) > RuleR(Pathing, ZDiffThreshold))
 	{
@@ -1199,7 +1199,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 		stepz = (stepz/factor)*step_size;
 			
 		VERTEX TestPoint(curx, cury, curz);
-		float NewZ = zone->zonemap->FindBestZ(MAP_ROOT_NODE, TestPoint, NULL, NULL);
+		float NewZ = zone->zonemap->FindBestZ(TestPoint, NULL, NULL);
 		if(ABS(NewZ - last_z) > 5.0)
 		{
 			_log(PATHING__DEBUG, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
@@ -2018,7 +2018,7 @@ void PathManager::MoveNode(Client *c)
 	if(zone->zonemap)
 	{
 		VERTEX loc(c->GetX(), c->GetY(), c->GetZ());
-		Node->bestz = zone->zonemap->FindBestZ(MAP_ROOT_NODE, loc, NULL, NULL);
+		Node->bestz = zone->zonemap->FindBestZ(loc, NULL, NULL);
 	}
 	else
 	{

@@ -61,7 +61,7 @@ public:
 	//nodes to these functions must be final
 	bool LineIntersectsNode( NodeRef _node, VERTEX start, VERTEX end, VERTEX *result, FACE **on = NULL) const;
 	bool LineIntersectsFace( PFACE cface, VERTEX start, VERTEX end, VERTEX *result) const;
-	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = NULL) const;
+	inline float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const { return FindBestZ(GetRoot(), start, result, on); }
 	bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
 		
 //	inline unsigned int		GetVertexNumber( ) {return m_Vertex; }
@@ -82,6 +82,7 @@ public:
 	float FindClosestZ(VERTEX p ) const;
 
 private:
+	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = NULL) const;
 //	unsigned long m_Vertex;
 	uint32 m_Faces;
 	uint32 m_Nodes;

@@ -7676,7 +7676,7 @@ void command_path(Client *c, const Seperator *sep)
 			if(zone->zonemap)
 			{
 				VERTEX loc(px, py, pz);
-				best_z = zone->zonemap->FindBestZ(MAP_ROOT_NODE, loc, NULL, NULL);
+				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
 			}
 			else
 			{
@@ -7703,7 +7703,7 @@ void command_path(Client *c, const Seperator *sep)
 			if(zone->zonemap)
 			{
 				VERTEX loc(px, py, pz);
-				best_z = zone->zonemap->FindBestZ(MAP_ROOT_NODE, loc, NULL, NULL);
+				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
 			}
 			else
 			{
@@ -8064,7 +8064,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 	VERTEX bme(me);
 	bme.z -= 500;
 	
-	float best_z = zone->zonemap->FindBestZ(pnode, me, &hit, NULL);
+	float best_z = zone->zonemap->FindBestZ(me, &hit, NULL);
 	
 	float best_z2 = -999990;
 	if(zone->zonemap->LineIntersectsNode(pnode, me, bme, &hit, NULL)) {
@@ -8087,7 +8087,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 			me.x = x;
 			me.y = y;
 			me.z = 1000;
-			printf("%8.3f,%8.3f,%8.3f\n",x,y,zone->zonemap->FindBestZ(NULL, me, NULL, NULL));
+			printf("%8.3f,%8.3f,%8.3f\n",x,y,zone->zonemap->FindBestZ(me, NULL, NULL));
 
 		}
 	}
