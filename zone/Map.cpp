@@ -229,6 +229,7 @@ bool Map::loadMap(FILE *fp) {
 			_minz = v;
 	}
 	printf("Building raycast mesh\n"); fflush(stdout);
+	/*
 	float *vertices = new float[m_Faces * 9];
 	uint32 *indices = new uint32[m_Faces * 3];
 
@@ -253,20 +254,21 @@ bool Map::loadMap(FILE *fp) {
 		indices[tindex] = tindex++;
 	}
 
-	//rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
+	rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
+	*/
 	rm = createRaycastMesh(m_Faces, mFinalFaces);
 
 	printf("Done building raycast mesh\n"); fflush(stdout);
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 
-	rm->Dump(0);
-
 	return(true);
 }
 
 Map::~Map() {
 //	safe_delete_array(mFinalVertex);
+	rm->release();
+	rm = 0;
 	safe_delete_array(mFinalFaces);
 	safe_delete_array(mNodes);
 	safe_delete_array(mFaceLists);

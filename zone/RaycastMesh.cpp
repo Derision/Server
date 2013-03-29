@@ -833,7 +833,6 @@ public:
 		{
 			mMaxNodeCount+=pow2Table[i];
 		}
-		printf("MyRayCastMesh constructor, allocating new NodeAABB[%i]\n", mMaxNodeCount);
 		mNodes = new NodeAABB[mMaxNodeCount];
 		mNodeCount = 0;
 		mFaceCount = FaceCount;
@@ -841,7 +840,6 @@ public:
 		mRaycastTriangles = (uint32 *)::malloc(mFaceCount*sizeof(uint32));
 		memset(mRaycastTriangles,0,mFaceCount*sizeof(uint32));
 		mRoot = getNode();
-		printf("mRoot is %8X\n", mRoot);
 		mFaceNormals = NULL;
 		new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
 	}
