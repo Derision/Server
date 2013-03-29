@@ -8080,6 +8080,18 @@ void command_bestz(Client *c, const Seperator *sep) {
 		c->Message(0,"Found no Z.");
 	}
 
+	for(float x = -3960; x < 3960; x = x + 50)
+	{
+		for(float y = -2550; y < 3650; y = y + 50)
+		{
+			me.x = x;
+			me.y = y;
+			me.z = 1000;
+			printf("%8.3f,%8.3f,%8.3f\n",x,y,zone->zonemap->FindBestZ(NULL, me, NULL, NULL));
+
+		}
+	}
+
 	if(zone->watermap == NULL) {
 		c->Message(0,"Water Region Map not loaded for this zone");
 	} else {
