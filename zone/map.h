@@ -80,6 +80,7 @@ public:
 	inline float GetMaxZ() const { return(_maxz); }
 	bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
 	float FindClosestZ(VERTEX p ) const;
+	bool CheckLosFN(VERTEX myloc, VERTEX oloc);
 
 private:
 	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = NULL) const;

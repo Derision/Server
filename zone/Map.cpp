@@ -1142,3 +1142,59 @@ float Map::FindClosestZ(VERTEX p ) const
 	return ClosestZ;
 }
 
+bool Map::CheckLosFN(VERTEX myloc, VERTEX oloc)
+{
+	FACE *onhit;
+	NodeRef mynode;
+	NodeRef onode;
+	
+	VERTEX hit;
+	//see if anything in our node is in the way
+	mynode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), myloc.x, myloc.y);
+	if(mynode != NODE_NONE) {
+		if(zone->zonemap->LineIntersectsNode(mynode, myloc, oloc, &hit, &onhit)) {
+#if LOSDEBUG>=5
+			LogFile->write(EQEMuLog::Debug, "Check LOS for %s target position, cannot see.", GetName());
+			LogFile->write(EQEMuLog::Debug, "\tPoly: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
+				onhit->a.x, onhit->a.y, onhit->a.z,
+				onhit->b.x, onhit->b.y, onhit->b.z, 
+				onhit->c.x, onhit->c.y, onhit->c.z);
+#endif
+			return(false);
+		}
+	}
+#if LOSDEBUG>=5
+	 else {
+		LogFile->write(EQEMuLog::Debug, "WTF, I have no node, what am I standing on??? (%.2f, %.2f).", myloc.x, myloc.y);
+	}
+#endif
+	
+	//see if they are in a different node.
+	//if so, see if anything in their node is blocking me.
+	if(! zone->zonemap->LocWithinNode(mynode, oloc.x, oloc.y)) {
+		onode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), oloc.x, oloc.y);
+		if(onode != NODE_NONE && onode != mynode) {
+			if(zone->zonemap->LineIntersectsNode(onode, myloc, oloc, &hit, &onhit)) {
+#if LOSDEBUG>=5
+			LogFile->write(EQEMuLog::Debug, "Check LOS for %s target position, cannot see (2).", GetName());
+			LogFile->write(EQEMuLog::Debug, "\tPoly: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
+				onhit->a.x, onhit->a.y, onhit->a.z,
+				onhit->b.x, onhit->b.y, onhit->b.z, 
+				onhit->c.x, onhit->c.y, onhit->c.z);
+#endif
+				return(false);
+			}
+		}
+#if LOSDEBUG>=5
+		 else if(onode == NODE_NONE) {
+			LogFile->write(EQEMuLog::Debug, "WTF, They have no node, what are they standing on??? (%.2f, %.2f).", myloc.x, myloc.y);
+		}
+#endif
+	}
+	
+#if LOSDEBUG>=5
+			LogFile->write(EQEMuLog::Debug, "Check LOS for %s target position, CAN SEE.", GetName());
+#endif
+	
+	return(true);
+}
