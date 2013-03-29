@@ -229,8 +229,8 @@ bool Map::loadMap(FILE *fp) {
 			_minz = v;
 	}
 	printf("Building raycast mesh\n"); fflush(stdout);
-	RmReal *vertices = new RmReal[m_Faces * 9];
-	RmUint32 *indices = new RmUint32[m_Faces * 3];
+	float *vertices = new float[m_Faces * 9];
+	uint32 *indices = new uint32[m_Faces * 3];
 
 	uint32 vindex = 0, tindex = 0;
 	
@@ -549,11 +549,11 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 
 	if(!result && !on)
 	{
-		RmReal from[3] = { p1.x, p1.y, p1.z };
-		RmReal to[3] = { p1.x, p1.y, BEST_Z_INVALID };
-		RmReal hitLocation[3];
-		RmReal normal[3];
-		RmReal hitDistance;
+		float from[3] = { p1.x, p1.y, p1.z };
+		float to[3] = { p1.x, p1.y, BEST_Z_INVALID };
+		float hitLocation[3];
+		float normal[3];
+		float hitDistance;
 
 		bool hit = rm->raycast(from,to,hitLocation,NULL,&hitDistance);
 
