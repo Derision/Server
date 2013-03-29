@@ -8805,30 +8805,28 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 
 		//for whatever reason, LineIntersectsNode is giving better results than FindBestZ
 
-		NodeRef pnode;
 		VERTEX me;
 		me.x = GetX();
 		me.y = GetY();
 		me.z = GetZ() + (GetSize()==0.0?6:GetSize());
-		pnode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), me.x, me.y );
 
 		VERTEX hit;
 		VERTEX below_me(me);
 		below_me.z -= 500;
-		if(!zone->zonemap->LineIntersectsNode(pnode, me, below_me, &hit, NULL) || hit.z < -5000) {
+		if(!zone->zonemap->LineIntersectsNode( me, below_me, &hit, NULL) || hit.z < -5000) {
 #if EQDEBUG >= 5
 			LogFile->write(EQEMuLog::Debug, "Player %s started below the zone trying to fix! (%.3f, %.3f, %.3f)", GetName(), me.x, me.y, me.z);
 #endif
 			//theres nothing below us... try to find something to stand on
 			me.z += 200;	//arbitrary #
-			if(zone->zonemap->LineIntersectsNode(pnode, me, below_me, &hit, NULL)) {
+			if(zone->zonemap->LineIntersectsNode(me, below_me, &hit, NULL)) {
 				//+10 so they dont stick in the ground
 				SendTo(me.x, me.y, hit.z + 10);
 				m_pp.z = hit.z + 10;
 			} else {
 				//one more, desperate try
 				me.z += 2000;
-				if(zone->zonemap->LineIntersectsNode(pnode, me, below_me, &hit, NULL)) {
+				if(zone->zonemap->LineIntersectsNode(me, below_me, &hit, NULL)) {
 				//+10 so they dont stick in the ground
 					SendTo(me.x, me.y, hit.z + 10);
 					m_pp.z = hit.z + 10;

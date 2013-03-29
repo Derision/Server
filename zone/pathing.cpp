@@ -1210,47 +1210,43 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 
 		if(zone->watermap)
 		{
-			NodeRef n = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), TestPoint.x, TestPoint.y);
-			if(n != NODE_NONE) 
+			if(zone->watermap->InLiquid(From.x, From.y, From.z) || zone->watermap->InLiquid(To.x, To.y, To.z))
 			{
-				if(zone->watermap->InLiquid(From.x, From.y, From.z) || zone->watermap->InLiquid(To.x, To.y, To.z))
-				{
-					break;
-				}
+				break;
+			}
 
-				if(zone->watermap->InLiquid(TestPoint.x, TestPoint.y, NewZ))
+			if(zone->watermap->InLiquid(TestPoint.x, TestPoint.y, NewZ))
+			{
+				VERTEX TestPointWater(TestPoint.x, TestPoint.y, NewZ-0.5);
+				VERTEX TestPointWaterDest(TestPointWater);
+				VERTEX hit;
+				TestPointWaterDest.z -= 500;
+				float best_z2 = -999990;
+				if(zone->zonemap->LineIntersectsNode(TestPointWater, TestPointWaterDest, &hit, NULL)) 
 				{
-					VERTEX TestPointWater(TestPoint.x, TestPoint.y, NewZ-0.5);
-					VERTEX TestPointWaterDest(TestPointWater);
-					VERTEX hit;
-					TestPointWaterDest.z -= 500;
-					float best_z2 = -999990;
-					if(zone->zonemap->LineIntersectsNode(n, TestPointWater, TestPointWaterDest, &hit, NULL)) 
+					best_z2 = hit.z;
+				}
+				if(best_z2 == -999990)
+				{
+					_log(PATHING__DEBUG, "  HAZARD DETECTED, really deep water/lava!");
+					return false;
+				}
+				else
+				{
+					if(ABS(NewZ - best_z2) > RuleR(Pathing, ZDiffThreshold))
 					{
-						best_z2 = hit.z;
-					}
-					if(best_z2 == -999990)
-					{
-						_log(PATHING__DEBUG, "  HAZARD DETECTED, really deep water/lava!");
+						_log(PATHING__DEBUG, "  HAZARD DETECTED, water is fairly deep at %8.3f units deep", ABS(NewZ - best_z2));
 						return false;
 					}
 					else
 					{
-						if(ABS(NewZ - best_z2) > RuleR(Pathing, ZDiffThreshold))
-						{
-							_log(PATHING__DEBUG, "  HAZARD DETECTED, water is fairly deep at %8.3f units deep", ABS(NewZ - best_z2));
-							return false;
-						}
-						else
-						{
-							_log(PATHING__DEBUG, "  HAZARD NOT DETECTED, water is shallow at %8.3f units deep", ABS(NewZ - best_z2));
-						}
+						_log(PATHING__DEBUG, "  HAZARD NOT DETECTED, water is shallow at %8.3f units deep", ABS(NewZ - best_z2));
 					}
 				}
-				else
-				{
-					_log(PATHING__DEBUG, "Hazard point not in water or lava!");
-				}
+			}
+			else
+			{
+				_log(PATHING__DEBUG, "Hazard point not in water or lava!");
 			}
 		}
 		else
