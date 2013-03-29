@@ -232,6 +232,7 @@ Client::Client(EQStreamInterface* ieqs)
 	dead_timer.Disable();
 	camp_timer.Disable();
 	autosave_timer.Disable();
+	GetMercTimer()->Disable();
 	instalog = false;
 	pLastUpdate = 0;
 	pLastUpdateWZ = 0;
@@ -562,8 +563,8 @@ bool Client::Save(uint8 iCommitNow) {
 	if(GetMercInfo().MercTimerRemaining > RuleI(Mercs, UpkeepIntervalMS))
 		GetMercInfo().MercTimerRemaining = RuleI(Mercs, UpkeepIntervalMS);
 
-	if(merc_timer.Enabled()) {
-		GetMercInfo().MercTimerRemaining = merc_timer.GetRemainingTime();
+	if(GetMercTimer()->Enabled()) {
+		GetMercInfo().MercTimerRemaining = GetMercTimer()->GetRemainingTime();
 	}
 
 	if (GetMerc() && !dead) {
@@ -3128,22 +3129,10 @@ uint8 Client::SlotConvert2(uint8 slot){
 
 void Client::Escape()
 {
-	hidden = true;
-	entity_list.ClearFeignAggro(this);
+    entity_list.RemoveFromTargets(this, true);
+    SetInvisible(1);
 
-	EQApplicationPacket *outapp = new EQApplicationPacket(OP_SimpleMessage,12);
-	SimpleMessage_Struct *msg=(SimpleMessage_Struct *)outapp->pBuffer;
-	msg->color=0x010E;
-	msg->string_id=114;
-	FastQueuePacket(&outapp);
-
-	outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
-	sa_out->spawn_id = GetID();
-	sa_out->type = 0x03;
-	sa_out->parameter = 1;
-	entity_list.QueueClients(this, outapp);
-	safe_delete(outapp);
+    Message_StringID(MT_Skills, ESCAPE);
 }
 
 float Client::CalcPriceMod(Mob* other, bool reverse)
@@ -5915,7 +5904,7 @@ void Client::CheckEmoteHail(Mob *target, const char* message)
 	{
 		return;
 	}
-	uint16 emoteid = target->CastToNPC()->GetNPCEmoteID();
+	uint16 emoteid = target->GetEmoteID();
 	if(emoteid != 0)
 		target->CastToNPC()->DoNPCEmote(HAILED,emoteid);
 }

@@ -3540,7 +3540,6 @@ void Client::Handle_OP_WearChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(WearChange_Struct)) {
 		cout << "Wrong size: OP_WearChange, size=" << app->size << ", expected " << sizeof(WearChange_Struct) << endl;
-		DumpPacket(app);
 		return;
 	}
 
@@ -3595,7 +3594,6 @@ void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(Who_All_Struct)) {
 		cout << "Wrong size on OP_WhoAll. Got: " << app->size << ", Expected: " << sizeof(Who_All_Struct) << endl;
-		DumpPacket(app);
 		return;
 	}
 	Who_All_Struct* whoall = (Who_All_Struct*) app->pBuffer;
@@ -6461,10 +6459,6 @@ void Client::Handle_OP_GroupFollow2(const EQApplicationPacket *app)
 			}
 		}
 
-		// Remove the merc from the old group
-		if (GetMerc())
-			GetMerc()->RemoveMercFromGroup(GetMerc(), GetMerc()->GetGroup());
-
 		Group* group = entity_list.GetGroupByClient(inviter->CastToClient());
 
 		if(!group){
@@ -6536,8 +6530,9 @@ void Client::Handle_OP_GroupFollow2(const EQApplicationPacket *app)
 
 		// Add the merc back into the new group
 		if (GetMerc()) {
-			if (GetMerc()->AddMercToGroup(GetMerc(), group)) {
+			if (Merc::AddMercToGroup(GetMerc(), group)) {
 				database.SetGroupID(GetMerc()->GetName(), group->GetID(), inviter->CastToClient()->CharacterID(), true);
+				database.RefreshGroupFromDB(this);
 			}
 		}
 
@@ -6662,34 +6657,28 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 						group->DelMember(memberToDisband,false);
 						Client* memberClient = memberToDisband->CastToClient();
 						Merc* memberMerc = memberToDisband->CastToClient()->GetMerc();
-						memberMerc->RemoveMercFromGroup(memberMerc, group);
+						if(memberClient && memberMerc && group)
+						{
+							if(!memberMerc->IsGrouped() && !memberClient->IsGrouped()) {
+								Group *g = new Group(memberClient);
 
-						if(!memberMerc->IsGrouped() && !memberClient->IsGrouped()) {
-							Group *g = new Group(memberClient);
+								entity_list.AddGroup(g);
 
-							if(!g) {
-								delete g;
-								g = NULL;
-								return;
-							}
-
-							entity_list.AddGroup(g);
-
-							if(g->GetID() == 0) {
-								safe_delete(g);
-								return;
-							}
-							if(memberMerc->AddMercToGroup(memberMerc, g)) {
-								database.SetGroupLeaderName(g->GetID(), memberClient->GetName());
-								g->SaveGroupLeaderAA();
-								database.SetGroupID(memberClient->GetName(), g->GetID(), memberClient->CharacterID());
-								database.SetGroupID(memberMerc->GetName(), g->GetID(), memberClient->CharacterID(), true);
-								database.RefreshGroupFromDB(memberClient);
+								if(g->GetID() == 0) {
+									safe_delete(g);
+									return;
+								}
+								if(Merc::AddMercToGroup(memberMerc, g)) {
+									database.SetGroupLeaderName(g->GetID(), memberClient->GetName());
+									g->SaveGroupLeaderAA();
+									database.SetGroupID(memberClient->GetName(), g->GetID(), memberClient->CharacterID());
+									database.SetGroupID(memberMerc->GetName(), g->GetID(), memberClient->CharacterID(), true);
+									database.RefreshGroupFromDB(memberClient);
+								}
 							}
 						}
 					}
 					else if(memberToDisband->IsMerc()) {
-						memberToDisband->CastToMerc()->RemoveMercFromGroup(memberToDisband->CastToMerc(), group);
 						memberToDisband->CastToMerc()->Suspend();
 					}
 				}
@@ -6714,12 +6703,17 @@ void Client::Handle_OP_GroupDisband(const EQApplicationPacket *app)
 								return;
 							}
 
-							if(GetMerc()->AddMercToGroup(GetMerc(), g)) {
+							if(Merc::AddMercToGroup(GetMerc(), g)) {
 								database.SetGroupLeaderName(g->GetID(), this->GetName());
 								g->SaveGroupLeaderAA();
 								database.SetGroupID(this->GetName(), g->GetID(), this->CharacterID());
 								database.SetGroupID(GetMerc()->GetName(), g->GetID(), this->CharacterID(), true);
 								database.RefreshGroupFromDB(this);
+							}
+							else
+							{
+								if(GetMerc())
+								GetMerc()->Depop();
 							}
 						}
 					}
@@ -7400,6 +7394,24 @@ void Client::Handle_OP_Emote(const EQApplicationPacket *app)
 	memcpy(out->message, name, len_name);
 	memcpy(&out->message[len_name], in->message, len_msg);
 
+	/*
+	if (target && target->IsClient()) {
+		entity_list.QueueCloseClients(this, outapp, false, 100, target);
+
+		cptr = outapp->pBuffer + 2;
+
+                        // not sure if live does this or not.  thought it was a nice feature, but would take a lot to
+		// clean up grammatical and other errors.  Maybe with a regex parser...
+		replacestr((char *)cptr, target->GetName(), "you");
+		replacestr((char *)cptr, " he", " you");
+		replacestr((char *)cptr, " she", " you");
+		replacestr((char *)cptr, " him", " you");
+		replacestr((char *)cptr, " her", " you");
+		target->CastToClient()->QueuePacket(outapp);
+
+	}
+	else
+	*/
 	entity_list.QueueCloseClients(this, outapp, true, 100,0,true,FilterSocials);
 
 	safe_delete(outapp);
@@ -13814,7 +13826,7 @@ void Client::Handle_OP_MercenaryTimerRequest(const EQApplicationPacket *app)
 	}
 
     if(entityID > 0) {
-	    SendMercTimerPacket(entityID, mercState, suspendedTime, RuleI(Mercs, UpkeepIntervalMS), RuleI(Mercs, SuspendIntervalMS));
+	    SendMercTimerPacket(entityID, mercState, suspendedTime, GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
 	}
 }
 
