@@ -8072,6 +8072,56 @@ void command_bestz(Client *c, const Seperator *sep) {
 	{
 		c->Message(0,"Found no Z.");
 	}
+
+	VERTEX other(me);
+
+	other.y = 10000;
+	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+		c->Message(0, "Obstacle to the North at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+	else
+		c->Message(0, "No obstacle to the north");
+
+	other.y = -10000;
+	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+		c->Message(0, "Obstacle to the South at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+	else
+		c->Message(0, "No obstacle to the South");
+
+	other.y = me.y;
+	other.x = 10000;
+	other.x = -2.3;
+	c->Message(0, "Checking LoS to west between (%8.3f, %8.3f, %8.3f) and (%8.3f, %8.3f, %8.3f)",
+		me.x, me.y, me.z, other.x, other.y, other.z);
+	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+		c->Message(0, "Obstacle to the West at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+	else
+		c->Message(0, "No obstacle to the West");
+
+	while(!zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+		other.x = other.x + 1;
+
+	c->Message(0, "Finally found obstacle to the West at %8.3f, %8.3f, %8.3f when other.x = %8.3f", hit.x, hit.y, hit.z, other.x);
+
+	other.x = -10000;
+	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+		c->Message(0, "Obstacle to the East at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+	else
+		c->Message(0, "No obstacle to the East");
+
+	if(c->GetTarget())
+	{
+		other.x = c->GetTarget()->GetX();
+		other.y = c->GetTarget()->GetY();
+		//other.z = c->GetTarget()->GetZ();
+		other.z = me.z;
+		c->Message(0, "Checking LoS between (%8.3f, %8.3f, %8.3f) and (%8.3f, %8.3f, %8.3f)",
+			me.x, me.y, me.z, other.x, other.y, other.z);
+		if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
+			c->Message(0, "Obstacle to target at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		else
+			c->Message(0, "No obstacle to target");
+	}
+
 	/*
 	for(float x = -3960; x < 3960; x = x + 50)
 	{
