@@ -65,7 +65,7 @@ typedef std::vector< uint32 > TriVector;
 //! Integer representation of a floating-point value.
 #define IR(x)	((uint32&)x)
 
-bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTEX coord)
+bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTEX &coord)
 {
 	bool Inside = true;
 	VERTEX MaxT;
@@ -170,7 +170,7 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 			#ifdef RAYAABB_EPSILON
 			if(coord.axis[i] < MinB.axis[i] - RAYAABB_EPSILON || coord.axis[i] > MaxB.axis[i] + RAYAABB_EPSILON)	return false;
 			#else
-			if(coord.axis[i] < MinB.axis[i] || coord.axis[i] > MaxB.axi[i])	return false;
+			if(coord.axis[i] < MinB.axis[i] || coord.axis[i] > MaxB.axis[i])	return false;
 			#endif
 		}
 	}
@@ -180,7 +180,7 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 
 
 
-bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,float &dist,VERTEX intersect)
+bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,float &dist,VERTEX &intersect)
 {
 	bool ret = false;
 
