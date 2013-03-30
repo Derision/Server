@@ -35,12 +35,12 @@ public:
 	Map();
 	~Map();
 	
-	bool LineIntersectsFace( PFACE cface, VERTEX start, VERTEX end, VERTEX *result) const;
-	inline float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const { return FindBestZ(GetRoot(), start, result, on); }
-	bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
-	inline PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
-	bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
-	bool CheckLosFN(VERTEX myloc, VERTEX oloc);
+	virtual bool LineIntersectsFace( PFACE cface, VERTEX start, VERTEX end, VERTEX *result) const;
+	virtual inline float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const { return FindBestZ(GetRoot(), start, result, on); }
+	virtual bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
+	virtual inline PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
+	virtual bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
+	virtual bool CheckLosFN(VERTEX myloc, VERTEX oloc);
 
 private:
 	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = NULL) const;
