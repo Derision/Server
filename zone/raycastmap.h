@@ -15,24 +15,36 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-#ifndef BASE_MAP_H
-#define BASE_MAP_H
+#ifndef RAYCASTMAP_H
+#define RAYCASTMAP_H
 
 #include <stdio.h>
 #include "map_types.h"
+#include "base_map.h"
+#include "RaycastMesh.h"
 
-
-class BaseMap
+class RayCastMap : public BaseMap
 {
 public:
-	virtual float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const = 0;
-	virtual bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const = 0;
-	virtual PFACE GetFace( int _idx) = 0;
-	virtual bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) = 0;
-	virtual bool CheckLosFN(VERTEX myloc, VERTEX oloc) = 0;
-	virtual bool loadMap(FILE *fp) = 0;
+	RayCastMap();
+	~RayCastMap();
+	
+	 float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const;
+	 bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
+	 PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
+	 bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
+	 bool CheckLosFN(VERTEX myloc, VERTEX oloc);
+	bool loadMap(FILE *fp);
 
 private:
+
+	uint32 m_Faces;
+	PFACE mFinalFaces;
+	
+	float _minz, _maxz;
+	float _minx, _miny, _maxx, _maxy;
+
+	RaycastMesh *rm;
 };
 
 #endif

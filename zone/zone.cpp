@@ -50,6 +50,7 @@ using namespace std;
 #include "ZoneConfig.h"
 #include "../common/breakdowns.h"
 #include "map.h"
+#include "raycastmap.h"
 #include "watermap.h"
 #include "object.h"
 #include "petitions.h"
@@ -2673,7 +2674,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
 	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
 	
 	if ((fp = fopen( cWork, "rb" ))) {
-		ret = new Map();
+		ret = new RayCastMap();
 		if(ret != NULL) {
 			ret->loadMap(fp);
 			printf("Map %s loaded.\n", cWork);
