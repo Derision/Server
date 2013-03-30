@@ -551,43 +551,41 @@ bool Map::LineIntersectsNode( NodeRef node_r, VERTEX p1, VERTEX p2, VERTEX *resu
 float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) const {
 	_ZP(Map_FindBestZ);
 
+	if(on)
+		*on = NULL;
+
+	VERTEX tmp_result;	//dummy placeholder if they do not ask for a result.
+	if(result == NULL)
+		result = &tmp_result;
+
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
 
-	if(!result && !on)
+	VERTEX from(p1.x, p1.y, p1.z);
+	VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
+	//VERTEX hitLocation;
+	VERTEX normal;
+
+	float hitDistance;
+
+	bool hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
+
+	if(hit)
 	{
-		/*
-		float from[3] = { p1.x, p1.y, p1.z };
-		float to[3] = { p1.x, p1.y, BEST_Z_INVALID };
-		float hitLocation[3];
-		float normal[3];
-		*/
-		VERTEX from(p1.x, p1.y, p1.z);
-		VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
-		VERTEX hitLocation;
-		VERTEX normal;
-
-		float hitDistance;
-
-		bool hit = rm->raycast(from,to,&hitLocation,NULL,&hitDistance);
-
-		if(hit)
-		{
-			//printf("Used Raycastmesh\n");
-			return hitLocation.z;
-		}
-
-		from.z = from.z + 10;
-	
-		hit = rm->raycast(from,to,&hitLocation,NULL,&hitDistance);
-
-		if(hit)
-		{
-			//printf("Used Raycastmesh\n");
-			return hitLocation.z;
-		}
-
-		return BEST_Z_INVALID;
+		//printf("Used Raycastmesh\n");
+		return result->z;
 	}
+
+	from.z = from.z + 10;
+
+	hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
+
+	if(hit)
+	{
+		//printf("Used Raycastmesh\n");
+		return result->z;
+	}
+
+	return BEST_Z_INVALID;
 
 
 	if(RuleB(Map, UseClosestZ))
@@ -604,10 +602,6 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 		return(BEST_Z_INVALID);   //not a final node... could find the proper node...
 	}
 	
-	VERTEX tmp_result;	//dummy placeholder if they do not ask for a result.
-	if(result == NULL)
-		result = &tmp_result;
-
 	
 	VERTEX p2(p1);
 	p2.z = BEST_Z_INVALID;

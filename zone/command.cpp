@@ -8050,10 +8050,11 @@ void command_bestz(Client *c, const Seperator *sep) {
 	me.y = c->GetY();
 	me.z = c->GetZ() + (c->GetSize()==0.0?6:c->GetSize()) * HEAD_POSITION;
 	VERTEX hit;
+	FACE *hitFace;
 	VERTEX bme(me);
 	bme.z -= 500;
 	
-	float best_z = zone->zonemap->FindBestZ(me, NULL, NULL);
+	float best_z = zone->zonemap->FindBestZ(me, &hit, &hitFace);
 	
 	float best_z2 = -999990;
 	if(zone->zonemap->LineIntersectsNode(me, bme, &hit, NULL)) {
@@ -8063,6 +8064,14 @@ void command_bestz(Client *c, const Seperator *sep) {
 	if (best_z != -999999)
 	{
 		c->Message(0,"Z is %.3f or %.3f at (%.3f, %.3f).", best_z, best_z2, me.x, me.y);
+		c->Message(0, "Hit = %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		if(hitFace)
+			c->Message(0, "HitFace = (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)",
+				hitFace->a.x, hitFace->a.y, hitFace->a.z,
+				hitFace->b.x, hitFace->b.y, hitFace->b.z,
+				hitFace->c.x, hitFace->c.y, hitFace->c.z);
+		else
+			c->Message(0, "HitFace is NULL");
 	}
 	else
 	{

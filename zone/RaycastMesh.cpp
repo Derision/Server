@@ -856,7 +856,7 @@ public:
 		mRoot->Dump(Depth);
 	}
 
-	virtual bool raycast(VERTEX from, VERTEX to,VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance)
+	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation, VERTEX *hitNormal, float *hitDistance, FACE **hitFace)
 	{
 		bool ret = false;
 
@@ -875,6 +875,10 @@ public:
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
 		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
+
+		if((nearestTriIndex != TRI_EOF) && hitFace)
+			*hitFace = &mFaces[nearestTriIndex];
+
 		return ret;
 	}
 
