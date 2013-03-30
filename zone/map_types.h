@@ -3,6 +3,9 @@
 
 #pragma pack(1)
 
+#define MAP_VERSION 0x01000000
+#define BEST_Z_INVALID -999999
+
 typedef struct _vertex{
 //	unsigned long order;
 	
@@ -102,4 +105,6 @@ typedef struct _nodeHeader {
 } nodeHeader, NODE, *PNODE;
 
 #pragma pack()
+
+
 #endif

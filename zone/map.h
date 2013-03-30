@@ -22,23 +22,11 @@
 #include "map_types.h"
 #include "RaycastMesh.h"
 
-//this is the current version number to expect from the map header
-#define MAP_VERSION 0x01000000
-
-#define BEST_Z_INVALID -999999
-
 //special value returned as 'not found'
 #define NODE_NONE 65534
 #define MAP_ROOT_NODE 0
 
 typedef uint16 NodeRef;
-
-/*typedef struct _node {
-	nodeHeader head;
-	unsigned int *	pfaces;
-	char						mask;
-	struct  _node	*	node1, *node2, *node3, *node4;
-}NODE, *PNODE;*/
 
 class Map {
 public:
