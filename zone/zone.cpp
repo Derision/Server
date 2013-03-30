@@ -109,7 +109,7 @@ bool Zone::Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone) {
 		worldserver.SetZone(0);
 		return false;
 	}
-	zone->zonemap = Map::LoadMapfile(zone->map_name);
+	zone->zonemap = LoadMapfile(zone->map_name);
 	zone->watermap = WaterMap::LoadWaterMapfile(zone->map_name);
 	zone->pathing = PathManager::LoadPathFile(zone->map_name);
 	
@@ -2657,3 +2657,34 @@ void Zone::ReloadWorld(uint32 Option){
 		parse->ReloadQuests();
 	}
 }
+
+BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
+	FILE *fp;
+	char zBuf[64];
+	char cWork[256];
+	BaseMap* ret = 0;
+	
+	//have to convert to lower because the short names im getting
+	//are not all lower anymore, copy since strlwr edits the str.
+	strn0cpy(zBuf, in_zonename, 64);
+	
+	if(directory == NULL)
+		directory = MAP_DIR;
+	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
+	
+	if ((fp = fopen( cWork, "rb" ))) {
+		ret = new Map();
+		if(ret != NULL) {
+			ret->loadMap(fp);
+			printf("Map %s loaded.\n", cWork);
+		} else {
+			printf("Map %s loading failed.\n", cWork);
+		}
+		fclose(fp);
+	}
+	else {
+		printf("Map %s not found.\n", cWork);
+	}
+	return ret;
+}
+

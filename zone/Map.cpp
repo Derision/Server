@@ -59,36 +59,6 @@ extern Zone* zone;
 #define Vmax3(o, a, b, c) ((a.o>b.o)? (a.o>c.o?a.o:c.o) : (b.o>c.o?b.o:c.o))
 #define ABS(x) ((x)<0?-(x):(x))
 
-Map* Map::LoadMapfile(const char* in_zonename, const char *directory) {
-	FILE *fp;
-	char zBuf[64];
-	char cWork[256];
-	Map* ret = 0;
-	
-	//have to convert to lower because the short names im getting
-	//are not all lower anymore, copy since strlwr edits the str.
-	strn0cpy(zBuf, in_zonename, 64);
-	
-	if(directory == NULL)
-		directory = MAP_DIR;
-	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
-	
-	if ((fp = fopen( cWork, "rb" ))) {
-		ret = new Map();
-		if(ret != NULL) {
-			ret->loadMap(fp);
-			printf("Map %s loaded.\n", cWork);
-		} else {
-			printf("Map %s loading failed.\n", cWork);
-		}
-		fclose(fp);
-	}
-	else {
-		printf("Map %s not found.\n", cWork);
-	}
-	return ret;
-}
-
 Map::Map() {
 	_minz = FLT_MAX;
 	_minx = FLT_MAX;
@@ -228,37 +198,12 @@ bool Map::loadMap(FILE *fp) {
 		if(v < _minz)
 			_minz = v;
 	}
-	printf("Building raycast mesh\n"); fflush(stdout);
 	/*
-	float *vertices = new float[m_Faces * 9];
-	uint32 *indices = new uint32[m_Faces * 3];
-
-	uint32 vindex = 0, tindex = 0;
-	
-	for(r = 0; r < m_Faces; r++)
-	{
-		vertices[vindex++] = mFinalFaces[r].a.x;
-		vertices[vindex++] = mFinalFaces[r].a.y;
-		vertices[vindex++] = mFinalFaces[r].a.z;
-
-		vertices[vindex++] = mFinalFaces[r].b.x;
-		vertices[vindex++] = mFinalFaces[r].b.y;
-		vertices[vindex++] = mFinalFaces[r].b.z;
-
-		vertices[vindex++] = mFinalFaces[r].c.x;
-		vertices[vindex++] = mFinalFaces[r].c.y;
-		vertices[vindex++] = mFinalFaces[r].c.z;
-
-		indices[tindex] = tindex++;
-		indices[tindex] = tindex++;
-		indices[tindex] = tindex++;
-	}
-
-	rm = createRaycastMesh(m_Faces * 3, vertices, m_Faces, indices);
-	*/
+	printf("Building raycast mesh\n"); fflush(stdout);
 	rm = createRaycastMesh(m_Faces, mFinalFaces);
 
 	printf("Done building raycast mesh\n"); fflush(stdout);
+	*/
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 
@@ -267,8 +212,8 @@ bool Map::loadMap(FILE *fp) {
 
 Map::~Map() {
 //	safe_delete_array(mFinalVertex);
-	rm->release();
-	rm = 0;
+	//rm->release();
+	//rm = 0;
 	safe_delete_array(mFinalFaces);
 	safe_delete_array(mNodes);
 	safe_delete_array(mFaceLists);
@@ -560,33 +505,8 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
 
-	VERTEX from(p1.x, p1.y, p1.z);
-	VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
-	//VERTEX hitLocation;
-	VERTEX normal;
-
-	float hitDistance;
-
-	bool hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
-
-	if(hit)
-	{
-		//printf("Used Raycastmesh\n");
-		return result->z;
-	}
-
-	from.z = from.z + 10;
-
-	hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
-
-	if(hit)
-	{
-		//printf("Used Raycastmesh\n");
-		return result->z;
-	}
-
-	return BEST_Z_INVALID;
-
+	//VERTEX from(p1.x, p1.y, p1.z);
+	//VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
 
 	if(RuleB(Map, UseClosestZ))
 		return FindClosestZ(p1);
@@ -1041,7 +961,7 @@ bool Map::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, V
 		me.z = cur.z;
 		VERTEX hit;
 		FACE *onhit;
-		float best_z = zone->zonemap->FindBestZ(cnode, me, &hit, &onhit);
+		float best_z = FindBestZ(cnode, me, &hit, &onhit);
 		float diff = ABS(best_z-z);
 //		diff *= sign(diff);
 		if (z == -999999 || best_z == -999999 || diff < 12.0)
@@ -1143,9 +1063,9 @@ bool Map::CheckLosFN(VERTEX myloc, VERTEX oloc)
 	
 	VERTEX hit;
 	//see if anything in our node is in the way
-	mynode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), myloc.x, myloc.y);
+	mynode = SeekNode(GetRoot(), myloc.x, myloc.y);
 	if(mynode != NODE_NONE) {
-		if(zone->zonemap->LineIntersectsNode(mynode, myloc, oloc, &hit, &onhit)) {
+		if(LineIntersectsNode(mynode, myloc, oloc, &hit, &onhit)) {
 #if LOSDEBUG>=5
 			LogFile->write(EQEMuLog::Debug, "Check LOS for %s target position, cannot see.", GetName());
 			LogFile->write(EQEMuLog::Debug, "\tPoly: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",
@@ -1164,10 +1084,10 @@ bool Map::CheckLosFN(VERTEX myloc, VERTEX oloc)
 	
 	//see if they are in a different node.
 	//if so, see if anything in their node is blocking me.
-	if(! zone->zonemap->LocWithinNode(mynode, oloc.x, oloc.y)) {
-		onode = zone->zonemap->SeekNode( zone->zonemap->GetRoot(), oloc.x, oloc.y);
+	if(!LocWithinNode(mynode, oloc.x, oloc.y)) {
+		onode = SeekNode(GetRoot(), oloc.x, oloc.y);
 		if(onode != NODE_NONE && onode != mynode) {
-			if(zone->zonemap->LineIntersectsNode(onode, myloc, oloc, &hit, &onhit)) {
+			if(LineIntersectsNode(onode, myloc, oloc, &hit, &onhit)) {
 #if LOSDEBUG>=5
 			LogFile->write(EQEMuLog::Debug, "Check LOS for %s target position, cannot see (2).", GetName());
 			LogFile->write(EQEMuLog::Debug, "\tPoly: (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f) (%.2f, %.2f, %.2f)\n",

@@ -34,9 +34,6 @@
 #include "../common/types.h"
 #include "map_types.h"
 
-//typedef float float;
-//typedef unsigned int uint32;
-
 class RaycastMesh
 {
 public:
@@ -50,7 +47,6 @@ public:
 protected:
 	virtual ~RaycastMesh(void) { };
 };
-
 
 RaycastMesh * createRaycastMesh(uint32 FaceCount,
 				PFACE Faces,

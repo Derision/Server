@@ -470,10 +470,6 @@ public:
 	virtual void getFaceNormal(uint32 tri, VERTEX *faceNormal) = 0;
 };
 
-
-
-
-
 	class NodeAABB
 	{
 	public:

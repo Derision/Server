@@ -1,7 +1,7 @@
 #ifndef PATHING_H
 #define PATHING_H
 #include <algorithm>
-#include "map.h"
+#include "base_map.h"
 #include "../common/timer.h"
 #include <list>
 #include <vector>

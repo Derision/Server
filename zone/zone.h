@@ -33,8 +33,9 @@
 #include "tasks.h"
 #include "pathing.h"
 #include "QGlobals.h"
+#include "base_map.h"
 
-class Map;
+class BaseMap;
 class WaterMap;
 
 struct ZonePoint 
@@ -81,6 +82,7 @@ class Zone
 public:
 	static bool Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone = false);
 	static void Shutdown(bool quite = false);
+	static BaseMap* LoadMapfile(const char* in_zonename, const char *directory = NULL);
 	
 	Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name);
 	~Zone();
@@ -200,7 +202,7 @@ public:
 	void	LoadNPCEmotes(LinkedList<NPC_Emote_Struct*>* NPCEmoteList);
 	void	ReloadWorld(uint32 Option);
 
-	Map*	zonemap;
+	BaseMap* zonemap;
 	WaterMap* watermap;
 	PathManager *pathing;
 	NewZone_Struct	newzone_data;

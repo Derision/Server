@@ -1,6 +1,8 @@
 #ifndef MAP_TYPES_H
 #define MAP_TYPES_H
 
+#include "../common/types.h"
+
 #pragma pack(1)
 
 #define MAP_VERSION 0x01000000
