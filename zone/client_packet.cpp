@@ -8803,31 +8803,32 @@ bool Client::FinishConnState2(DBAsyncWork* dbaw) {
 	//if we zone in with invalid Z, fix it.
 	if (zone->zonemap != NULL) {
 
-		//for whatever reason, LineIntersectsNode is giving better results than FindBestZ
-
 		VERTEX me;
 		me.x = GetX();
 		me.y = GetY();
 		me.z = GetZ() + (GetSize()==0.0?6:GetSize());
 
 		VERTEX hit;
-		VERTEX below_me(me);
-		below_me.z -= 500;
-		if(!zone->zonemap->LineIntersectsNode( me, below_me, &hit, NULL) || hit.z < -5000) {
+
+		if(zone->zonemap->FindBestZ(me, &hit, NULL) == BEST_Z_INVALID)
+		{
 #if EQDEBUG >= 5
 			LogFile->write(EQEMuLog::Debug, "Player %s started below the zone trying to fix! (%.3f, %.3f, %.3f)", GetName(), me.x, me.y, me.z);
 #endif
-			//theres nothing below us... try to find something to stand on
 			me.z += 200;	//arbitrary #
-			if(zone->zonemap->LineIntersectsNode(me, below_me, &hit, NULL)) {
+			if(zone->zonemap->FindBestZ(me, &hit, NULL) != BEST_Z_INVALID)
+			{
 				//+10 so they dont stick in the ground
 				SendTo(me.x, me.y, hit.z + 10);
 				m_pp.z = hit.z + 10;
-			} else {
+			}
+			else
+			{
 				//one more, desperate try
 				me.z += 2000;
-				if(zone->zonemap->LineIntersectsNode(me, below_me, &hit, NULL)) {
-				//+10 so they dont stick in the ground
+				if(zone->zonemap->FindBestZ(me, &hit, NULL) != BEST_Z_INVALID)
+				{
+					//+10 so they dont stick in the ground
 					SendTo(me.x, me.y, hit.z + 10);
 					m_pp.z = hit.z + 10;
 				}

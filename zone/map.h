@@ -35,16 +35,10 @@ public:
 	Map();
 	~Map();
 	
-	
-	//nodes to these functions must be final
-	inline bool LineIntersectsNode( VERTEX start, VERTEX end, VERTEX *result, FACE **on = NULL) const
-	{
-		return LineIntersectsNode(SeekNode(GetRoot(), start.x, start.y), start, end, result, on);
-	}
 	bool LineIntersectsFace( PFACE cface, VERTEX start, VERTEX end, VERTEX *result) const;
 	inline float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const { return FindBestZ(GetRoot(), start, result, on); }
 	bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
-	inline PFACE		GetFace( int _idx) {return mFinalFaces + _idx;		}
+	inline PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
 	bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
 	bool CheckLosFN(VERTEX myloc, VERTEX oloc);
 

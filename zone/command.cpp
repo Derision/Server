@@ -8056,14 +8056,9 @@ void command_bestz(Client *c, const Seperator *sep) {
 	
 	float best_z = zone->zonemap->FindBestZ(me, &hit, &hitFace);
 	
-	float best_z2 = -999990;
-	if(zone->zonemap->LineIntersectsNode(me, bme, &hit, NULL)) {
-		best_z2 = hit.z;
-	}
-	
 	if (best_z != -999999)
 	{
-		c->Message(0,"Z is %.3f or %.3f at (%.3f, %.3f).", best_z, best_z2, me.x, me.y);
+		c->Message(0,"Z is %.3f at (%.3f, %.3f).", best_z, me.x, me.y);
 		c->Message(0, "Hit = %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
 		if(hitFace)
 			c->Message(0, "HitFace = (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)",

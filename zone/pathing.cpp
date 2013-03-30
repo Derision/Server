@@ -1222,7 +1222,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 				VERTEX hit;
 				TestPointWaterDest.z -= 500;
 				float best_z2 = -999990;
-				if(zone->zonemap->LineIntersectsNode(TestPointWater, TestPointWaterDest, &hit, NULL)) 
+				if(zone->zonemap->LineIntersectsZone(TestPointWater, TestPointWaterDest, 1.0f, &hit, NULL))
 				{
 					best_z2 = hit.z;
 				}
