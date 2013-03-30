@@ -8053,7 +8053,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 	VERTEX bme(me);
 	bme.z -= 500;
 	
-	float best_z = zone->zonemap->FindBestZ(me, &hit, NULL);
+	float best_z = zone->zonemap->FindBestZ(me, NULL, NULL);
 	
 	float best_z2 = -999990;
 	if(zone->zonemap->LineIntersectsNode(me, bme, &hit, NULL)) {
@@ -8068,7 +8068,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 	{
 		c->Message(0,"Found no Z.");
 	}
-
+	/*
 	for(float x = -3960; x < 3960; x = x + 50)
 	{
 		for(float y = -2550; y < 3650; y = y + 50)
@@ -8080,7 +8080,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 
 		}
 	}
-
+	*/
 	if(zone->watermap == NULL) {
 		c->Message(0,"Water Region Map not loaded for this zone");
 	} else {

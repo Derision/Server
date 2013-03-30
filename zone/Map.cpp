@@ -550,7 +550,7 @@ bool Map::LineIntersectsNode( NodeRef node_r, VERTEX p1, VERTEX p2, VERTEX *resu
 
 float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) const {
 	_ZP(Map_FindBestZ);
-	
+
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
 
 	if(!result && !on)
@@ -637,9 +637,8 @@ printf("Start finding best Z...\n");
 
 			if(cur->minz > p1.z)
 			{	
-				break;
-				//cfl++;
-				//continue;
+				cfl++;
+				continue;
 			}
 
 			if(cur->maxx < p1.x)
