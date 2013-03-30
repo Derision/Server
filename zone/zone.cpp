@@ -2674,7 +2674,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
 	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
 	
 	if ((fp = fopen( cWork, "rb" ))) {
-		ret = new Map();
+		ret = new RayCastMap();
 		if(ret != NULL) {
 			ret->loadMap(fp);
 			printf("Map %s loaded.\n", cWork);
