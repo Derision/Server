@@ -29,11 +29,11 @@ public:
 	RayCastMap();
 	~RayCastMap();
 	
-	 float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const;
-	 bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
-	 PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
-	 bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
-	 bool CheckLosFN(VERTEX myloc, VERTEX oloc);
+	float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const;
+	bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
+	PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
+	bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
+	bool CheckLosFN(VERTEX myloc, VERTEX oloc);
 	bool loadMap(FILE *fp);
 
 private:
