@@ -271,6 +271,6 @@ bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step
 bool RayCastMap::CheckLosFN(VERTEX myloc, VERTEX oloc)
 {
 	bool hit = rm->raycast(myloc, oloc, NULL, NULL, NULL, NULL);
-	printf("RayCastMap::CheckLosFN, hit is %i\n", hit); fflush(stdout);
+	//printf("RayCastMap::CheckLosFN, hit is %i\n", hit); fflush(stdout);
 	return !hit;
 }

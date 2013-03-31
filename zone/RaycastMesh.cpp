@@ -73,77 +73,25 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 
 	// Find candidate planes.
 
-	if(origin.x < MinB.x)
+	for(uint32 i = 0; i < 3; i++)
 	{
-		coord.x	= MinB.x;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.x))	MaxT.x = (MinB.x - origin.x) / dir.x;
-	}
-	else if(origin.x > MaxB.x)
-	{
-		coord.x	= MaxB.x;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.x))	MaxT.x = (MaxB.x - origin.x) / dir.x;
-	}
-
-	if(origin.y < MinB.y)
-	{
-		coord.y	= MinB.y;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.y))	MaxT.y = (MinB.y - origin.y) / dir.y;
-	}
-	else if(origin.y > MaxB.y)
-	{
-		coord.y	= MaxB.y;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.y))	MaxT.y = (MaxB.y - origin.y) / dir.y;
-	}
-
-	if(origin.z < MinB.z)
-	{
-		coord.z	= MinB.z;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.z))	MaxT.z = (MinB.z - origin.z) / dir.z;
-	}
-	else if(origin.z > MaxB.z)
-	{
-		coord.z	= MaxB.z;
-		Inside		= false;
-
-		// Calculate T distances to candidate planes
-		if(IR(dir.z))	MaxT.z = (MaxB.z - origin.z) / dir.z;
-	}
-	/*
-	for(uint32 i=0;i<3;i++)
-	{
-		if(origin[i] < MinB[i])
+		if(origin.axis[i] < MinB.axis[i])
 		{
-			coord[i]	= MinB[i];
+			coord.axis[i]	= MinB.axis[i];
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			if(IR(dir[i]))	MaxT[i] = (MinB[i] - origin[i]) / dir[i];
+			if(IR(dir.axis[i]))	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
-		else if(origin[i] > MaxB[i])
+		else if(origin.axis[i] > MaxB.axis[i])
 		{
-			coord[i]	= MaxB[i];
+			coord.axis[i]	= MaxB.axis[i];
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			if(IR(dir[i]))	MaxT[i] = (MaxB[i] - origin[i]) / dir[i];
+			if(IR(dir.axis[i]))	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
 	}
-	*/
 
 	// Ray origin inside bounding box
 	if(Inside)
@@ -308,12 +256,12 @@ enum AxisAABB
 
 enum ClipCode
 {
-	CC_MINX   =       (1<<0),
+	CC_MINX  =       (1<<0),
 	CC_MAXX  =       (1<<1),
-	CC_MINY   =       (1<<2),
+	CC_MINY  =       (1<<2),
 	CC_MAXY	 =       (1<<3),
 	CC_MINZ  =       (1<<4),
-	CC_MAXZ   =       (1<<5),
+	CC_MAXZ  =       (1<<5),
 };
 
 
@@ -506,14 +454,6 @@ public:
 				mBounds.include(Faces[i].b);
 				mBounds.include(Faces[i].c);
 			}
-			/*
-			const float *vtx = vertices+3;
-			for (uint32 i=1; i<vcount; i++)
-			{
-				mBounds.include( vtx );
-				vtx+=3;
-			}
-			*/
 			split(triangles, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 		}
 
@@ -567,7 +507,6 @@ public:
 			// we create the leaf node and copy the triangles into the leaf node triangle array.
 			if ( count < minLeafSize || depth >= maxDepth || laxis < minAxisSize )
 			{ 
-				//printf("Created leaf node with %i triangles\n", count);
 				// Copy the triangle indices into the leaf triangles array
 				mLeafTriangleIndex = leafTriangles.size(); // assign the array start location for these leaf triangles.
 				leafTriangles.push_back(count);
@@ -600,16 +539,6 @@ public:
 					uint32 tri = (*i); 
 
 					{
-						/*
-						uint32 i1 = indices[tri*3+0];
-						uint32 i2 = indices[tri*3+1];
-						uint32 i3 = indices[tri*3+2];
-
-						const float *p1 = &vertices[i1*3];
-						const float *p2 = &vertices[i2*3];
-						const float *p3 = &vertices[i3*3];
-						*/
-
 						uint32 addCount = 0;
 						uint32 orCode=0xFFFFFFFF;
 						if ( b1.containsTriangleExact(Faces[tri],orCode))
@@ -732,15 +661,6 @@ public:
 					if ( raycastTriangles[tri] != raycastFrame )
 					{
 						raycastTriangles[tri] = raycastFrame;
-						/*
-						uint32 i1 = indices[tri*3+0];
-						uint32 i2 = indices[tri*3+1];
-						uint32 i3 = indices[tri*3+2];
-
-						const float *p1 = &vertices[i1*3];
-						const float *p2 = &vertices[i2*3];
-						const float *p3 = &vertices[i3*3];
-						*/
 
 						float t;
 						if ( rayIntersectsTriangle(from, dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t))
@@ -857,11 +777,7 @@ public:
 		bool ret = false;
 
 		VERTEX dir(to.x - from .x, to.y - from.y, to.z - from.z);
-		/*
-		dir[0] = to[0] - from[0];
-		dir[1] = to[1] - from[1];
-		dir[2] = to[2] - from[2];
-		*/
+		
 		float distance = sqrtf( dir.x*dir.x + dir.y*dir.y+dir.z*dir.z );
 		if ( distance < 0.0000000001f ) return false;
 		float recipDistance = 1.0f / distance;
@@ -905,19 +821,7 @@ public:
 		if ( mFaceNormals == NULL )
 		{
 			mFaceNormals = (VERTEX *)::malloc(sizeof(VERTEX) * mFaceCount);
-			/*
-			for (uint32 i=0; i<mTcount; i++)
-			{
-				uint32 i1		= mIndices[i*3+0];
-				uint32 i2		= mIndices[i*3+1];
-				uint32 i3		= mIndices[i*3+2];
-				const float*p1 = &mVertices[i1*3];
-				const float*p2 = &mVertices[i2*3];
-				const float*p3 = &mVertices[i3*3];
-				float *dest	= &mFaceNormals[i*3];
-				computePlane(p3,p2,p1,dest);
-			}
-			*/
+			
 			for (uint32 i = 0; i < mFaceCount; ++i)
 			{
 				VERTEX *dest = &mFaceNormals[i];
@@ -926,13 +830,6 @@ public:
 		}
 		VERTEX *src = &mFaceNormals[tri];
 		faceNormal = src;
-
-		/*
-		const float *src = &mFaceNormals[tri*3];
-		faceNormal[0] = src[0];
-		faceNormal[1] = src[1];
-		faceNormal[2] = src[2];
-		*/
 	}
 
 	virtual bool bruteForceRaycast(VERTEX from, VERTEX to,VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance)
@@ -951,22 +848,10 @@ public:
 		dir.x*=recipDistance;
 		dir.y*=recipDistance;
 		dir.z*=recipDistance;
-		//const uint32 *indices = mIndices;
-		//const float *vertices = mVertices;
 		float nearestDistance = distance;
 
 		for (uint32 tri=0; tri<mFaceCount; ++tri)
 		{
-			/*
-			uint32 i1 = indices[tri*3+0];
-			uint32 i2 = indices[tri*3+1];
-			uint32 i3 = indices[tri*3+2];
-
-			const float *p1 = &vertices[i1*3];
-			const float *p2 = &vertices[i2*3];
-			const float *p3 = &vertices[i3*3];
-			*/
-
 			float t;
 			if ( rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t))
 			{
