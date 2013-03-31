@@ -25,6 +25,7 @@
 class BaseMap
 {
 public:
+	virtual ~BaseMap() {}
 	virtual float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const = 0;
 	virtual bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const = 0;
 	virtual PFACE GetFace( int _idx) = 0;

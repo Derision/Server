@@ -109,10 +109,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 			_maxx = v;
 		v = Vmin3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
 		if(v < _minx)
-		{
-			printf("_minx of face %i is %8.3f\n", i, v);
 			_minx = v;
-		}
 		v = Vmax3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
 		if(v > _maxy)
 			_maxy = v;
@@ -167,22 +164,17 @@ float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 
 	float hitDistance;
 
-	bool hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
+	bool hit = false;
 
-	if(hit)
+	for(int zAttempt = 0; zAttempt < 2; ++zAttempt)
 	{
-		//printf("Used Raycastmesh\n");
-		return result->z;
-	}
+		hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
 
-	from.z = from.z + 10;
+		if(hit)
+			return result->z;
 
-	hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
+		from.z = from.z + 10;
 
-	if(hit)
-	{
-		//printf("Used Raycastmesh\n");
-		return result->z;
 	}
 
 	return BEST_Z_INVALID;
