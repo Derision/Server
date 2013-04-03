@@ -2235,10 +2235,6 @@ bool Merc::AICastSpell(int8 iChance, int32 iSpellTypes) {
 
 					if(numToHeal > 2) {
 						selectedMercSpell = GetBestMercSpellForGroupHeal(this);
-
-						if(selectedMercSpell.spellid == 0) {
-							selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-						}
 					}
 
 					if(tar && selectedMercSpell.spellid == 0) {
@@ -2265,7 +2261,7 @@ bool Merc::AICastSpell(int8 iChance, int32 iSpellTypes) {
 								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
 							}
 						}
-						else if (tar->GetHPRatio() < 75) {
+						else if (tar->GetHPRatio() < 80) {
 							selectedMercSpell = GetBestMercSpellForPercentageHeal(this);
 
 							//get regular heal
@@ -2276,17 +2272,13 @@ bool Merc::AICastSpell(int8 iChance, int32 iSpellTypes) {
 						else {
 							//check for heal over time. if not present, try it first
 							if(!tar->FindType(SE_HealOverTime)) {
-								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-							}
+								selectedMercSpell = GetBestMercSpellForHealOverTime(this);
 
-							//get regular heal
-							if(selectedMercSpell.spellid == 0) {
-								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+								//get regular heal
+								if(selectedMercSpell.spellid == 0) {
+									selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+								}
 							}
-						}
-
-						if(selectedMercSpell.spellid == 0) {
-							selectedMercSpell = GetFirstMercSpellForSingleTargetHeal(this);
 						}
 					}
 
@@ -5596,6 +5588,9 @@ void Client::SpawnMercOnZone()
 			GetMercInfo().SuspendedTime = 0;
 			// Get merc, assign it to client & spawn
 			if(database.LoadMercInfo(this)) {
+				if(!CheckCanUnsuspendMerc()){
+					return;
+				}
 				Merc* merc = Merc::LoadMerc(this, &zone->merc_templates[GetMercInfo().MercTemplateID], 0, true);
 				SpawnMerc(merc, false);
 				SendMercTimerPacket(merc->GetID(), 5, GetMercInfo().SuspendedTime, GetMercInfo().MercTimerRemaining, RuleI(Mercs, SuspendIntervalMS));
