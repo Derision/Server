@@ -129,7 +129,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 	printf("Done building raycast mesh\n"); fflush(stdout);
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
-
+	/*
 	printf("Starting Benchmarks\n");
 	
 	time_t StartTime = time(NULL);
@@ -143,22 +143,6 @@ bool RayCastMap::loadMap(FILE *fp) {
 		{
 			VERTEX start(x, y, 10000);
 			z = FindBestZ(start, NULL, NULL);
-			/*	
-			if(z != BEST_Z_INVALID)
-			{	
-				start.z = z + 2;
-				float z2 = z;
-				z = FindBestZ(start, NULL, NULL, 0);
-
-				if(z == BEST_Z_INVALID)
-				{
-					printf("Z at %8.3f, %8.3f is %8.3f from 10000, but no Z from %8.3f\n", start.x, start.y, z2, start.z);
-					float z2 = FindBestZ(start, NULL, NULL, 0);
-					if(z2 != BEST_Z_INVALID)
-						printf("Discrepancy2 at %8.3f, %8.3f. Unoptimised Z at %8.3f\n", start.x, start.y, z2);
-				}
-			}
-			*/
 			
 			++Tests;
 			if(z != BEST_Z_INVALID)
@@ -171,7 +155,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 	time_t EndTime = time(NULL);
 
 	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
-
+	*/
 	return(true);
 }
 
