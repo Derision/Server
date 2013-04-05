@@ -130,6 +130,48 @@ bool RayCastMap::loadMap(FILE *fp) {
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 
+	printf("Starting Benchmarks\n");
+	
+	time_t StartTime = time(NULL);
+
+	float x, y, z, Sum = 0;
+	uint32 Tests = 0, Hits = 0;
+
+	for(x = _minx; x < _maxx; x = x + 1.0f)
+	{
+		for(y = _miny; y < _maxy; y = y + 1.0f)
+		{
+			VERTEX start(x, y, 10000);
+			z = FindBestZ(start, NULL, NULL);
+			/*	
+			if(z != BEST_Z_INVALID)
+			{	
+				start.z = z + 2;
+				float z2 = z;
+				z = FindBestZ(start, NULL, NULL, 0);
+
+				if(z == BEST_Z_INVALID)
+				{
+					printf("Z at %8.3f, %8.3f is %8.3f from 10000, but no Z from %8.3f\n", start.x, start.y, z2, start.z);
+					float z2 = FindBestZ(start, NULL, NULL, 0);
+					if(z2 != BEST_Z_INVALID)
+						printf("Discrepancy2 at %8.3f, %8.3f. Unoptimised Z at %8.3f\n", start.x, start.y, z2);
+				}
+			}
+			*/
+			
+			++Tests;
+			if(z != BEST_Z_INVALID)
+			{
+				++Hits;
+				Sum += z;
+			}
+		}
+	}
+	time_t EndTime = time(NULL);
+
+	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
+
 	return(true);
 }
 
@@ -147,7 +189,6 @@ bool RayCastMap::LineIntersectsZone(VERTEX start, VERTEX end, float step_mag, VE
 
 float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 {
-
 	if(on)
 		*on = NULL;
 

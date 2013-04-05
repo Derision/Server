@@ -32,7 +32,7 @@
 //
 // 
 
-#pragma warning(disable:4100)
+//#pragma warning(disable:4100)
 
 namespace RAYCAST_MESH
 {
@@ -81,7 +81,8 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			if(IR(dir.axis[i]))	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
+			//if(IR(dir.axis[i]))	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
+			if(dir.axis[i] != 0.0f)	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
 		else if(origin.axis[i] > MaxB.axis[i])
 		{
@@ -89,7 +90,8 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			if(IR(dir.axis[i]))	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
+			//if(IR(dir.axis[i]))	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
+			if(dir.axis[i] != 0.0f)	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
 	}
 
@@ -108,7 +110,8 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 	if(MaxT.axis[2] > MaxT.axis[WhichPlane])	WhichPlane = 2;
 
 	// Check final candidate actually inside box
-	if(IR(MaxT.axis[WhichPlane])&0x80000000) return false;
+	//if(IR(MaxT.axis[WhichPlane])&0x80000000) return false;
+	if(MaxT.axis[WhichPlane] < 0) return false;
 
 	for(uint32 i=0;i<3;i++)
 	{
@@ -128,7 +131,7 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 
 
 
-bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,float &dist,VERTEX &intersect)
+bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,double &dist,VERTEX &intersect)
 {
 	bool ret = false;
 
@@ -171,10 +174,10 @@ bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,fl
 	(a).z = (b).x * (c).y - (c).x * (b).y;
 
 
-static inline bool rayIntersectsTriangle(VERTEX p,VERTEX d, VERTEX v0, VERTEX v1, VERTEX v2,float &t)
+static inline bool rayIntersectsTriangle(VERTEX p,VERTEX d, VERTEX v0, VERTEX v1, VERTEX v2,double &t)
 {
-	VERTEX e1,e2,h,s,q;
-	float a,f,u,v;
+	DVERTEX e1,e2,h,s,q;
+	double a,f,u,v;
 
 	vector(e1,v1,v0);
 	vector(e2,v2,v0);
@@ -182,27 +185,37 @@ static inline bool rayIntersectsTriangle(VERTEX p,VERTEX d, VERTEX v0, VERTEX v1
 	a = innerProduct(e1,h);
 
 	if (a > -0.00001 && a < 0.00001)
+	{
 		return(false);
+	}
 
 	f = 1/a;
 	vector(s,p,v0);
 	u = f * (innerProduct(s,h));
 
 	if (u < 0.0 || u > 1.0)
+	{
 		return(false);
+	}
 
 	crossProduct(q,s,e1);
 	v = f * innerProduct(d,q);
 	if (v < 0.0 || u + v > 1.0)
+	{
 		return(false);
+	}
 	// at this stage we can compute t to find out where
 	// the intersection point is on the line
 	t = f * innerProduct(e2,q);
 	if (t > 0) // ray intersection
+	{
 		return(true);
+	}
 	else // this means that there is a line intersection
 		// but not a ray intersection
+	{
 		return (false);
+	}
 }
 
 static float computePlane(VERTEX A,VERTEX B, VERTEX C, VERTEX *n) // returns D
@@ -507,12 +520,32 @@ public:
 			// we create the leaf node and copy the triangles into the leaf node triangle array.
 			if ( count < minLeafSize || depth >= maxDepth || laxis < minAxisSize )
 			{ 
+				// sort the triangles into highest Z order
+				TriVector SortedTriangles;
+				
+				for (TriVector::const_iterator i=triangles.begin(); i!=triangles.end(); ++i)
+				{
+					bool Inserted = false;
+					for (TriVector::iterator j = SortedTriangles.begin(); j != SortedTriangles.end(); ++j)
+					{
+						if(Faces[*i].minz > Faces[*j].minz)
+						{
+							SortedTriangles.insert(j, *i);
+							Inserted = true;
+							break;
+						}
+					}
+					if(!Inserted)
+						SortedTriangles.push_back(*i);
+
+				}
 				// Copy the triangle indices into the leaf triangles array
 				mLeafTriangleIndex = leafTriangles.size(); // assign the array start location for these leaf triangles.
 				leafTriangles.push_back(count);
-				for (TriVector::const_iterator i=triangles.begin(); i!=triangles.end(); ++i)
+				for (TriVector::const_iterator i=SortedTriangles.begin(); i!=SortedTriangles.end(); ++i)
 				{
 					uint32 tri = *i;
+					//printf("Minz = %8.3f\n", Faces[tri].minz);
 					leafTriangles.push_back(tri);
 				}
 			}
@@ -641,14 +674,16 @@ public:
 							uint32 *raycastTriangles,
 							uint32 raycastFrame,
 							const TriVector &leafTriangles,
-							uint32 &nearestTriIndex)
+							uint32 &nearestTriIndex,
+							bool ZTest)
 		{
 			VERTEX sect;
-			float nd = nearestDistance;
+			double nd = nearestDistance;
 			if ( !intersectLineSegmentAABB(mBounds.mMin,mBounds.mMax,from,dir,nd,sect) )
 			{
 				return;	
 			}
+
 			if ( mLeafTriangleIndex != TRI_EOF )
 			{
 				const uint32 *scan = &leafTriangles[mLeafTriangleIndex];
@@ -661,8 +696,42 @@ public:
 					if ( raycastTriangles[tri] != raycastFrame )
 					{
 						raycastTriangles[tri] = raycastFrame;
-
-						float t;
+						// If we are doing a Z test and the faces minimum z is above us, don't check further					
+						if(ZTest && (Faces[tri].minz > from.z))
+						{
+							continue;
+						}
+						// Some quick checks to see if we can hit
+						if(ZTest)
+						{
+							if(from.x < Faces[tri].minx)
+								continue;
+							if(from.y < Faces[tri].miny)
+								continue;
+		
+							if(from.x > Faces[tri].maxx)
+								continue;
+							if(from.y > Faces[tri].maxy)
+								continue;
+						}
+						else
+						{
+							if(from.x < Faces[tri].minx && to.x < Faces[tri].minx)
+								continue;
+							if(from.y < Faces[tri].miny && to.y < Faces[tri].miny)
+								continue;
+							if(from.z < Faces[tri].minz && to.z < Faces[tri].minz)
+								continue;
+		
+							if(from.x > Faces[tri].maxx && to.x > Faces[tri].maxx)
+								continue;
+							if(from.y > Faces[tri].maxy && to.y > Faces[tri].maxy)
+								continue;
+							if(from.z > Faces[tri].maxz && to.z > Faces[tri].maxz)
+								continue;
+						}
+				
+						double t;
 						if ( rayIntersectsTriangle(from, dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t))
 						{
 							bool accept = false;
@@ -689,6 +758,10 @@ public:
 								}
 								nearestTriIndex = tri;
 								hit = true;
+								// Triangles are sorted from highest to lowest minz. If we hit something, it must be the first
+								// triangle below the test point, hence the best Z.
+								if(ZTest)
+									break;
 							}
 						}
 					}
@@ -698,11 +771,11 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
 				}
 			}
 		}
@@ -786,7 +859,7 @@ public:
 		dir.z*=recipDistance;
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex);
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
 
 		if((nearestTriIndex != TRI_EOF) && hitFace)
 			*hitFace = &mFaces[nearestTriIndex];
@@ -852,7 +925,7 @@ public:
 
 		for (uint32 tri=0; tri<mFaceCount; ++tri)
 		{
-			float t;
+			double t;
 			if ( rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t))
 			{
 				if ( t < nearestDistance )

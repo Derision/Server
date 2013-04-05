@@ -40,6 +40,38 @@ typedef struct _vertex{
 
 }VERTEX, *PVERTEX;
 
+typedef struct _dvertex{
+//	unsigned long order;
+	
+	union
+	{
+		struct
+		{
+			double x;
+			double y;
+			double z;
+		};
+		double axis[3];
+	};
+
+	_dvertex()
+	{
+		x  = y = z = 0.0f;
+	};
+
+	_dvertex(double ix, double iy, double iz)
+	{
+		x = ix;
+		y = iy;
+		z = iz;
+	}
+	bool  operator==(const _dvertex &v1) const
+	{
+		return((v1.x == x) && (v1.y == y) && (v1.z ==z));
+	}
+
+}DVERTEX, *PDVERTEX;
+
 struct FILEFACE
 {
 	VERTEX a;
