@@ -8072,7 +8072,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 	{
 		c->Message(0,"Found no Z.");
 	}
-
+	/*
 	VERTEX other(me);
 
 	other.y = 10000;
@@ -8121,7 +8121,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 		else
 			c->Message(0, "No obstacle to target");
 	}
-
+	*/
 	/*
 	for(float x = -3960; x < 3960; x = x + 50)
 	{

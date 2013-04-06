@@ -60,6 +60,29 @@ ENDIF(UNIX)
 
 SET(EXECUTABLE_OUTPUT_PATH ../../Bin)
 
+#azone3
+SET(azone3_sources
+    azone3.cpp
+    ../../zone/RaycastMesh.cpp
+)
+
+SET(azone3_headers
+    azone3.h
+)
+
+ADD_EXECUTABLE(azone3 ${azone3_sources} ${azone3_headers})
+TARGET_LINK_LIBRARIES(azone3 azone_common)
+IF(MSVC)
+    SET_TARGET_PROPERTIES(azone3 PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
+    TARGET_LINK_LIBRARIES(azone3 "Ws2_32.lib")
+ENDIF(MSVC)
+
+IF(UNIX)
+    TARGET_LINK_LIBRARIES(azone3 "z")
+ENDIF(UNIX)
+
+SET(EXECUTABLE_OUTPUT_PATH ../../Bin)
+
 #awater
 SET(awater_sources
     awater.cpp
