@@ -38,24 +38,24 @@ SET(azone_common_headers
 ADD_LIBRARY(azone_common ${azone_common_sources} ${azone_common_headers})
 SET(LIBRARY_OUTPUT_PATH ../../Bin)
 
-#azone
-SET(azone_sources
-    azone.cpp
+#azone2
+SET(azone2_sources
+    azone2.cpp
 )
 
-SET(azone_headers
-    azone.h
+SET(azone2_headers
+    azone2.h
 )
 
-ADD_EXECUTABLE(azone ${azone_sources} ${azone_headers})
-TARGET_LINK_LIBRARIES(azone azone_common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE})
+ADD_EXECUTABLE(azone2 ${azone2_sources} ${azone2_headers})
+TARGET_LINK_LIBRARIES(azone2 azone_common)
 IF(MSVC)
-    SET_TARGET_PROPERTIES(azone PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
-    TARGET_LINK_LIBRARIES(azone "Ws2_32.lib")
+    SET_TARGET_PROPERTIES(azone2 PROPERTIES LINK_FLAGS_RELEASE "/OPT:REF /OPT:ICF")
+    TARGET_LINK_LIBRARIES(azone2 "Ws2_32.lib")
 ENDIF(MSVC)
 
 IF(UNIX)
-    TARGET_LINK_LIBRARIES(azone "z")
+    TARGET_LINK_LIBRARIES(azone2 "z")
 ENDIF(UNIX)
 
 SET(EXECUTABLE_OUTPUT_PATH ../../Bin)

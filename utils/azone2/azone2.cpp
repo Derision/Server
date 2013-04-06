@@ -38,7 +38,7 @@
 #include <algorithm>
 //#include "EQWldData.h"
 #include "types.h"
-#include "azone.h"
+#include "azone2.h"
 #include "wld.hpp"
 
 #include "archive.hpp"
