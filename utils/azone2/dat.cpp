@@ -34,7 +34,7 @@ float HeightWithinQuad(VERTEX p1, VERTEX p2, VERTEX p3, VERTEX p4, float x, floa
 
 	FILEFACE f;
 
-	int inTriangle = 0;
+	int32 inTriangle = 0;
 
 	float fAB = (y-p1.y) * (p2.x-p1.x) - (x-p1.x) * (p2.y-p1.y);
 	float fBC = (y-p2.y) * (p3.x-p2.x) - (x-p2.x) * (p3.y-p2.y);
@@ -81,7 +81,7 @@ float HeightWithinQuad(VERTEX p1, VERTEX p2, VERTEX p3, VERTEX p4, float x, floa
 }
 
 
-string GetToken(uchar *&Buffer, int &Position)
+string GetToken(uchar *&Buffer, int32 &Position)
 {
 	// This is used to return each Token, keyword, etc. from an EQG v4 .zon or .tog file
 	//
@@ -102,11 +102,11 @@ string GetToken(uchar *&Buffer, int &Position)
 	return Token;
 }
 
-int AddModelName(Content_3D *C3D, string ModelName)
+int32 AddModelName(Content_3D *C3D, string ModelName)
 {
 	vector<string>::iterator Iterator;
 	
-	for(unsigned int i = 0; i < C3D->ModelNames.size(); ++i)
+	for(uint32 i = 0; i < C3D->ModelNames.size(); ++i)
 	{
 #ifndef WIN32
 		if(!strcasecmp(C3D->ModelNames[i].c_str(), ModelName.c_str()))
@@ -136,18 +136,18 @@ DATLoader::~DATLoader()
 	this->Close();
 }
 
-int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
+int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 #ifdef DEBUGDAT
 	printf("DATLoader::Open %s, [%s]\n", base_path, zone_name);
 	fflush(stdout);
 #endif
-	unsigned int i, j, mat_count = 0;
+	uint32 i, j, mat_count = 0;
 
 	Zone_Model *zm;
 
 	char *buffer, *buf_start;
-	int buf_len, bone_count;
+	int32 buf_len, bone_count;
 
 	char *filename;
 
@@ -175,9 +175,9 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	buf_start = buffer;
 
 	//TODO: Find out what these three unknowns are
-	int Unknown1 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-	int Unknown2 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-	int Unknown3 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+	int32 Unknown1 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+	int32 Unknown2 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+	int32 Unknown3 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 #ifdef DEBUGDAT
 	printf("Unknowns: %i, %i, %i\n", Unknown1, Unknown2, Unknown3);
@@ -191,7 +191,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	printf("('%s',)\n", s);
 #endif
 
-	int TileCount = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+	int32 TileCount = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 #ifdef DEBUGDAT
 	printf("TileCount is  %i\n", TileCount);
@@ -199,7 +199,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 	// Most of these default values will be overwritten when we read the .zon file
 	//
-	int QuadsPerTile = 32;
+	int32 QuadsPerTile = 32;
 
 	float MinLAT = -24;
 	float MaxLAT = -1;
@@ -221,7 +221,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	//
 	uchar *ZonBuffer;
 
-	int ZonBufferLength, ZonPosition;
+	int32 ZonBufferLength, ZonPosition;
 
 	if(!GetFile((uchar **)&ZonBuffer, &ZonBufferLength, base_path, "*.zon", archive))
 	{
@@ -323,8 +323,8 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	ZoneMinY = MinLNG * QuadsPerTile * UnitsPerVert;
 	ZoneMaxY = (MaxLNG + 1) * QuadsPerTile * UnitsPerVert;
 
-	int QuadCount = (QuadsPerTile * QuadsPerTile);
-	int VertCount = ((QuadsPerTile + 1) * (QuadsPerTile + 1));
+	int32 QuadCount = (QuadsPerTile * QuadsPerTile);
+	int32 VertCount = ((QuadsPerTile + 1) * (QuadsPerTile + 1));
 #ifdef DEBUGDAT
 	printf("X Range: %8.3f to %8.3f\n", ZoneMinX, ZoneMaxX);
 	printf("Y Range: %8.3f to %8.3f\n", ZoneMinY, ZoneMaxY);
@@ -336,8 +336,8 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 		MinLAT, MaxLAT, LATRange, ZoneMinX, ZoneMaxX, ZoneMaxX - ZoneMinX);
 
 #endif
-	int VertexNumber = -1;
-	int PolyNumber = -1;
+	int32 VertexNumber = -1;
+	int32 PolyNumber = -1;
 
 	this->model_data.zone_model = new Zone_Model;
 	zm = this->model_data.zone_model;
@@ -354,16 +354,16 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 
 	float *Floats = new float[VertCount];
-	int *Color1 = new int[VertCount];
-	int *Color2 = new int[VertCount];
+	int32 *Color1 = new int[VertCount];
+	int32 *Color2 = new int[VertCount];
 	uint8 *Bytes = new uint8[QuadCount];
 
-	for(int TileNumber = 0; TileNumber < TileCount; ++TileNumber)
+	for(int32 TileNumber = 0; TileNumber < TileCount; ++TileNumber)
 	{
 		
-		int TileLNG = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-		int TileLAT = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-		int TileUNK = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 TileLNG = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 TileLAT = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 TileUNK = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 		float TileYStart = ZoneMinY + (TileLNG - 100000 - MinLNG) * UnitsPerVertY * QuadsPerTile;
 		float TileXStart = ZoneMinX + (TileLAT - 100000 - MinLAT) * UnitsPerVertX * QuadsPerTile;
@@ -384,7 +384,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 		//
 		bool AllFloatsTheSame = true;
 
-		for(int i = 0; i < VertCount; ++i)
+		for(int32 i = 0; i < VertCount; ++i)
 		{
 			Floats[i] = VARSTRUCT_DECODE_TYPE(float, buffer);
 			if((i > 0) && (Floats[i] != Floats[0]))
@@ -394,19 +394,19 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 		// It is an assumption that these next two groups are Color info, but they look like it.
 		//
-		for(int i = 0; i < VertCount; ++i)
+		for(int32 i = 0; i < VertCount; ++i)
 		{
 			Color1[i] = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 		}
 
-		for(int i = 0; i < VertCount; ++i)
+		for(int32 i = 0; i < VertCount; ++i)
 		{
 			Color2[i] = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 		}
 
 		// The low order bit of this group of bytes indicates whether the corresponding quad should
 		// be rendered or not.
-		for(int i = 0; i < QuadCount; ++i)
+		for(int32 i = 0; i < QuadCount; ++i)
 		{
 			Bytes[i] = VARSTRUCT_DECODE_TYPE(uint8, buffer);
 		}
@@ -414,7 +414,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 		float UnkFloat = VARSTRUCT_DECODE_TYPE(float, buffer);
 
-		int UnkUnk = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 UnkUnk = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 		buffer -= 4;
 
@@ -446,19 +446,19 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #endif
 		}
 
-		int LayerCount = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 LayerCount = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 		VARSTRUCT_DECODE_STRING(s, buffer);
 		
-		int OverlayCount = 0;
+		int32 OverlayCount = 0;
 
-		for(int Layer = 1; Layer < LayerCount; ++Layer)
+		for(int32 Layer = 1; Layer < LayerCount; ++Layer)
 		{
 			VARSTRUCT_DECODE_STRING(s, buffer);
 
-			int Size = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Size = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
-			for(int b = 0; b < (Size * Size); ++b)
+			for(int32 b = 0; b < (Size * Size); ++b)
 			{
 				uint8 Byte = VARSTRUCT_DECODE_TYPE(uint8, buffer);
 			}
@@ -467,14 +467,14 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 		}	
 
-		int Count1 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 Count1 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 #ifdef DEBUGDAT
 		printf("Count 1 is  (%iL,)\n", Count1);
 #endif
 
 		// The Count1 section is a list of single placeable models
 		//
-		for(int j = 0; j < Count1; ++j)
+		for(int32 j = 0; j < Count1; ++j)
 		{
 			char ModelName[255];
 
@@ -482,7 +482,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #ifdef DEBUGDAT
 			printf("%s\n", ModelName);
 #endif
-			int ModelNumber = AddModelName(&model_data, ModelName);
+			int32 ModelNumber = AddModelName(&model_data, ModelName);
 
 			VARSTRUCT_DECODE_STRING(s, buffer);
 #ifdef DEBUGDAT
@@ -492,9 +492,9 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			// Although the LNG/LAT is included for each model within this tile, the values always appear to be
 			// the same as for the parent tile.
 			//
-			int Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
-			int Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 			float x = VARSTRUCT_DECODE_TYPE(float, buffer);
 			float y = VARSTRUCT_DECODE_TYPE(float, buffer);
@@ -567,12 +567,12 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			float AdjustedY = y;
 
 			if(AdjustedX < 0)
-				AdjustedX = AdjustedX + (-(int)(AdjustedX / (UnitsPerVertX * QuadsPerTile)) + 1) * (UnitsPerVertX * QuadsPerTile);
+				AdjustedX = AdjustedX + (-(int32)(AdjustedX / (UnitsPerVertX * QuadsPerTile)) + 1) * (UnitsPerVertX * QuadsPerTile);
 			else
 				AdjustedX = fmod(AdjustedX, UnitsPerVertX * QuadsPerTile);
 
 			if(AdjustedY < 0)
-				AdjustedY = AdjustedY + (-(int)(AdjustedY / (UnitsPerVertX * QuadsPerTile)) + 1) * (UnitsPerVertX * QuadsPerTile);
+				AdjustedY = AdjustedY + (-(int32)(AdjustedY / (UnitsPerVertX * QuadsPerTile)) + 1) * (UnitsPerVertX * QuadsPerTile);
 			else
 				AdjustedY = fmod(AdjustedY, UnitsPerVertY * QuadsPerTile);
 
@@ -583,11 +583,11 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 			//	Calculated which quad the adjusted x/y coordinated of the object lie in.
 			//
-			int RowNumber = (int)(AdjustedY / UnitsPerVertY);
+			int32 RowNumber = (int32)(AdjustedY / UnitsPerVertY);
 
-			int Column = (int)(AdjustedX / UnitsPerVertX);
+			int32 Column = (int32)(AdjustedX / UnitsPerVertX);
 
-			int Quad = RowNumber * QuadsPerTile + Column;
+			int32 Quad = RowNumber * QuadsPerTile + Column;
 
 			float QuadVertex1Z = Floats[Quad + RowNumber];
 			float QuadVertex2Z = Floats[Quad + RowNumber + QuadsPerTile + 1];
@@ -628,11 +628,11 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 		// We don't currently do anything with the Count2 objects.
 		// Things like water, teleports, zonelines seem to be in here, judging from the strings.
 		//
-		int Count2 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 Count2 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 #ifdef DEBUGDAT
 		printf("Count 2 is  (%iL,)\n", Count2);
 #endif
-		for(int j = 0; j < Count2; ++j)
+		for(int32 j = 0; j < Count2; ++j)
 		{
 			VARSTRUCT_DECODE_STRING(s, buffer);
 #ifdef DEBUGDAT
@@ -646,8 +646,8 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			printf("%s\n", s);
 #endif
 
-			int Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-			int Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 			float x = VARSTRUCT_DECODE_TYPE(float, buffer);
 			float y = VARSTRUCT_DECODE_TYPE(float, buffer);
@@ -666,14 +666,14 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			float SizeZ = VARSTRUCT_DECODE_TYPE(float, buffer);
 		}
 
-		int Count3 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 Count3 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 		// We don't currently do anything with the Count 3 data. Mostly seems to be camp fires and suchlike.
 		//
 #ifdef DEBUGDAT
 		printf("Count 3 is  (%iL,)\n", Count3);
 #endif
-		for(int j = 0; j < Count3; ++j)
+		for(int32 j = 0; j < Count3; ++j)
 		{
 			VARSTRUCT_DECODE_STRING(s, buffer);
 #ifdef DEBUGDAT
@@ -686,8 +686,8 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 			VARSTRUCT_DECODE_TYPE(uint8, buffer);
 
-			int Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-			int Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 			float x = VARSTRUCT_DECODE_TYPE(float, buffer);
 			float y = VARSTRUCT_DECODE_TYPE(float, buffer);
@@ -704,14 +704,14 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			VARSTRUCT_DECODE_TYPE(float, buffer);
 		}
 
-		int Count4 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+		int32 Count4 = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 		// The data in this section mostly references .tog (Object Group) files.
 		//
 #ifdef DEBUGDAT
 		printf("Count 4 is  (%iL,)\n", Count4);
 #endif
-		for(int j = 0; j < Count4; ++j)
+		for(int32 j = 0; j < Count4; ++j)
 		{
 			char TogName[255];
 
@@ -720,8 +720,8 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			printf("%s\n", TogName);
 #endif
 
-			int Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
-			int Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Longitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
+			int32 Latitude = VARSTRUCT_DECODE_TYPE(uint32, buffer);
 
 			float x = VARSTRUCT_DECODE_TYPE(float, buffer);
 			float y = VARSTRUCT_DECODE_TYPE(float, buffer);
@@ -744,7 +744,7 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			sprintf(TogFileName, "%s.tog", TogName);
 
 			uchar *TogBuffer;
-			int TogBufferLength, TogPosition;
+			int32 TogBufferLength, TogPosition;
 
 			if(!GetFile((uchar **)&TogBuffer, &TogBufferLength, base_path, TogFileName, archive))
 			{
@@ -907,11 +907,11 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 		}
 		else
 		{
-			int RowNumber = -1;
+			int32 RowNumber = -1;
 
 			// This is the code that generates triangles for this tile of the terrain based on the height values we decode above.
 			//
-			for(int Quad = 0; Quad < QuadCount; ++Quad)
+			for(int32 Quad = 0; Quad < QuadCount; ++Quad)
 			{
 				if((Quad % QuadsPerTile) == 0)
 					++RowNumber;
@@ -981,14 +981,14 @@ int DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	return 1;
 }
 
-int DATLoader::Close() {
+int32 DATLoader::Close() {
 
 	if(!status)
 		return 1;
 
 	Zone_Model *zm = this->model_data.zone_model;
 
-	int i;
+	int32 i;
 
 	for(i = 0; i < zm->vert_count; ++i)
 		delete zm->verts[i];

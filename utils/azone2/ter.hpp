@@ -8,7 +8,7 @@
 
 struct ter_header {
   char magic[4];
-  unsigned long version, list_len, mat_count, vert_count, tri_count;
+  uint32 version, list_len, mat_count, vert_count, tri_count;
 } typedef ter_header;
 
 struct ter_vertex {
@@ -20,25 +20,25 @@ struct ter_vertex {
 struct ter_vertexV3 {
   float x, y, z;
   float i, j, k;
-  long unk1;
+  int32 unk1;
   float unk2, unk3;
   float u, v;
 } typedef ter_vertexV3;
 
 struct ter_triangle {
-  long v1, v2, v3;
-  long group;
-  long unk;
+  int32 v1, v2, v3;
+  int32 group;
+  int32 unk;
 } typedef ter_triangle;
 
 struct ter_object {
-  long index;
-  long name_offset, another_name_offset;
-  long property_count;
+  int32 index;
+  int32 name_offset, another_name_offset;
+  int32 property_count;
 } typedef ter_object;
 
 struct ter_property {
-  long name_offset, type, value;
+  int32 name_offset, type, value;
 } typedef ter_property;
 
 struct material {
@@ -55,8 +55,8 @@ class TERLoader : public FileLoader {
 public:
   TERLoader();
   ~TERLoader();
-  virtual int Open(char *base_path, char *zone_name, Archive *archive);
-  virtual int Close();
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
+  virtual int32 Close();
 };
 
 #endif

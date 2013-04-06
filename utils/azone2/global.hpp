@@ -12,16 +12,8 @@
 #ifndef NULL
 #define NULL 0
 #endif
-
-typedef unsigned long uint32;
-typedef long int32;
-
-typedef unsigned short uint16;
-typedef short int16;
-
-typedef unsigned char uint8;
+#include "../../common/types.h"
 typedef unsigned char uchar;
-typedef char int8;
 
 uint16 GetUint16(uchar **buf);
 uint32 GetUint32(uchar **buf);

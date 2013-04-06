@@ -20,7 +20,7 @@ TERLoader::~TERLoader() {
   this->Close();
 }
 
-int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
+int32 TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 #ifdef DEBUGTER
   printf("TERLoader::Open %s, [%s]\n", base_path, zone_name);
@@ -31,15 +31,15 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   ter_vertexV3 *tverV3;
   ter_triangle *ttri;
   uchar *ter_orig, *ter_tmp, *StartOfNameList;
-  int model = 0;
-  unsigned int i, j, mat_count = 0;
+  int32 model = 0;
+  uint32 i, j, mat_count = 0;
 
   Zone_Model *zm;
 
   material *mlist;
 
   uchar *buffer;
-  int buf_len, bone_count;
+  int32 buf_len, bone_count;
 
   char *filename;
 
@@ -80,7 +80,7 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
   ter_tmp = buffer + thdr->list_len;
 
-  if(sizeof(ter_header) + thdr->list_len + (thdr->vert_count * sizeof(ter_vertex)) + (thdr->tri_count * sizeof(ter_triangle)) > (unsigned int)buf_len)
+  if(sizeof(ter_header) + thdr->list_len + (thdr->vert_count * sizeof(ter_vertex)) + (thdr->tri_count * sizeof(ter_triangle)) > (uint32)buf_len)
     return 0;
 
   for(i = 0; i < thdr->mat_count; ++i) {
@@ -96,7 +96,7 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   for(j=0; j< thdr->mat_count; j++) {
      struct ter_object *tobj = (struct ter_object *)buffer;
      buffer += sizeof(struct ter_object);
-     for (unsigned int i=0; i<(unsigned int)tobj->property_count; i++) {
+     for (uint32 i=0; i<(uint32)tobj->property_count; i++) {
         struct ter_property *tprop = (struct ter_property *)buffer;
      	buffer += sizeof(struct ter_property);
      }
@@ -120,13 +120,13 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #ifdef DEBUGTER
   printf("Starting offset is %8X\n", buffer-ter_orig);
 #endif
-  for(unsigned int b=0; b<thdr->mat_count; b++) {
- 	unsigned long property_count = *((unsigned long *)(buffer+12));
+  for(uint32 b=0; b<thdr->mat_count; b++) {
+ 	uint32 property_count = *((uint32 *)(buffer+12));
 #ifdef DEBUGTER
 	printf("Property count is %d\n", property_count); fflush(stdout);
 #endif
 	buffer += 16;
-	for (unsigned int a=0; a<property_count; a++)
+	for (uint32 a=0; a<property_count; a++)
 		buffer += 12;
   }
 #ifdef DEBUGTER
@@ -134,7 +134,7 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #endif
 
 
-  for(i = 0; i < (unsigned int)zm->vert_count; ++i) {
+  for(i = 0; i < (uint32)zm->vert_count; ++i) {
     if(thdr->version<3)  {
     	tver = (ter_vertex *) buffer;
         zm->verts[i] = new Vertex;
@@ -160,7 +160,7 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   }
   
   j = 0;
-  for(i = 0; i < (unsigned int)zm->poly_count; ++i) {
+  for(i = 0; i < (uint32)zm->poly_count; ++i) {
     ttri = (ter_triangle *) buffer;
     if(ttri->group == -1) {
       buffer += sizeof(ter_triangle);
@@ -218,9 +218,9 @@ int TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   return 1;
 }
 
-int TERLoader::Close() {
+int32 TERLoader::Close() {
   Zone_Model *zm = this->model_data.zone_model;
-  int i;
+  int32 i;
 
   //return 1;
 

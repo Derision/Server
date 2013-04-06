@@ -31,11 +31,6 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-typedef unsigned char  BYTE;
-typedef unsigned short WORD;
-typedef          short SHORT;
-typedef unsigned long  DWORD;
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -185,7 +180,7 @@ bool QTBuilder::build(const char *shortname) {
 
 	zm = fileloader->model_data.zone_model;
 
-	long i;
+	int32 i;
 	VERTEX v1, v2, v3;
 	for(i = 0; i < zm->poly_count; ++i) {
 #ifdef INVERSEXY
@@ -235,7 +230,7 @@ bool QTBuilder::build(const char *shortname) {
 
 	printf("After processing placeable objects, there are %lu vertices and %lu faces.\n", _FaceList.size()*3, _FaceList.size());
 
-	unsigned long r;
+	uint32 r;
 
 	faceCount = _FaceList.size();
 
@@ -359,7 +354,7 @@ bool QTBuilder::writeMap(const char *file) {
 
 	printf("Map header: Version: 0x%08lX. %lu faces, %u nodes, %lu facelists\n", head.version, head.face_count, head.node_count, head.facelist_count);
 	/*
-	for(int i = 0; i < faceCount; ++i)
+	for(int32 i = 0; i < faceCount; ++i)
 	{
 		printf("Face: %i, (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f),(%8.3f, %8.3f, %8.3f)\n", i,
 			faceBlock[i].a.x, faceBlock[i].a.y, faceBlock[i].a.z,
@@ -378,15 +373,15 @@ bool QTBuilder::writeMap(const char *file) {
 	//make our node blocks to write out...
 	nodeHeader *nodes = new(nothrow) nodeHeader[head.node_count];
 	//memset(nodes, 0, sizeof(nodeHeader) * head.node_count);
-	unsigned long *facelist = new unsigned long[head.facelist_count];
+	uint32 *facelist = new uint32[head.facelist_count];
 	if(nodes == NULL || facelist == NULL) {
 		printf("Error allocating temporary memory for output.\n");
 		fclose(out);
 		return(1);  //no memory
 	}
 
-	unsigned long hindex = 0;
-	unsigned long findex = 0;
+	uint32 hindex = 0;
+	uint32 findex = 0;
 	_root->fillBlocks(nodes, facelist, hindex, findex);
 
 	if(fwrite(nodes, sizeof(nodeHeader), head.node_count, out) != head.node_count) {
@@ -394,14 +389,14 @@ bool QTBuilder::writeMap(const char *file) {
 		fclose(out);
 		return(1);
 	}
-	if(fwrite(facelist, sizeof(unsigned long), head.facelist_count, out) != head.facelist_count) {
+	if(fwrite(facelist, sizeof(uint32), head.facelist_count, out) != head.facelist_count) {
 		printf("Error writing map file face list.\n");
 		fclose(out);
 		return(1);
 	}
 
 
-	long MapFileSize = ftell(out);
+	int32 MapFileSize = ftell(out);
 	fclose(out);
 	delete[] nodes;
 	delete[] facelist;
@@ -447,7 +442,7 @@ void QTNode::clearNodes() {
 }
 
 //assumes that both supplied arrays are big enough per countNodes/Facelists
-void QTNode::fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &hindex, unsigned long &findex) {
+void QTNode::fillBlocks(nodeHeader *heads, uint32 *flist, uint32 &hindex, uint32 &findex) {
 	//printf("\n\n\n");
 	nodeHeader *head = &heads[hindex];
 	hindex++;
@@ -459,7 +454,7 @@ void QTNode::fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &
 	head->flags = 0;
 //printf("Node %u: (%.2f -> %.2f, %.2f -> %.2f)\n", hindex-1, head->minx, head->maxx, head->miny, head->maxy);
 	if(final) {
-		unsigned long r;
+		uint32 r;
 		/*
 		printf("\nBefore sort\n");
 		for(r = 0; r < faces.size(); r++) {
@@ -511,8 +506,8 @@ void QTNode::fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &
 	}
 }
 
-unsigned long QTNode::countNodes() const {
-	unsigned long c = 1;
+uint32 QTNode::countNodes() const {
+	uint32 c = 1;
 	if(node1 != NULL)
 		c += node1->countNodes();
 	if(node2 != NULL)
@@ -524,8 +519,8 @@ unsigned long QTNode::countNodes() const {
 	return(c);
 }
 
-unsigned long QTNode::countFacelists() const {
-	unsigned long c = final? faces.size() : 0;
+uint32 QTNode::countFacelists() const {
+	uint32 c = final? faces.size() : 0;
 	if(node1 != NULL)
 		c += node1->countFacelists();
 	if(node2 != NULL)
@@ -543,16 +538,16 @@ Map Format:
 1x mapHeader (head)
 head.face_count x FACE
 head.node_count x nodeHeader
-head.facelist_count x unsigned long (indexes into face array)
+head.facelist_count x uint32 (indexes into face array)
 
 
 */
 
-void QTNode::divideYourself(int depth) {
+void QTNode::divideYourself(int32 depth) {
 //	printf("Dividing in box (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d faces.\n",
 //		minx, maxx, miny, maxy, depth, faces.size());
 
-	unsigned long cc;
+	uint32 cc;
 	cc = faces.size();
 	//printf("Facecount is %i\n", cc);
 #ifdef MAX_QUADRANT_FACES
@@ -588,7 +583,7 @@ printf("Stopping on box (size) (%.2f -> %.2f, %.2f -> %.2f) at depth %d with %d 
 	c4 = node4? node4->faces.size() : 0;
 
 #ifdef MIN_QUADRANT_GAIN
-	int miss = 0;
+	int32 miss = 0;
 	float gain1 = 1.0 - c1 / cc;
 	float gain2 = 1.0 - c2 / cc;
 	float gain3 = 1.0 - c3 / cc;
@@ -665,7 +660,7 @@ static const GVector gNormals[6] = {
 	GVector(0.0, 0.0, -1.0),
 };
 
-static const unsigned short gIntFaces[6][4] =
+static const uint16 gIntFaces[6][4] =
 {
 	{0, 1, 2, 3},
 	{3, 2, 6, 7},
@@ -737,8 +732,8 @@ bool PointInTriangle(VERTEX *polygon, float px, float py)
   */
 
 {
-  int counter = 0;
-  int i;
+  int32 counter = 0;
+  int32 i;
   double xinters;
   VERTEX p1,p2;
 
@@ -838,7 +833,7 @@ bool QTBuilder::FaceInNode(const QTNode *q, const FILEFACE *f) {
 #define CheckIntersect(p1, p2, p3, p4) \
 (((p4->y - p3->y)*(p2.x - p1.x) - (p4->x - p3->x)*(p2.y - p1.y)) != 0)
 
-	int finaltest =
+	int32 finaltest =
 		   (edges_cross(&pt1, &pt2, v1, v2)
 		|| edges_cross(&pt1, &pt2, v1, v3)
 		|| edges_cross(&pt1, &pt2, v2, v3)
@@ -883,7 +878,7 @@ void QTNode::doSplit() {
 		return;
 	}
 
-	unsigned long r,l;
+	uint32 r,l;
 	l = faces.size();
 	for(r = 0; r < l; r++) {
 		FaceRecord &cur = faces[r];
@@ -1013,7 +1008,7 @@ void GVector::normalize() {
 }
 
 //stolen from: http://gamecode.tripod.com/tut/tut04.htm
-int QTBuilder::ClipPolygon(POLYGON *poly, GVector *plane) {
+int32 QTBuilder::ClipPolygon(POLYGON *poly, GVector *plane) {
    /* Plan: cycle through the vertices, considering pairs of them.
       If both vertices are visible, add them to the new array.
       If both vertices are invisible, add neither to the new array.
@@ -1026,7 +1021,7 @@ int QTBuilder::ClipPolygon(POLYGON *poly, GVector *plane) {
      // polygon's vertices because we might still need
      // them. Instead, use tempvtx array and update vertices
      // array at the end. Create tempvtx array once only.
-   int i, ii, j=0;
+   int32 i, ii, j=0;
 
    /* Check if plane is a valid plane */
    if (!(plane->x || plane->y || plane->z)) return -1;
@@ -1110,15 +1105,15 @@ void QTBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool Li
 	// anguish.eqg,25,69,70
 	//
 
-	const int IniBufferSize = 255;
+	const int32 IniBufferSize = 255;
 	enum ReadingState { ReadingZoneName, ReadingModelNumbers };
 	ReadingState State = ReadingZoneName;
 	bool INIEntryFound = false;
-	int INIModelCount = 0;
+	int32 INIModelCount = 0;
 	char IniBuffer[IniBufferSize], ch;
-	vector<int> ModelNumbers;
-	int StrIndex = 0;
-	int ModelNumber;
+	vector<int32> ModelNumbers;
+	int32 StrIndex = 0;
+	int32 ModelNumber;
 
 	FILE *IniFile = fopen("azone.ini", "rb");
 
@@ -1200,7 +1195,7 @@ void QTBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool Li
 
 
 
-	for(int i = 0; i < fileloader->model_data.plac_count; ++i) {
+	for(int32 i = 0; i < fileloader->model_data.plac_count; ++i) {
 		if(fileloader->model_data.placeable[i]->model==-1) continue;
 		// The model pointer should only really be NULL for the zone model, as we process that separately.
 		if(fileloader->model_data.models[fileloader->model_data.placeable[i]->model] == NULL) continue;
@@ -1237,7 +1232,7 @@ void QTBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool Li
 		Model *model = fileloader->model_data.models[fileloader->model_data.placeable[i]->model];
 
 
-		for(int j = 0; j < model->poly_count; ++j) {
+		for(int32 j = 0; j < model->poly_count; ++j) {
 
 			poly = model->polys[j];
 
@@ -1290,7 +1285,7 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 
 	vector<ObjectGroupEntry>::iterator Iterator;
 
-	int OGNum = 0;
+	int32 OGNum = 0;
 
 	bool BailOut = false;
 
@@ -1303,15 +1298,15 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 	// anguish.eqg,25,69,70
 	//
 
-	const int IniBufferSize = 255;
+	const int32 IniBufferSize = 255;
 	enum ReadingState { ReadingZoneName, ReadingModelNumbers };
 	ReadingState State = ReadingZoneName;
 	bool INIEntryFound = false;
-	int INIModelCount = 0;
+	int32 INIModelCount = 0;
 	char IniBuffer[IniBufferSize], ch;
-	vector<int> ModelNumbers;
-	int StrIndex = 0;
-	int ModelNumber;
+	vector<int32> ModelNumbers;
+	int32 StrIndex = 0;
+	int32 ModelNumber;
 
 	FILE *IniFile = fopen("azone.ini", "rb");
 
@@ -1359,7 +1354,7 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 					}
 					else
 					{
-						if((ModelNumber >= 0) && ((unsigned int)ModelNumber < fileloader->model_data.ObjectGroups.size()))
+						if((ModelNumber >= 0) && ((uint32 )ModelNumber < fileloader->model_data.ObjectGroups.size()))
 							fileloader->model_data.ObjectGroups[ModelNumber].IncludeInMap = Exclude ? false : true;
 
 					}
@@ -1405,7 +1400,7 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 					}
 					else
 					{
-						if((ModelNumber >= 0) && ((unsigned int)ModelNumber < fileloader->model_data.ObjectGroups.size()))
+						if((ModelNumber >= 0) && ((uint32 )ModelNumber < fileloader->model_data.ObjectGroups.size()))
 							fileloader->model_data.ObjectGroups[ModelNumber].IncludeInMap = Exclude ? false : true;
 
 					}
@@ -1450,13 +1445,13 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 			(*Iterator).ScaleX, (*Iterator).ScaleY, (*Iterator).ScaleZ);
 #endif
 
-		list<int>::iterator ModelIterator;
+		list<int32>::iterator ModelIterator;
 
 		ModelIterator = (*Iterator).SubObjects.begin();
 
 		while(ModelIterator != (*Iterator).SubObjects.end())
 		{
-			int SubModel = (*ModelIterator);
+			int32 SubModel = (*ModelIterator);
 
 #ifdef DEBUG
 			printf("  SubModel: %i\n", (*ModelIterator));
@@ -1494,7 +1489,7 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 #endif
 				continue;
 			}
-			for(int j = 0; j < model->poly_count; ++j) {
+			for(int32 j = 0; j < model->poly_count; ++j) {
 
 				poly = model->polys[j];
 

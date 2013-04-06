@@ -9,7 +9,7 @@
 //#define DEBUGEQG
 //#define DEBUGPLAC
 
-string GetToken(uchar *&Buffer, int &Position);
+string GetToken(uchar *&Buffer, int32 &Position);
 
 Zonv4Loader::Zonv4Loader()
 {
@@ -24,17 +24,17 @@ Zonv4Loader::~Zonv4Loader()
 	this->Close();
 }
 
-int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
+int32 Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 {
 	
 	uchar *buffer;
-	int position;
-	int buf_len;
+	int32 position;
+	int32 buf_len;
 
 	Texture **tex;
-	int tex_count, tex_tmp, *tex_map;
+	int32 tex_count, tex_tmp, *tex_map;
 
-	int i, j, k, l;
+	int32 i, j, k, l;
 	char **model_names;
 
 	char *filename;
@@ -104,7 +104,7 @@ int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 
 	this->model_data.placeable = new Placeable *[this->datloader.model_data.PlaceableList.size()];
 
-	for(unsigned int i = 0; i < this->datloader.model_data.ModelNames.size(); ++i)
+	for(uint32 i = 0; i < this->datloader.model_data.ModelNames.size(); ++i)
 	{
 		char tmp[200];
 		//printf("Opening %s.mod\n", this->datloader.model_data.ModelNames[i].c_str());
@@ -160,7 +160,7 @@ int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 #ifdef DEBUGPLAC
 	printf("Placeable list:\n");
 
-	for(int i = 0; i < this->datloader.model_data.ObjectGroups.size(); ++i)
+	for(int32 i = 0; i < this->datloader.model_data.ObjectGroups.size(); ++i)
 	{
 		printf("ObjectGroup: %i\n", i);
 		printf(" XYZ: %8.3f, %8.3f, %8.3f  Tile: (%8.3f, %8.3f, %8.3f)  Rots: (%8.3f, %8.3f, %8.3f) Scale: %8.3f\n",
@@ -175,7 +175,7 @@ int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 			this->datloader.model_data.ObjectGroups[i].RotZ,
 			this->datloader.model_data.ObjectGroups[i].ScaleX);
 
-		list<int>::iterator ModelIterator;
+		list<int32>::iterator ModelIterator;
 
 		ModelIterator = this->datloader.model_data.ObjectGroups[i].SubObjects.begin();
 
@@ -202,7 +202,7 @@ int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 	}
 #endif
 
-	for(unsigned int i = 0; i < this->datloader.model_data.PlaceableList.size(); ++i)
+	for(uint32 i = 0; i < this->datloader.model_data.PlaceableList.size(); ++i)
 	{
 		this->model_data.placeable[i] = new Placeable;
 
@@ -233,9 +233,9 @@ int Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 }
 
 
-int Zonv4Loader::Close()
+int32 Zonv4Loader::Close()
 {
-	int i;
+	int32 i;
 
 	if(!this->status)
 		return 1;

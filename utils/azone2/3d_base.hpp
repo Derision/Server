@@ -22,7 +22,7 @@ struct Vertex {
 	float i, j, k;
 	float u, v;
 
-//	int bone;
+//	int32 bone;
 
 	Vertex()
 	{
@@ -39,11 +39,11 @@ struct Vertex {
 
 
 struct Polygon {
-  int flags;
+  int32 flags;
 
-  int v1, v2, v3;
+  int32 v1, v2, v3;
 
-  int tex;
+  int32 tex;
 } typedef Polygon;
 
 
@@ -70,7 +70,7 @@ public:
   Polygon **polys;
   Texture **tex;
 
-  int vert_count, poly_count, tex_count;
+  int32 vert_count, poly_count, tex_count;
 
   char *name;
   bool IncludeInMap; // Include in EQEmu .map file
@@ -81,7 +81,7 @@ class Placeable {
 public:
 	Placeable() {}
 
-	Placeable(int iModel, float ix, float iy, float iz, float irx, float iry, float irz, float iScale0, float iScale1, float iScale2)
+	Placeable(int32 iModel, float ix, float iy, float iz, float irx, float iry, float irz, float iScale0, float iScale1, float iScale2)
 	{
 		model = iModel;
 		x = ix;
@@ -99,7 +99,7 @@ public:
 	float rx, ry, rz;
 	float scale[3];
 
-	int model;
+	int32 model;
 };
 
 #pragma pack()

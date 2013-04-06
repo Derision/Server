@@ -17,7 +17,7 @@ this->frags[i] = new name(this, buffer, frag->size, frag->nameRef);
 class TexRef {
 public:
   Texture **tex;
-  int tex_count;
+  int32 tex_count;
 };
 
 class Fragment {
@@ -25,7 +25,7 @@ public:
   Fragment() {}
   virtual ~Fragment() {}
 
-  int type, name;
+  int32 type, name;
   void *frag;
 };
 
@@ -34,10 +34,10 @@ public:
   WLDLoader();
   ~WLDLoader();
   
-  virtual int Open(char *base_path, char *zone_name, Archive *archive);
-  virtual int Close();
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
+  virtual int32 Close();
 
-  int fragcount;
+  int32 fragcount;
   Fragment **frags;
   BSP_Node *tree;
 
@@ -54,12 +54,12 @@ public:
 #define FRAG_CLASS(name) \
 class name : public Fragment { \
 public: \
-  name(WLDLoader *wld, uchar *buf, int len, int frag_name); \
+  name(WLDLoader *wld, uchar *buf, int32 len, int32 frag_name); \
   ~name() {}; \
 }
 
 #define FRAG_CONSTRUCTOR(name) \
-name::name(WLDLoader *wld, uchar *buf, int len, int frag_name)
+name::name(WLDLoader *wld, uchar *buf, int32 len, int32 frag_name)
 
 #define FRAG_DECONSTRUCTOR(name) \
 name::~name()
@@ -78,7 +78,7 @@ FRAG_CLASS(Data30);
 FRAG_CLASS(Data31);
 FRAG_CLASS(Data36);
 
-void DoubleLinkBSP(BSP_Node *tree, long node_number, long parent);
-long BSPMarkRegion(BSP_Node *tree, long node_number, long region, int region_type);
+void DoubleLinkBSP(BSP_Node *tree, int32 node_number, int32 parent);
+int32 BSPMarkRegion(BSP_Node *tree, int32 node_number, int32 region, int32 region_type);
 
 #endif

@@ -22,14 +22,14 @@ ZonLoader::~ZonLoader() {
   this->Close();
 }
 
-int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
+int32 ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   uchar *buffer, *orig_buffer;
-  int buf_len;
+  int32 buf_len;
 
   Texture **tex;
-  int tex_count, tex_tmp, *tex_map;
+  int32 tex_count, tex_tmp, *tex_map;
 
-  int i, j, k, l;
+  int32 i, j, k, l;
   char **model_names;
 
   char *filename;
@@ -71,7 +71,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
     if(FSZon) {
     	printf("Found.\n");
 	fseek(FSZon, 0, SEEK_END);
-	long FSZonSize = ftell(FSZon);
+	int32 FSZonSize = ftell(FSZon);
 	fseek(FSZon, 0, SEEK_SET);
 //	printf("File size is %d\n", FSZonSize);
 	buffer = new uchar[FSZonSize];
@@ -137,7 +137,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   // then a list of placeable models. It would appear that one .MOD file can be used by multiple objects,
   // i.e. the key_door_open and key_door models in the example above.
   //
-  // After this list, there is a list of hdr->NumberOfModels longs, one for each Model. Each long is an offset into
+  // After this list, there is a list of hdr->NumberOfModels uint32s, one for each Model. Each int32 is an offset into
   // the list above, pointing to the .MOD file for that model.
 
   zon_orig = buffer;
@@ -147,8 +147,8 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   //
   buffer = zon_orig + hdr->list_len;
   model_names = new char *[hdr->NumberOfModels];
-  for(int ModelNumber=0; ModelNumber< hdr->NumberOfModels; ModelNumber++) {
- 	long offset = *((long *)(buffer+ModelNumber*4));
+  for(int32 ModelNumber=0; ModelNumber< hdr->NumberOfModels; ModelNumber++) {
+ 	int32 offset = *((int32 *)(buffer+ModelNumber*4));
 	model_names[ModelNumber] = (char *)(zon_orig + offset);
 	//
 	// Derision: 23/06/08
@@ -157,7 +157,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 	// This is the only zone I have seen this in, but is the reason for the follow code to replace 
 	// the parenthesis with an underscore.
 	//
-	for(unsigned int i=0; i<strlen(model_names[ModelNumber]); i++)
+	for(uint32 i=0; i<strlen(model_names[ModelNumber]); i++)
 		if(model_names[ModelNumber][i] == ')') {
 			model_names[ModelNumber][i] = '_';
 			printf("***** Replacing parenthesis with underscore in model name %s\n", model_names[ModelNumber]);
@@ -199,7 +199,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   buffer += sizeof(zon_placeable);
 
   if(hdr->version > 1) {
-  	long UnknownSize = *((long *)(buffer));
+  	int32 UnknownSize = *((int32 *)(buffer));
 //	printf("Unknown Size is %d\n", UnknownSize);
 	buffer = buffer + 4 + (UnknownSize * 4);
   }
@@ -247,7 +247,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #endif
     buffer += sizeof(zon_placeable);
     if(hdr->version > 1) {
-  	long UnknownSize = *((long *)(buffer));
+  	int32 UnknownSize = *((int32 *)(buffer));
 	buffer = buffer + 4 + (UnknownSize * 4);
     }
     	
@@ -289,7 +289,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
         for(i = 0; i < this->model_data.models[j]->tex_count; ++i) {
 	  tex_tmp = 1;  // Derision
           for(k = 0; k < this->model_data.zone_model->tex_count; ++k) {
-//	  printf("    Checking zm tex filename %s againt model filename %s\n", this->model_data.zone_model->tex[k]->filenames[0],
+//	  printf("    Checking zm tex filename %s against model filename %s\n", this->model_data.zone_model->tex[k]->filenames[0],
 //	                                                                       this->model_data.models[j]->tex[i]->filenames[0]);
             if((!this->model_data.zone_model->tex[k]->filenames[0] && !this->model_data.models[j]->tex[i]->filenames[0]) ||
                (this->model_data.zone_model->tex[k]->filenames[0] &&
@@ -368,7 +368,7 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 #endif
         continue;
     }
-    tex_map = new int[this->model_data.models[i]->tex_count];
+    tex_map = new int32[this->model_data.models[i]->tex_count];
 
     for(j = 0; j < this->model_data.models[i]->tex_count; ++j) {
       tex_map[j] = 0;
@@ -397,9 +397,9 @@ int ZonLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 }
 
 
-int ZonLoader::Close() {
+int32 ZonLoader::Close() {
 
-	int i;
+	int32 i;
 
 	if(!this->status)
 		return 1;

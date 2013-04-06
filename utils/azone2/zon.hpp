@@ -9,24 +9,24 @@
 
 struct zon_header {
   char magic[4]; // Constant at EQGZ
-  long version; // Constant at 2
-  long list_len; // Length of the list to follow.
-  long NumberOfModels;
-  long obj_count; // Placeable object count.
-  long unk[2]; // Unknown.
+  int32 version; // Constant at 2
+  int32 list_len; // Length of the list to follow.
+  int32 NumberOfModels;
+  int32 obj_count; // Placeable object count.
+  int32 unk[2]; // Unknown.
 } typedef zon_header;
 
 struct zon_placeable {
-  long id;
-  long loc;
+  int32 id;
+  int32 loc;
   float x, y, z;
   float rx, ry, rz;
   float scale;
 } typedef zon_placeable;
 
 struct zon_object {
-   long offset;
-   long id;
+   int32 offset;
+   int32 id;
 } typedef zon_object;
 
 #pragma pack()
@@ -36,8 +36,8 @@ public:
   ZonLoader();
   ~ZonLoader();
  
-  virtual int Open(char *base_path, char *zone_name, Archive *archive);
-  virtual int Close();
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
+  virtual int32 Close();
 
 private:
   TERLoader terloader;

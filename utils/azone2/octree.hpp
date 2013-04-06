@@ -12,8 +12,8 @@
 class Octree_Node {
 public:
   Octree_Node();
-  Octree_Node(int poly_count, Polygon **polys, Vertex **verts, int plac_count, Placeable **plac);
-  Octree_Node(int poly_count, Polygon **polys, Vertex **verts, int plac_count, Placeable **plac, float min[3], float max[3]);
+  Octree_Node(int32 poly_count, Polygon **polys, Vertex **verts, int32 plac_count, Placeable **plac);
+  Octree_Node(int32 poly_count, Polygon **polys, Vertex **verts, int32 plac_count, Placeable **plac, float min[3], float max[3]);
   ~Octree_Node();
   void FindMinMax();
   void Split(char level);
@@ -21,11 +21,11 @@ public:
   float min[3], max[3];
   float x, y, z, size, sizes[3];
 
-  int poly_count;
+  int32 poly_count;
   Vertex **verts;
   Polygon **polys;
 
-  int plac_count;
+  int32 plac_count;
   Placeable **plac;
 
   GLuint li;

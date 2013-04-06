@@ -33,7 +33,7 @@ typedef struct _vertex{
 	
 }VERTEX;
 
-void DrawEQModel(FileLoader *fileloader, int modnum);
+void DrawEQModel(FileLoader *fileloader, int32 modnum);
 FileLoader *mfileloader;
 bool ProcessZoneFile(const char *shortname);
 enum EQFileType { S3D, EQG, UNKNOWN };
@@ -48,7 +48,7 @@ char	ch;
 bool	active=true;
 GLuint	base;	
 
-int modelnum = 1;			// The Number of the model we are currently displaying.
+int32 modelnum = 1;			// The Number of the model we are currently displaying.
 float angle = 0;			// used to rotate the model. Updated by a timer
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
@@ -104,7 +104,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)
 	glLoadIdentity();	
 }
 
-int InitGL(GLvoid)	
+int32 InitGL(GLvoid)	
 {
 	glShadeModel(GL_SMOOTH);	
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
@@ -116,7 +116,7 @@ int InitGL(GLvoid)
 	return true;					
 }
 
-int DrawGLScene(char *ZoneFileName)		
+int32 DrawGLScene(char *ZoneFileName)		
 {
 	char textBuffer[100];
 
@@ -178,7 +178,7 @@ GLvoid KillGLWindow(GLvoid) {
 }
 
  
-BOOL CreateGLWindow(char* title, int width, int height, int bits) {
+BOOL CreateGLWindow(char* title, int32 width, int32 height, int32 bits) {
 	GLuint		PixelFormat;
 	WNDCLASS	wc;	
 	DWORD		dwExStyle;
@@ -326,7 +326,7 @@ void ScaleVertex(VERTEX &v, float XScale, float YScale, float ZScale) {
 }
 
 
-void DrawEQModel(FileLoader *fileloader, int modnum) {
+void DrawEQModel(FileLoader *fileloader, int32 modnum) {
 	
 	Polygon *poly;
 	Vertex *verts[3];
@@ -335,14 +335,14 @@ void DrawEQModel(FileLoader *fileloader, int modnum) {
 	float maxDimension = 0, minx = 999999, miny = 999999, minz = 999999, maxx = -999999, maxy=-999999, maxz=-999999;
 	Model *model = fileloader->model_data.models[modnum];
 
-	for(int i = 0; i < model->poly_count; ++i) {
+	for(int32 i = 0; i < model->poly_count; ++i) {
 		poly = model->polys[i];
 
 		verts[0] = model->verts[poly->v1];
 		verts[1] = model->verts[poly->v2];
 		verts[2] = model->verts[poly->v3];
 
-		for(int j=0; j<3; j++) {
+		for(int32 j=0; j<3; j++) {
 			if(verts[j]->x > maxDimension) maxDimension = verts[j]->x;
 			if(verts[j]->y > maxDimension) maxDimension = verts[j]->y;
 			if(verts[j]->z > maxDimension) maxDimension = verts[j]->z;
@@ -375,7 +375,7 @@ void DrawEQModel(FileLoader *fileloader, int modnum) {
 	
 	glBegin(GL_TRIANGLES);
 
-	for(int i = 0; i < model->poly_count; ++i) {
+	for(int32 i = 0; i < model->poly_count; ++i) {
 		poly = model->polys[i];
 
 		verts[0] = model->verts[poly->v1];
@@ -487,7 +487,7 @@ int WINAPI WinMain(HINSTANCE hInstance,	HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	BOOL done=false;
 	FILE *fp; 
 
-	for(int i=0;i<256;i++) 
+	for(int32 i=0;i<256;i++) 
 		keys[i] = false;
 	
 

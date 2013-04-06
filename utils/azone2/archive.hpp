@@ -10,20 +10,20 @@ public:
   Archive() {}
   virtual ~Archive() {}
 
-  virtual int Open(FILE *fp) = 0;
-  virtual int Close() = 0;
+  virtual int32 Open(FILE *fp) = 0;
+  virtual int32 Close() = 0;
 
-  virtual int GetFile(char *name, uchar **buf, int *len) = 0;
+  virtual int32 GetFile(char *name, uchar **buf, int32 *len) = 0;
   virtual const char *FindExtension(const char *ext) = 0;
 
   char **filenames;
-  int count;
+  int32 count;
 
 protected:
   uchar *buffer;
-  int buf_len;
+  int32 buf_len;
 
-  int status;
+  int32 status;
 
   uint32 *files;
   FILE *fp;

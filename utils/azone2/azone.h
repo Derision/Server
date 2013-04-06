@@ -35,7 +35,7 @@ using namespace std;
 				//if all points on poly are, kill it.
 /*
  This is used for the recursive node structure
- unsigned shorts are adequate because, worst case
+ uint16s are adequate because, worst case
  even in a zone that is 6000x6000 with a small node
  size of 30x30, there are only 40000 nodes.
  
@@ -57,7 +57,7 @@ enum EQFileType { S3D, EQG, UNKNOWN };
 
 struct POLYGON {
    VERTEX /*w[MAX_POLY_VTX], */c[MAX_POLY_VTX];
-   int count;             // w is world points, c is for camera points
+   int32 count;             // w is world points, c is for camera points
 };
 
 class GPoint {
@@ -95,7 +95,7 @@ public:
 
 struct FaceRecord {
 	FILEFACE *face;
-	unsigned long index;
+	uint32 index;
 };
 
 #define Vmin3(o, a, b, c) ((a.o<b.o)? (a.o<c.o?a.o:c.o) : (b.o<c.o?b.o:c.o))
@@ -104,7 +104,7 @@ bool SortFaceRecordHighestZ(FaceRecord a, FaceRecord b)
 {
 	float amz = Vmin3(z, a.face->a, a.face->b, a.face->c);
 	float bmz = Vmin3(z, b.face->a, b.face->b, b.face->c);
-	return bmz > amz;
+	return bmz < amz;
 }
 
 class QTNode;
@@ -128,15 +128,15 @@ protected:
 	
 	void AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3);
 	
-	int ClipPolygon(POLYGON *poly, GVector *plane);
+	int32 ClipPolygon(POLYGON *poly, GVector *plane);
 	
 	//dynamic during load
 //	vector<VERTEX> _VertexList;
 	vector<FILEFACE> _FaceList;
 	
 	//static once loaded
-//	unsigned long vertexCount;
-	unsigned long faceCount;
+//	uint32 vertexCount;
+	uint32 faceCount;
 //	VERTEX * vertexBlock;
 	FILEFACE * faceBlock;
 	
@@ -147,10 +147,10 @@ protected:
 	static void NormalizeN(FILEFACE *p);
 
 #ifdef COUNT_MACTHES
-	unsigned long gEasyMatches;
-	unsigned long gEasyExcludes;
-	unsigned long gHardMatches;
-	unsigned long gHardExcludes;
+	uint32 gEasyMatches;
+	uint32 gEasyExcludes;
+	uint32 gHardMatches;
+	uint32 gHardExcludes;
 #endif
 
 };
@@ -164,22 +164,22 @@ public:
 	void clearNodes();
 	
 	void doSplit();
-	void divideYourself(int depth);
+	void divideYourself(int32 depth);
 	
 	void buildVertexes();
 
 //	bool writeFile(FILE *out);
 	
-	unsigned long countNodes() const;
-	unsigned long countFacelists() const;
+	uint32 countNodes() const;
+	uint32 countFacelists() const;
 	
-	void fillBlocks(nodeHeader *heads, unsigned long *flist, unsigned long &hindex, unsigned long &findex);
+	void fillBlocks(nodeHeader *heads, uint32 *flist, uint32 &hindex, uint32 &findex);
 	
 	float minx;
 	float miny;
 	float maxx;
 	float maxy;
-	unsigned long nfaces;
+	uint32 nfaces;
 	vector<FaceRecord> faces;
 	
 	/*

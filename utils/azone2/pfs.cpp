@@ -39,8 +39,8 @@ struct struct_fn_entry {
 
 #pragma pack()
 
-inline void decompress(char *p, char *p2, int len, int uLen) {
-  int status;
+inline void decompress(char *p, char *p2, int32 len, int32 uLen) {
+  int32 status;
   z_stream d_stream;
 
   d_stream.zalloc = (alloc_func)0;
@@ -76,7 +76,7 @@ PFSLoader::~PFSLoader() {
   this->Close();
 }
 
-int PFSLoader::Open(FILE *fp)
+int32 PFSLoader::Open(FILE *fp)
 {
 	struct_header s3d_header;
 	struct_directory_header s3d_dir_header;
@@ -88,7 +88,7 @@ int PFSLoader::Open(FILE *fp)
 	uint32 *offsets;
 
 	char *temp, *temp2;
-	int i, j, pos, inf, tmp, running = 0;
+	int32 i, j, pos, inf, tmp, running = 0;
 
 	if(!fp)
 		return 0;
@@ -113,7 +113,7 @@ int PFSLoader::Open(FILE *fp)
 	this->files = new uint32[s3d_dir_header.count - 1];
 	offsets = new uint32[s3d_dir_header.count - 1];
 
-	for(i = 0; i < (int)s3d_dir_header.count; ++i)
+	for(i = 0; i < (int32)s3d_dir_header.count; ++i)
 	{
 		fread(&s3d_dir, sizeof(struct_directory), 1, fp);
 
@@ -125,7 +125,7 @@ int PFSLoader::Open(FILE *fp)
 			memset(temp, 0, s3d_dir.size);
 			inf = 0;
 
-			while(inf < (int)s3d_dir.size)
+			while(inf < (int32)s3d_dir.size)
 			{
 				fread(&s3d_data, sizeof(struct_data_block), 1, fp);
 				temp2 = new char[s3d_data.deflen];
@@ -137,7 +137,7 @@ int PFSLoader::Open(FILE *fp)
 			fseek(fp, pos, SEEK_SET);
 			s3d_fn_header = (struct_fn_header *) temp;
 			pos = sizeof(struct_fn_header);
-			for(j = 0; j < (int)s3d_fn_header->fncount; ++j)
+			for(j = 0; j < (int32)s3d_fn_header->fncount; ++j)
 			{
 				s3d_fn_entry = (struct_fn_entry *) &temp[pos];
 				this->filenames[j] = new char[s3d_fn_entry->fnlen + 1];
@@ -180,7 +180,7 @@ int PFSLoader::Open(FILE *fp)
 	return 1;
 }
 
-int PFSLoader::Close()
+int32 PFSLoader::Close()
 {
 	if(this->status)
 	{
@@ -203,12 +203,12 @@ int PFSLoader::Close()
 }
 
 const char *PFSLoader::FindExtension(const char *ext) {
-  int i;
+  int32 i;
 
-  int elen = strlen(ext);
+  int32 elen = strlen(ext);
   
   for(i = 0; i < this->count; ++i) {
-    int flen = strlen(this->filenames[i]);
+    int32 flen = strlen(this->filenames[i]);
 	if(flen <= elen)
 		continue;
     if(!strcmp(this->filenames[i]+(flen-elen), ext))
@@ -217,12 +217,12 @@ const char *PFSLoader::FindExtension(const char *ext) {
   return(NULL);
 }
 
-int PFSLoader::GetFile(char *name, uchar **buf, int *len) {
+int32 PFSLoader::GetFile(char *name, uchar **buf, int32 *len) {
   struct_directory s3d_dir;
   struct_data_block s3d_data;
   char *temp2;
-  long inf;
-  int i;
+  int32 inf;
+  int32 i;
   Lower(name);
 
   for(i = 0; i < this->count; ++i) {
@@ -236,7 +236,7 @@ int PFSLoader::GetFile(char *name, uchar **buf, int *len) {
       *buf = new uchar[s3d_dir.size];
       
       inf = 0;
-      while(inf < (int)s3d_dir.size) {
+      while(inf < (int32)s3d_dir.size) {
         fread(&s3d_data, sizeof(struct_data_block), 1, this->fp);
         temp2 = new char[s3d_data.deflen];
         fread(temp2, s3d_data.deflen, 1, this->fp);

@@ -31,11 +31,6 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-typedef unsigned char  BYTE;
-typedef unsigned short WORD;
-typedef          short SHORT;
-typedef unsigned long  DWORD;
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -65,17 +60,17 @@ using namespace std;
 //#define SPLIT_DEBUG
 
 
-bool BuildWaterMap(const char *shortname, long DefaultRegionType);
-void PrintBSP(BSP_Node *tree, long node_number);
-long BSPFindRegion(BSP_Node *tree, long node_number, long region);
-long BSPFindNode(BSP_Node *tree, long node_number, float x, float y, float z);
-long BSPMarkRegion(BSP_Node *tree, long node_number, long region, int region_type);
-long BSPCountNodes(BSP_Node *tree, long node_number);
+bool BuildWaterMap(const char *shortname, int32 DefaultRegionType);
+void PrintBSP(BSP_Node *tree, int32 node_number);
+int32 BSPFindRegion(BSP_Node *tree, int32 node_number, int32 region);
+int32 BSPFindNode(BSP_Node *tree, int32 node_number, float x, float y, float z);
+int32 BSPMarkRegion(BSP_Node *tree, int32 node_number, int32 region, int32 region_type);
+int32 BSPCountNodes(BSP_Node *tree, int32 node_number);
 
 
 int main(int argc, char *argv[]) {
 
-	long DefaultRegionType=RegionTypeWater;
+	int32 DefaultRegionType=RegionTypeWater;
 	
 	if((argc < 2) ||
 	   (argc > 3) ||
@@ -105,12 +100,12 @@ int main(int argc, char *argv[]) {
 
 
 
-bool BuildWaterMap(const char *shortname, long DefaultRegionType) {
+bool BuildWaterMap(const char *shortname, int32 DefaultRegionType) {
 
 	char bufs[96];
 	Archive *archive;
 	WLDLoader *fileloader;
-	long WaterOrLavaCount = 0; 
+	int32 WaterOrLavaCount = 0; 
 	
 	//TODO: clean up a LOT of memory that the freaku code does not
 	
@@ -142,7 +137,7 @@ bool BuildWaterMap(const char *shortname, long DefaultRegionType) {
 	struct_Data29 *data29;
 
 
-	for(int i=0; i<fileloader->fragcount; i++) {
+	for(int32 i=0; i<fileloader->fragcount; i++) {
 		if(fileloader->frags[i]->type == 0x29) {
 			printf("We have a type 0x29 fragment. ");
 			data29 = (struct_Data29 *) fileloader->frags[i]->frag;
@@ -178,17 +173,17 @@ bool BuildWaterMap(const char *shortname, long DefaultRegionType) {
 		return(false);
 	}
 
-	unsigned long BSPTreeSize = BSPCountNodes(tree, 1);
+	uint32 BSPTreeSize = BSPCountNodes(tree, 1);
 
 	printf("There are %ld nodes in the BSP tree\n", BSPTreeSize);
 
 	// Now we mark each leaf in the BSP tree that is in a 'special area' with what type the area is
 	// Water, Lava, Zoneline etc
 	
-	for(int i=0; i<fileloader->fragcount; i++) {
+	for(int32 i=0; i<fileloader->fragcount; i++) {
 		if(fileloader->frags[i]->type == 0x29) {
 			data29 = (struct_Data29 *) fileloader->frags[i]->frag;
-			for(long j=0; j<data29->region_count; j++) {
+			for(int32 j=0; j<data29->region_count; j++) {
 				BSPMarkRegion(tree, 1,data29->region_array[j]+1, data29->region_type); 
 			}
 		}
@@ -205,7 +200,7 @@ bool BuildWaterMap(const char *shortname, long DefaultRegionType) {
 		return(false);
 	}
 	const char *WFMagic = "EQEMUWATER";
-	const long WFVersion = 1;
+	const int32 WFVersion = 1;
 
 	if(fwrite(WFMagic, strlen(WFMagic), 1, WaterFile) != 1) {
 		printf("Error writing output file\n");
@@ -235,7 +230,7 @@ bool BuildWaterMap(const char *shortname, long DefaultRegionType) {
 }
 
 
-void PrintBSP(BSP_Node *tree, long node_number) {
+void PrintBSP(BSP_Node *tree, int32 node_number) {
 	printf("Node %ld, Left=%ld, Right=%ld\n",
 	       node_number-1,
 	       tree[node_number-1].left,
@@ -255,9 +250,9 @@ void PrintBSP(BSP_Node *tree, long node_number) {
 
 }
 
-long BSPCountNodes(BSP_Node *tree, long node_number) {
+int32 BSPCountNodes(BSP_Node *tree, int32 node_number) {
 
-	long NodesInRightBranch = 0, NodesInLeftBranch = 0;
+	int32 NodesInRightBranch = 0, NodesInLeftBranch = 0;
 
 	if((tree[node_number-1].left==0)&&
 		(tree[node_number-1].right==0)) return 1;
@@ -270,7 +265,7 @@ long BSPCountNodes(BSP_Node *tree, long node_number) {
 }
 	
 
-long BSPFindRegion(BSP_Node *tree, long node_number, long region) {
+int32 BSPFindRegion(BSP_Node *tree, int32 node_number, int32 region) {
 	//printf("Find Region %ld in node %ld\n", region, node_number);
 	if(node_number<1) {
 		printf("Something went wrong\n");
@@ -282,7 +277,7 @@ long BSPFindRegion(BSP_Node *tree, long node_number, long region) {
 	}
 
 	
-	long retnode ;
+	int32 retnode ;
 	if(tree[node_number-1].left!=0) {
 		retnode = BSPFindRegion(tree, tree[node_number-1].left, region);
 		if(retnode != 0) return retnode ;
@@ -296,7 +291,7 @@ long BSPFindRegion(BSP_Node *tree, long node_number, long region) {
 
 }
 
-long BSPFindNode(BSP_Node *tree, long node_number, float x, float y, float z) {
+int32 BSPFindNode(BSP_Node *tree, int32 node_number, float x, float y, float z) {
 
 	float distance;
 
@@ -342,7 +337,7 @@ long BSPFindNode(BSP_Node *tree, long node_number, float x, float y, float z) {
 }
 
 	
-long BSPMarkRegion(BSP_Node *tree, long node_number, long region, int region_type) {
+int32 BSPMarkRegion(BSP_Node *tree, int32 node_number, int32 region, int32 region_type) {
         //printf("Find Region %ld in node %ld\n", region, node_number);
         if(node_number<1) {
                 printf("Something went wrong\n");
@@ -356,7 +351,7 @@ long BSPMarkRegion(BSP_Node *tree, long node_number, long region, int region_typ
 			   }
         }
 
-        long retnode ;
+        int32 retnode ;
         if(tree[node_number-1].left!=0) {
                 retnode = BSPMarkRegion(tree, tree[node_number-1].left, region, region_type);
                 if(retnode != 0) return retnode ;

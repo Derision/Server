@@ -9,16 +9,16 @@ public:
   FileLoader() {}
   virtual ~FileLoader() {}
 
-  virtual int Open(char *base_path, char *zone_name, Archive *archive) = 0;
-  virtual int Close() = 0;
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive) = 0;
+  virtual int32 Close() = 0;
 
   Content_3D model_data;
 protected:
   uchar *buffer;
-  int buf_len;
+  int32 buf_len;
   Archive *archive;
 
-  int status;
+  int32 status;
 };
 
 #endif

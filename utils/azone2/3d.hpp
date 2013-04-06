@@ -21,7 +21,7 @@ struct ObjectGroupEntry
 	float x, y, z;
 	float RotX, RotY, RotZ;
 	float ScaleX, ScaleY, ScaleZ;
-	list<int> SubObjects;
+	list<int32> SubObjects;
 };
 
 class Octree_Node;
@@ -30,14 +30,14 @@ class Bone {
 public:
 	char *name;
 
-	int bone1, bone2;
+	int32 bone1, bone2;
 
 	float x, y, z;
 	float e[4];
 	float scale[3];
 
-	int vert_count;
-	int *verts;
+	int32 vert_count;
+	int32 *verts;
 };
 
 class Zone_Model {
@@ -50,7 +50,7 @@ public:
 	Octree_Node *octree;
 	Texture **tex;
 
-	int vert_count, poly_count, tex_count;
+	int32 vert_count, poly_count, tex_count;
 };
 
 class MobModel {
@@ -62,11 +62,11 @@ public:
 	Polygon **polys;
 	Texture **tex;
 
-	int vert_count, poly_count, tex_count;
+	int32 vert_count, poly_count, tex_count;
 
 	Bone *bones;
 
-	int bone_count;
+	int32 bone_count;
 };
 
 class Content_3D {
@@ -86,12 +86,12 @@ public:
 	Model **models;
 	Placeable **placeable;
 
-	int model_count, plac_count; // Count of placeable object models and count of instances
-	int ObjectGroupCount;
+	int32 model_count, plac_count; // Count of placeable object models and count of instances
+	int32 ObjectGroupCount;
 
 	MobModel **mob_models;
 	Placeable **mob_locs;
-	int mob_model_count, mob_count;
+	int32 mob_model_count, mob_count;
 
 	vector<ObjectGroupEntry> ObjectGroups;
 	vector<string> ModelNames;

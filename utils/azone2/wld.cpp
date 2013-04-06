@@ -11,11 +11,11 @@
 
 static uchar encarr[] = {0x95, 0x3A, 0xC5, 0x2A, 0x95, 0x7A, 0x95, 0x6A};
 
-inline void decode(uchar *str, int len) { int i; for(i = 0; i < len; ++i) str[i] ^= encarr[i % 8]; }
+inline void decode(uchar *str, int32 len) { int32 i; for(i = 0; i < len; ++i) str[i] ^= encarr[i % 8]; }
 
 
 FRAG_CONSTRUCTOR(Data03) {
-  int i, count, fnlen;
+  int32 i, count, fnlen;
   Texture *tex;
 
   count = uint32(buf);
@@ -47,7 +47,7 @@ FRAG_CONSTRUCTOR(Data03) {
 }
 
 FRAG_CONSTRUCTOR(Data04) {
-  int flags, count, i;
+  int32 flags, count, i;
   Texture *tex, *texref;
 
   flags = uint32(buf);
@@ -98,7 +98,7 @@ FRAG_CONSTRUCTOR(Data15) {
   plac->scale[1] = hdr->scale[1];
   plac->scale[2] = hdr->scale[1];
 
-  plac->model = atoi((const char*)&wld->sHash[-(int)hdr->ref]);
+  plac->model = (int32) &wld->sHash[-(int32)hdr->ref];
 
   pl = new Placeable *[wld->model_data.plac_count + 1];
   memcpy(pl, wld->model_data.placeable, sizeof(Placeable *) * wld->model_data.plac_count);
@@ -130,8 +130,8 @@ FRAG_CONSTRUCTOR(Data1C) {
 FRAG_CONSTRUCTOR(Data21) {
 
   struct_Data21 *data;
-  long count = *((long *) buf);
-  long i;
+  int32 count = *((int32 *) buf);
+  int32 i;
 
   wld->tree = (BSP_Node *) malloc(count * sizeof(BSP_Node));
 
@@ -155,7 +155,7 @@ FRAG_CONSTRUCTOR(Data21) {
 
 FRAG_CONSTRUCTOR(Data22) {
   
-  int pos;
+  int32 pos;
 
   uchar *data6area ;
 
@@ -174,7 +174,7 @@ FRAG_CONSTRUCTOR(Data22) {
   }
   data6area = data6area + ((data->size5) * 7 * 4);
 
-  unsigned short d6size = *((unsigned short *) data6area);
+  uint16 d6size = *((uint16 *) data6area);
   data6area = data6area + 2; // Move past d6 size
   data6area = data6area + d6size; // Move past RLE data ? Hopefully;
 
@@ -185,10 +185,10 @@ FRAG_CONSTRUCTOR(Data22) {
   f3 = *((float *) (data6area+8));
   f4 = *((float *) (data6area+12));
 
-  long Frag36Ref;
+  int32 Frag36Ref;
   if(data->flags==0x181) {
-	  Frag36Ref = *((long *) (data6area+20));
-	  //printf("Frag 36 reference?: %ld\n", *((long *) (data6area+20)));
+	  Frag36Ref = *((int32 *) (data6area+20));
+	  //printf("Frag 36 reference?: %ld\n", *((int32 *) (data6area+20)));
   }
 	  
 
@@ -199,7 +199,7 @@ FRAG_CONSTRUCTOR(Data22) {
 
 FRAG_CONSTRUCTOR(Data29) {
  
-        long  a,flags, numregions, lenstr;
+        int32  a,flags, numregions, lenstr;
 
 	struct_Data29 *data29 = (struct_Data29 *) malloc(sizeof(struct_Data29));
 	data29->region_type = -1; // Start of by flagging type as unknown
@@ -215,13 +215,13 @@ FRAG_CONSTRUCTOR(Data29) {
 	this->frag = (void *) data29;
   
         flags = *buf;
-        numregions = *((long *)(buf+4));
+        numregions = *((int32 *)(buf+4));
         data29->region_count = numregions ;
-        data29->region_array = (long *)malloc(numregions * sizeof(long));
+        data29->region_array = (int32 *)malloc(numregions * sizeof(int32));
         for(a=0;a<numregions;a++) {
-                data29->region_array[a] = *((long *)(buf+8+(a*4)));
+                data29->region_array[a] = *((int32 *)(buf+8+(a*4)));
         }
-        lenstr = *((long *)(buf+8+(numregions*4)));
+        lenstr = *((int32 *)(buf+8+(numregions*4)));
         data29->strlen=lenstr;
         if(lenstr==0) return;
 
@@ -290,7 +290,7 @@ FRAG_CONSTRUCTOR(Data30) {
 
 FRAG_CONSTRUCTOR(Data31) {
   TexRef *tr;
-  int i, count;
+  int32 i, count;
 
   buf += 4;
   count = uint32(buf);
@@ -323,7 +323,7 @@ FRAG_CONSTRUCTOR(Data36) {
 
   float scale = 1.0f / (float) (1 << header->scale);
 
-  int i, j, pc;
+  int32 i, j, pc;
   TexMap *tm;
 
   float recip_255 = 1.0f / 256.0f, recip_127 = 1.0f / 127.0f;
@@ -461,10 +461,10 @@ WLDLoader::~WLDLoader() {
   this->Close();
 }
 
-int WLDLoader::Open(char *base_path, char *zone_name, Archive *archive) {
+int32 WLDLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   uchar *buffer;
-  int buf_len;
-  int i, j, vc, pc, bc, mlen, *pmap;
+  int32 buf_len;
+  int32 i, j, vc, pc, bc, mlen, *pmap;
   Zone_Model *zm;
   Model *m;
 
@@ -680,8 +680,8 @@ int WLDLoader::Open(char *base_path, char *zone_name, Archive *archive) {
     }
 
     for(i = 0; i < this->model_data.model_count; ++i) {
-      pmap = new int[this->model_data.models[i]->poly_count];
-      memset(pmap, 0, sizeof(int) * this->model_data.models[i]->poly_count);
+      pmap = new int32[this->model_data.models[i]->poly_count];
+      memset(pmap, 0, sizeof(int32) * this->model_data.models[i]->poly_count);
       for(j = 0; j < this->model_data.models[i]->tex_count; ++j) {
         filename = this->model_data.models[i]->tex[j]->filenames[0];
         for(bc = 0; bc < this->model_data.zone_model->tex_count; ++bc) {
@@ -703,8 +703,8 @@ int WLDLoader::Open(char *base_path, char *zone_name, Archive *archive) {
   return 1;
 }
 
-int WLDLoader::Close() {
-  int i, j;
+int32 WLDLoader::Close() {
+  int32 i, j;
   Zone_Model *zm = this->model_data.zone_model;
   Model *m;
 

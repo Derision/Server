@@ -13,16 +13,16 @@ struct zonv4_header {
 } typedef zonv4_header;
 
 struct zonv4_placeable {
-  long id;
-  long loc;
+  int32 id;
+  int32 loc;
   float x, y, z;
   float rx, ry, rz;
   float scale;
 } typedef zonv4_placeable;
 
 struct zonv4_object {
-   long offset;
-   long id;
+   int32 offset;
+   int32 id;
 } typedef zonv4_object;
 
 #pragma pack()
@@ -32,8 +32,8 @@ public:
   Zonv4Loader();
   ~Zonv4Loader();
  
-  virtual int Open(char *base_path, char *zone_name, Archive *archive);
-  virtual int Close();
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
+  virtual int32 Close();
 
 private:
   DATLoader datloader;

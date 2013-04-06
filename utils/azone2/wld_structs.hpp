@@ -4,19 +4,19 @@
 #pragma pack(1)
 
 struct struct_wld_header {
-  long magic;
-  long version;
-  long fragmentCount;
-  long header3;
-  long header4;
-  long stringHashSize;
-  long header6;
+  int32 magic;
+  int32 version;
+  int32 fragmentCount;
+  int32 header3;
+  int32 header4;
+  int32 stringHashSize;
+  int32 header6;
 } typedef struct_wld_header;
 
 struct struct_wld_basic_frag {
-  long size;
-  long id;
-  long nameRef;
+  int32 size;
+  int32 id;
+  int32 nameRef;
 } typedef struct_wld_basic_frag;
 
 
@@ -28,15 +28,15 @@ struct struct_Data15 {
 } typedef struct_Data15;
 
 struct struct_Data36 {
-  long flags;
-  long fragment1;
-  long fragment2;
-  long fragment3;
-  long fragment4;
+  int32 flags;
+  int32 fragment1;
+  int32 fragment2;
+  int32 fragment3;
+  int32 fragment4;
   float centerX;
   float centerY;
   float centerZ;
-  long params2[3]; // 48
+  int32 params2[3]; // 48
   float maxDist;
   float minX;
   float minY;
@@ -44,20 +44,20 @@ struct struct_Data36 {
   float maxX;
   float maxY;
   float maxZ; // 24
-  short int vertexCount;
-  short int texCoordsCount;
-  short int normalsCount;
-  short int colorCount;
-  short int PolygonsCount;
-  short int size6;
-  short int PolygonTexCount;
-  short int vertexTexCount;
-  short int size9;
-  short int scale; // 20
+  int16 vertexCount;
+  int16 texCoordsCount;
+  int16 normalsCount;
+  int16 colorCount;
+  int16 PolygonsCount;
+  int16 size6;
+  int16 PolygonTexCount;
+  int16 vertexTexCount;
+  int16 size9;
+  int16 scale; // 20
 } typedef struct_Data36;
 
 struct struct_Data10 {
-  long flags, size1, fragment;
+  int32 flags, size1, fragment;
 } typedef struct_Data10;
 
 struct struct_Data1B {
@@ -68,11 +68,11 @@ struct struct_Data1B {
 
 struct struct_Data21 {
   float normal[3], splitdistance;
-  long region, node[2];
+  int32 region, node[2];
 } typedef struct_Data21;
 
 struct struct_Data22 {
-  long flags, fragment1, size1, size2, params1, size3, size4, params2, size5, size6;
+  int32 flags, fragment1, size1, size2, params1, size3, size4, params2, size5, size6;
 } typedef struct_Data22;
 
 struct struct_Data28 {
@@ -81,11 +81,11 @@ struct struct_Data28 {
 } typedef struct_Data28;
 
 typedef struct struct_Data29 {
-  long region_count;
-  long *region_array;
-  long strlen;
+  int32 region_count;
+  int32 *region_array;
+  int32 strlen;
   char *str;
-  int region_type; // We fill this in with -1 for unknown, 1 for water, 2 for lava
+  int32 region_type; // We fill this in with -1 for unknown, 1 for water, 2 for lava
 } struct_Data29;
 
 
@@ -95,16 +95,16 @@ struct struct_Data30 {
 } typedef struct_Data30;
 
 typedef struct BSP_Node {
-  long node_number;
+  int32 node_number;
   float normal[3], splitdistance;
-  long region;
-  int special;
-  long left, right;
+  int32 region;
+  int32 special;
+  int32 left, right;
 } BSP_Node;
 
 
 struct Vert {
-  signed short int x, y, z;
+  int16 x, y, z;
 } typedef Vert;
 
 struct TexCoordsNew {
@@ -112,7 +112,7 @@ struct TexCoordsNew {
 } typedef TexCoordsNew;
 
 struct TexCoordsOld {
-  signed short int tx, tz;
+  int16 tx, tz;
 } typedef TexCoordsOld;
 
 struct VertexNormal {
@@ -124,7 +124,7 @@ struct VertexColor {
 } typedef VertexColor;
 
 struct Poly {
-  short int flags, v1, v2, v3;
+  int16 flags, v1, v2, v3;
 } typedef Poly;
 
 struct TexMap {

@@ -7,7 +7,7 @@
 #pragma pack(1)
 
 struct dat_header {
-  unsigned long version, list_len, mat_count, vert_count, tri_count;
+  uint32 version, list_len, mat_count, vert_count, tri_count;
 } typedef dat_header;
 
 struct dat_vertex {
@@ -19,25 +19,25 @@ struct dat_vertex {
 struct dat_vertexV3 {
   float x, y, z;
   float i, j, k;
-  long unk1;
+  int32 unk1;
   float unk2, unk3;
   float u, v;
 } typedef dat_vertexV3;
 
 struct dat_triangle {
-  long v1, v2, v3;
-  long group;
-  long unk;
+  int32 v1, v2, v3;
+  int32 group;
+  int32 unk;
 } typedef dat_triangle;
 
 struct dat_object {
-  long index;
-  long name_offset, another_name_offset;
-  long property_count;
+  int32 index;
+  int32 name_offset, another_name_offset;
+  int32 property_count;
 } typedef dat_object;
 
 struct dat_property {
-  long name_offset, type, value;
+  int32 name_offset, type, value;
 } typedef dat_property;
 
 struct dat_material {
@@ -54,8 +54,8 @@ class DATLoader : public FileLoader {
 public:
   DATLoader();
   ~DATLoader();
-  virtual int Open(char *base_path, char *zone_name, Archive *archive);
-  virtual int Close();
+  virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
+  virtual int32 Close();
 };
 
 #endif

@@ -11,10 +11,10 @@ public:
   PFSLoader();
   ~PFSLoader();
 
-  virtual int Open(FILE *fp);
-  virtual int Close();
+  virtual int32 Open(FILE *fp);
+  virtual int32 Close();
 
-  virtual int GetFile(char *name, uchar **buf, int *len);
+  virtual int32 GetFile(char *name, uchar **buf, int32 *len);
   virtual const char *FindExtension(const char *ext);
 };
 

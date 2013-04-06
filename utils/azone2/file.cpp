@@ -2,7 +2,7 @@
 #include <string.h>
 #include "file.hpp"
 
-int GetFile(uchar **buffer, int *buf_len, char *base_path, char *file_name, Archive *archive) {
+int32 GetFile(uchar **buffer, int32 *buf_len, char *base_path, char *file_name, Archive *archive) {
   FILE *fp;
   char *temp;
 

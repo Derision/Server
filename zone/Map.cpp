@@ -169,7 +169,7 @@ bool Map::loadMap(FILE *fp) {
 	}
 #endif
 	
-	
+	printf("File pointer now at %i\n", ftell(fp)); fflush(stdout);	
 /*	mRoot = new NODE();
 	RecLoadNode(mRoot, fp );*/
 
@@ -590,7 +590,7 @@ printf("Start finding best Z...\n");
 					if(on != NULL)
 						*on = cur;
 					best_z = result->z;
-					return best_z;
+					//return best_z;
 				}
 			}
 			cfl++;

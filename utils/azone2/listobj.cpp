@@ -18,11 +18,6 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-typedef unsigned char  BYTE;
-typedef unsigned short WORD;
-typedef          short SHORT;
-typedef unsigned long  DWORD;
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -129,7 +124,7 @@ bool ProcessZoneFile(const char *shortname) {
 
 void ListPlaceable(FileLoader *fileloader, char *ZoneFileName) {
 
-	for(int i = 0; i < fileloader->model_data.plac_count; ++i) {
+	for(int32 i = 0; i < fileloader->model_data.plac_count; ++i) {
 		if(fileloader->model_data.placeable[i]->model==-1) continue;
 		if(fileloader->model_data.models[fileloader->model_data.placeable[i]->model] == NULL) continue;
 		printf("Placeable Object %4d @ (%9.2f, %9.2f, %9.2f uses model %4d %s\n",i,
@@ -152,7 +147,7 @@ void ListPlaceableV4(FileLoader *fileloader, char *ZoneFileName)
 
 	vector<ObjectGroupEntry>::iterator Iterator;
 
-	int OGNum = 0;
+	int32 OGNum = 0;
 
 	Iterator = fileloader->model_data.ObjectGroups.begin();
 
@@ -172,13 +167,13 @@ void ListPlaceableV4(FileLoader *fileloader, char *ZoneFileName)
 		printf("ObjectGroup Scale      : %8.3f, %8.3f, %8.3f\n",
 			(*Iterator).ScaleX, (*Iterator).ScaleY, (*Iterator).ScaleZ);
 
-		list<int>::iterator ModelIterator;
+		list<int32>::iterator ModelIterator;
 
 		ModelIterator = (*Iterator).SubObjects.begin();
 	
 		while(ModelIterator != (*Iterator).SubObjects.end())
 		{
-			int SubModel = (*ModelIterator);
+			int32 SubModel = (*ModelIterator);
 
 			Model *model = fileloader->model_data.models[fileloader->model_data.placeable[SubModel]->model];
 
