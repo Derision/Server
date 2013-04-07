@@ -795,6 +795,44 @@ public:
 				mLeft->Dump(Depth + 1);
 		}
 
+		void Save(FILE *fp)
+		{
+			uint8 LeafExists = 1;
+
+			fwrite(&mBounds.mMin, sizeof(VERTEX), 1, fp);
+			fwrite(&mBounds.mMax, sizeof(VERTEX), 1, fp);
+			fwrite(&mLeafTriangleIndex, sizeof(mLeafTriangleIndex), 1, fp);
+
+			if(mLeft)
+			{
+				LeafExists = 1;
+				fwrite(&LeafExists, sizeof(LeafExists), 1, fp);
+			}
+			else
+			{
+				LeafExists = 0;
+				fwrite(&LeafExists, sizeof(LeafExists), 1, fp);
+			}
+			
+			if(mRight)
+			{
+				LeafExists = 1;
+				fwrite(&LeafExists, sizeof(LeafExists), 1, fp);
+			}
+			else
+			{
+				LeafExists = 0;
+				fwrite(&LeafExists, sizeof(LeafExists), 1, fp);
+			}
+
+			if(mLeft)
+				mLeft->Save(fp);
+			
+			if(mRight)
+				mRight->Save(fp);
+			
+		}
+
 		NodeAABB		*mLeft;			// left node
 		NodeAABB		*mRight;		// right node
 		BoundsAABB		mBounds;		// bounding volume of node
@@ -843,6 +881,15 @@ public:
 	void Dump(uint32 Depth)
 	{
 		mRoot->Dump(Depth);
+	}
+	void Save(FILE *fp)
+	{
+		fwrite(&mNodeCount, sizeof(mNodeCount), 1, fp);	
+
+		for (int i = 0; i < mLeafTriangles.size(); ++i)
+			fwrite(&mLeafTriangles[i], sizeof(uint32), 1, fp);
+
+		mRoot->Save(fp);
 	}
 
 	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation, VERTEX *hitNormal, float *hitDistance, FACE **hitFace)

@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "../common/types.h"
 #include "map_types.h"
 
@@ -44,6 +45,7 @@ public:
 	virtual const VERTEX getBoundMax(void) const = 0; // return the maximum bounding box.
 	virtual void release(void) = 0;
 	virtual void Dump(uint32 Depth) = 0;
+	virtual void Save(FILE *fp) = 0;
 protected:
 	virtual ~RaycastMesh(void) { };
 };

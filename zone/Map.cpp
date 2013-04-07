@@ -82,11 +82,14 @@ bool Map::loadMap(FILE *fp) {
 #endif
 
 	mapHeader head;
+	
+	rewind(fp);
+
 	if(fread(&head, sizeof(head), 1, fp) != 1) {
 		//map read error.
 		return(false);
 	}
-	if(head.version != MAP_VERSION) {
+	if(head.version != 0x01000000) {
 		//invalid version... if there really are multiple versions,
 		//a conversion routine could be possible.
 		printf("Invalid map version 0x%lx\n", (unsigned long)head.version);

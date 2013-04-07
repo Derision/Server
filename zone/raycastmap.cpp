@@ -61,11 +61,14 @@ bool RayCastMap::loadMap(FILE *fp) {
 #endif
 
 	mapHeader head;
+
+	rewind(fp);
+
 	if(fread(&head, sizeof(head), 1, fp) != 1) {
 		//map read error.
 		return(false);
 	}
-	if(head.version != MAP_VERSION) {
+	if(head.version != 2) {
 		//invalid version... if there really are multiple versions,
 		//a conversion routine could be possible.
 		printf("Invalid map version 0x%lx\n", (unsigned long)head.version);
@@ -82,10 +85,12 @@ bool RayCastMap::loadMap(FILE *fp) {
 	uint32 r;
 	for(r = 0; r < m_Faces; r++) {
 		//if(fread(mFinalFaces+r, sizeof(FACE), 1, fp) != 1) {
-		if(fread(&ff, sizeof(FILEFACE), 1, fp) != 1) {
+		//if(fread(&ff, sizeof(FACE), 1, fp) != 1) {
+		if(fread(&mFinalFaces[r], sizeof(FACE), 1, fp) != 1) {
 			printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
 			return(false);
 		}
+		/*
 		mFinalFaces[r].a = ff.a;
 		mFinalFaces[r].b = ff.b;
 		mFinalFaces[r].c = ff.c;
@@ -99,6 +104,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
 		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
 		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		*/
 	}
 	
 	uint32 i;

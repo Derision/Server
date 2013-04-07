@@ -67,6 +67,8 @@ protected:
 	FACE * faceBlock;
 	
 	VERTEX tempvtx[MAX_POLY_VTX];
+
+	RaycastMesh *rm;
 	
 };
 

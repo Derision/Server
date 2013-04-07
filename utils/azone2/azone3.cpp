@@ -244,7 +244,7 @@ bool RCMBuilder::build(const char *shortname) {
 
 	printf("Building RayCastMesh.\n");
 
-	RaycastMesh *rm = createRaycastMesh(faceCount, faceBlock);
+	rm = createRaycastMesh(faceCount, faceBlock);
 
 	printf("Done building RCM...\n");
 
@@ -296,14 +296,14 @@ bool RCMBuilder::writeMap(const char *file)
 	*/
 
 	//write faceBlock
-	/*
-	if(fwrite(faceBlock, sizeof(FILEFACE), faceCount, out) != faceCount) {
+	
+	if(fwrite(faceBlock, sizeof(FACE), faceCount, out) != faceCount) {
 		printf("Error writing map file faces.\n");
 		fclose(out);
 		return(1);
 	}
-	*/
-
+	
+	rm->Save(out);
 
 	int32 MapFileSize = ftell(out);
 	fclose(out);

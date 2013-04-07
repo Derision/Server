@@ -2673,8 +2673,24 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
 		directory = MAP_DIR;
 	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
 	
-	if ((fp = fopen( cWork, "rb" ))) {
-		ret = new RayCastMap();
+	if ((fp = fopen( cWork, "rb" )))
+	{
+		mapHeader head;
+		if(fread(&head, sizeof(head), 1, fp) != 1)
+		{
+			//map read error.
+			fclose(fp);
+			return NULL;
+		}
+		printf("MAP Version: %8X\n", head.version);
+		if(head.version == 0x01000000)
+		{
+			ret = new Map();
+		}
+		else if(head.version = 2)
+		{
+			ret = new RayCastMap();
+		}
 		if(ret != NULL) {
 			ret->loadMap(fp);
 			printf("Map %s loaded.\n", cWork);
