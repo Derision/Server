@@ -81,15 +81,20 @@ bool RayCastMap::loadMap(FILE *fp) {
 	
 	mFinalFaces = new FACE	[m_Faces];
 
-	FILEFACE ff;
-	uint32 r;
-	for(r = 0; r < m_Faces; r++) {
+	if(fread(mFinalFaces, sizeof(FACE), m_Faces, fp) != m_Faces) {
+		printf("Unable to read %lu faces from map file.\n", (unsigned long)m_Faces);
+		return(false);
+	}
+
+	//FILEFACE ff;
+	//uint32 r;
+	//for(r = 0; r < m_Faces; r++) {
 		//if(fread(mFinalFaces+r, sizeof(FACE), 1, fp) != 1) {
 		//if(fread(&ff, sizeof(FACE), 1, fp) != 1) {
-		if(fread(&mFinalFaces[r], sizeof(FACE), 1, fp) != 1) {
-			printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
-			return(false);
-		}
+		//if(fread(&mFinalFaces[r], sizeof(FACE), 1, fp) != 1) {
+		//	printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
+		//	return(false);
+		//}
 		/*
 		mFinalFaces[r].a = ff.a;
 		mFinalFaces[r].b = ff.b;
@@ -105,7 +110,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
 		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
 		*/
-	}
+	//}
 	
 	uint32 i;
 	float v;
