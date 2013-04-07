@@ -833,6 +833,39 @@ public:
 			
 		}
 
+		void Load(FILE *fp, NodeInterface *callback)
+		{
+			mLeft = NULL;
+			mRight = NULL;
+
+			uint8 LeafExists = 1;
+
+			fread(&mBounds.mMin, sizeof(VERTEX), 1, fp);
+			fread(&mBounds.mMax, sizeof(VERTEX), 1, fp);
+			fread(&mLeafTriangleIndex, sizeof(mLeafTriangleIndex), 1, fp);
+
+			//printf("Bounds: mMin %8.3f, %8.3f, %8.3f\n", mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
+			//printf("        mMax %8.3f, %8.3f, %8.3f\n", mBounds.mMax.x, mBounds.mMax.y, mBounds.mMax.z);
+			//printf("\nLeafTriangleIndex = %i\n", mLeafTriangleIndex);
+
+			fread(&LeafExists, sizeof(LeafExists), 1, fp);
+
+			if(LeafExists)
+				mLeft = callback->getNode();
+
+			fread(&LeafExists, sizeof(LeafExists), 1, fp);
+
+			if(LeafExists)
+				mRight = callback->getNode();
+
+			if(mLeft)
+				mLeft->Load(fp, callback);
+
+			if(mRight)
+				mRight->Load(fp, callback);
+		}
+
+
 		NodeAABB		*mLeft;			// left node
 		NodeAABB		*mRight;		// right node
 		BoundsAABB		mBounds;		// bounding volume of node
@@ -843,7 +876,7 @@ class MyRaycastMesh : public RaycastMesh, public NodeInterface
 {
 public:
 
-	MyRaycastMesh(uint32 FaceCount, PFACE Faces, uint32 maxDepth,uint32 minLeafSize,float minAxisSize)
+	MyRaycastMesh(uint32 FaceCount, PFACE Faces, uint32 maxDepth,uint32 minLeafSize,float minAxisSize, bool CreateTree = true)
 	{
 		mRaycastFrame = 0;
 		if ( maxDepth < 2 )
@@ -860,6 +893,7 @@ public:
 		{
 			mMaxNodeCount+=pow2Table[i];
 		}
+		//printf("mMaxNodeCount is %i\n", mMaxNodeCount);
 		mNodes = new NodeAABB[mMaxNodeCount];
 		mNodeCount = 0;
 		mFaceCount = FaceCount;
@@ -868,7 +902,8 @@ public:
 		memset(mRaycastTriangles,0,mFaceCount*sizeof(uint32));
 		mRoot = getNode();
 		mFaceNormals = NULL;
-		new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
+		if(CreateTree)
+			new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
 	}
 
 	~MyRaycastMesh(void)
@@ -884,12 +919,47 @@ public:
 	}
 	void Save(FILE *fp)
 	{
+		//printf("Writing NodeCount of %i\n", mNodeCount);
+
 		fwrite(&mNodeCount, sizeof(mNodeCount), 1, fp);	
 
+		uint32 LeafTriangleCount = mLeafTriangles.size();
+
+		fwrite(&LeafTriangleCount, sizeof(LeafTriangleCount), 1, fp);	
+		
+		//printf("Writing %i mLeafTriangles\n", mLeafTriangles.size());
 		for (int i = 0; i < mLeafTriangles.size(); ++i)
 			fwrite(&mLeafTriangles[i], sizeof(uint32), 1, fp);
 
 		mRoot->Save(fp);
+	}
+
+	void Load(FILE *fp)
+	{
+		uint32 LeafTriangleCount = 0;
+
+		//printf("MyRayCastMesh::Load()\n");
+
+		uint32 FileNodeCount;
+
+		fread(&FileNodeCount, sizeof(mNodeCount), 1, fp);	
+
+		//printf(" FileNodeCount is %i\n", FileNodeCount);
+
+		fread(&LeafTriangleCount, sizeof(LeafTriangleCount), 1, fp);	
+
+		//printf(" LeafTriangleCount is %i\n", LeafTriangleCount);
+
+		mLeafTriangles.resize(LeafTriangleCount);
+
+		for (int i = 0; i < mLeafTriangles.size(); ++i)
+			fread(&mLeafTriangles[i], sizeof(uint32), 1, fp);
+
+		//printf("Read leaf triangles\n");
+
+		mRoot = getNode();
+
+		mRoot->Load(fp, this);
 	}
 
 	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation, VERTEX *hitNormal, float *hitDistance, FACE **hitFace)
@@ -1031,5 +1101,19 @@ RaycastMesh * createRaycastMesh(uint32 FaceCount,
 	return static_cast< RaycastMesh * >(m);
 }
 
+
+RaycastMesh * loadRaycastMesh(FILE *fp, uint32 FaceCount,
+				PFACE Faces,
+				uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
+				uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+				float	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
+				)
+{
+	MyRaycastMesh *m = new MyRaycastMesh(FaceCount,Faces,maxDepth,minLeafSize,minAxisSize, false);
+
+	m->Load(fp);
+
+	return static_cast< RaycastMesh * >(m);
+}
 
 

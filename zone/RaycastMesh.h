@@ -46,6 +46,7 @@ public:
 	virtual void release(void) = 0;
 	virtual void Dump(uint32 Depth) = 0;
 	virtual void Save(FILE *fp) = 0;
+	virtual void Load(FILE *fp) = 0;
 protected:
 	virtual ~RaycastMesh(void) { };
 };
@@ -57,5 +58,10 @@ RaycastMesh * createRaycastMesh(uint32 FaceCount,
 				float	minAxisSize=0.01f	// once a particular axis is less than this size, stop sub-dividing.
 				);
 
-
+RaycastMesh * loadRaycastMesh(FILE *fp, uint32 FaceCount,
+				PFACE Faces,
+				uint32 maxDepth=15,	// Maximum recursion depth for the triangle mesh.
+				uint32 minLeafSize=4,	// minimum triangles to treat as a 'leaf' node.
+				float	minAxisSize=0.01f	// once a particular axis is less than this size, stop sub-dividing.
+				);
 #endif

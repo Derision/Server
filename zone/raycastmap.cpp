@@ -81,7 +81,8 @@ bool RayCastMap::loadMap(FILE *fp) {
 	
 	mFinalFaces = new FACE	[m_Faces];
 
-	if(fread(mFinalFaces, sizeof(FACE), m_Faces, fp) != m_Faces) {
+	if(fread(mFinalFaces, sizeof(FACE), m_Faces, fp) != m_Faces)
+	{
 		printf("Unable to read %lu faces from map file.\n", (unsigned long)m_Faces);
 		return(false);
 	}
@@ -114,7 +115,8 @@ bool RayCastMap::loadMap(FILE *fp) {
 	
 	uint32 i;
 	float v;
-	for(i = 0; i < m_Faces; i++) {
+	for(i = 0; i < m_Faces; i++)
+	{
 		v = Vmax3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
 		if(v > _maxx)
 			_maxx = v;
@@ -134,14 +136,44 @@ bool RayCastMap::loadMap(FILE *fp) {
 		if(v < _minz)
 			_minz = v;
 	}
-	printf("Building raycast mesh\n"); fflush(stdout);
-	rm = createRaycastMesh(m_Faces, mFinalFaces);
+	printf("Loading RaycastMesh.\n");
+	rm = loadRaycastMesh(fp, m_Faces,mFinalFaces);
+	/*
+	printf("Starting Benchmarks on loaded file\n");
+	
+	time_t StartTime = time(NULL);
 
-	printf("Done building raycast mesh\n"); fflush(stdout);
+	float x, y, z, Sum = 0;
+	uint32 Tests = 0, Hits = 0;
+
+	for(x = _minx; x < _maxx; x = x + 1.0f)
+	{
+		for(y = _miny; y < _maxy; y = y + 1.0f)
+		{
+			VERTEX start(x, y, 10000);
+			z = FindBestZ(start, NULL, NULL);
+			
+			++Tests;
+			if(z != BEST_Z_INVALID)
+			{
+				++Hits;
+				Sum += z;
+			}
+		}
+	}
+	time_t EndTime = time(NULL);
+
+	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
+	*/
+
+	//printf("Building raycast mesh\n"); fflush(stdout);
+	//rm = createRaycastMesh(m_Faces, mFinalFaces);
+
+	//printf("Done building raycast mesh\n"); fflush(stdout);
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 	/*
-	printf("Starting Benchmarks\n");
+	printf("Starting Benchmarks on created RCM\n");
 	
 	time_t StartTime = time(NULL);
 
