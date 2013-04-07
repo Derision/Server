@@ -59,6 +59,7 @@ public:
 protected:
 	static void NormalizeN(FACE *p);	
 	void AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3);
+	void AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4);
 	
 	vector<FACE> _FaceList;
 	

@@ -81,10 +81,12 @@ struct FILEFACE
 };
 
 typedef struct _face
-{
+{	
+	uint8  type;	// 0 = triangle, 1 = quad
 	VERTEX a;
 	VERTEX b;
 	VERTEX c;
+	VERTEX d;
 	float nx, ny, nz, nd;
 	float minx, maxx, miny, maxy, minz, maxz;
 }FACE, *PFACE;

@@ -11,12 +11,13 @@
 
 string GetToken(uchar *&Buffer, int32 &Position);
 
-Zonv4Loader::Zonv4Loader()
+Zonv4Loader::Zonv4Loader(bool iGenerateQuads)
 {
 	this->buffer = NULL;
 	this->buf_len = -1;
 	this->archive = NULL;
 	this->status = 0;
+	GenerateQuads = iGenerateQuads;
 }
 
 Zonv4Loader::~Zonv4Loader()
@@ -93,6 +94,8 @@ int32 Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 			break;
 		}
 	}
+	if(GenerateQuads)
+		this->datloader.ReturnQuads();
 
 	this->datloader.Open(NULL, ZonName, archive);
 

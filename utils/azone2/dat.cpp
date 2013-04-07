@@ -129,11 +129,17 @@ DATLoader::DATLoader()
 	this->buf_len = -1;
 	this->archive = NULL;
 	this->status = 0;
+	GenerateQuads = false;
 }
 
 DATLoader::~DATLoader()
 {
 	this->Close();
+}
+
+void DATLoader::ReturnQuads()
+{
+	GenerateQuads = true;
 }
 
 int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
@@ -950,21 +956,32 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 				PolyNumber++;
 	
 				zm->polys[PolyNumber] = new Polygon;
+
+				if(!GenerateQuads)
+				{	
+					zm->polys[PolyNumber]->v1 = VertexNumber;
+					zm->polys[PolyNumber]->v2 = VertexNumber - 2;
+					zm->polys[PolyNumber]->v3 = VertexNumber - 1;
+					zm->polys[PolyNumber]->tex = -1;
 	
-				zm->polys[PolyNumber]->v1 = VertexNumber;
-				zm->polys[PolyNumber]->v2 = VertexNumber - 2;
-				zm->polys[PolyNumber]->v3 = VertexNumber - 1;
-				zm->polys[PolyNumber]->tex = -1;
+					PolyNumber++;
 	
-				PolyNumber++;
+					zm->polys[PolyNumber] = new Polygon;
 	
-				zm->polys[PolyNumber] = new Polygon;
-	
-				zm->polys[PolyNumber]->v1 = VertexNumber;
-				zm->polys[PolyNumber]->v2 = VertexNumber - 3;
-				zm->polys[PolyNumber]->v3 = VertexNumber - 2;
-				zm->polys[PolyNumber]->tex = -1; 
-	
+					zm->polys[PolyNumber]->v1 = VertexNumber;
+					zm->polys[PolyNumber]->v2 = VertexNumber - 3;
+					zm->polys[PolyNumber]->v3 = VertexNumber - 2;
+					zm->polys[PolyNumber]->tex = -1; 
+				}
+				else
+				{
+					zm->polys[PolyNumber]->type = 1;
+					zm->polys[PolyNumber]->v1 = VertexNumber;
+					zm->polys[PolyNumber]->v2 = VertexNumber - 3;
+					zm->polys[PolyNumber]->v3 = VertexNumber - 2;
+					zm->polys[PolyNumber]->v4 = VertexNumber - 1;
+					zm->polys[PolyNumber]->tex = -1; 
+				}	
 			}
 		}
 		zm->vert_count = VertexNumber + 1;

@@ -126,7 +126,7 @@ bool RCMBuilder::build(const char *shortname) {
 			fileloader = new ZonLoader();
 			if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
 				delete fileloader;
-				fileloader = new Zonv4Loader();
+				fileloader = new Zonv4Loader(true);
 				if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
 					printf("Error reading ZON/TER from %s\n", bufs);
 					return(false);
@@ -142,7 +142,7 @@ bool RCMBuilder::build(const char *shortname) {
 	zm = fileloader->model_data.zone_model;
 
 	int32 i;
-	VERTEX v1, v2, v3;
+	VERTEX v1, v2, v3, v4;
 	for(i = 0; i < zm->poly_count; ++i)
 	{
 		v1.y = zm->verts[zm->polys[i]->v1]->x;
@@ -157,7 +157,15 @@ bool RCMBuilder::build(const char *shortname) {
 		v3.x = zm->verts[zm->polys[i]->v3]->y;
 		v3.z = zm->verts[zm->polys[i]->v3]->z;
 
-		AddFace(v1, v2, v3);
+		if(zm->polys[i]->type == 1)
+		{
+			v4.y = zm->verts[zm->polys[i]->v4]->x;
+			v4.x = zm->verts[zm->polys[i]->v4]->y;
+			v4.z = zm->verts[zm->polys[i]->v4]->z;
+			AddFace(v1, v2, v3, v4);
+		}
+		else
+			AddFace(v1, v2, v3);
 	}
 
 	printf("There are %lu vertices and %lu faces.\n", _FaceList.size()*3, _FaceList.size());
@@ -196,6 +204,22 @@ bool RCMBuilder::build(const char *shortname) {
 		faceBlock[r].maxy = Vmax3(y, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
 		faceBlock[r].minz = Vmin3(z, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
 		faceBlock[r].maxz = Vmax3(z, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
+
+		if(faceBlock[r].type == 1)
+		{
+			if(faceBlock[r].d.x < faceBlock[r].minx)
+				faceBlock[r].minx = faceBlock[r].d.x;
+			if(faceBlock[r].d.y < faceBlock[r].miny)
+				faceBlock[r].miny = faceBlock[r].d.y;
+			if(faceBlock[r].d.z < faceBlock[r].minz)
+				faceBlock[r].minz = faceBlock[r].d.z;
+			if(faceBlock[r].d.x > faceBlock[r].maxx)
+				faceBlock[r].maxx = faceBlock[r].d.x;
+			if(faceBlock[r].d.y > faceBlock[r].maxy)
+				faceBlock[r].maxy = faceBlock[r].d.y;
+			if(faceBlock[r].d.z > faceBlock[r].maxz)
+				faceBlock[r].maxz = faceBlock[r].d.z;
+		}
 
 		//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", r, faceBlock[r].a.z, faceBlock[r].b.z, faceBlock[r].c.z, faceBlock[r].minz);
 	}
@@ -314,10 +338,11 @@ bool RCMBuilder::writeMap(const char *file)
 }
 
 
-void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3) {
+void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
+{
 	FACE f;
+	f.type = 0;
 
-	//this still might not work
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
 	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
 	f.nz = (v2.x - v1.x)*(v3.y - v1.y) - (v2.y - v1.y)*(v3.x - v1.x);
@@ -327,6 +352,26 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3) {
 	f.a = v1;
 	f.b = v2;
 	f.c = v3;
+
+	_FaceList.push_back(f);
+}
+
+
+void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4)
+{
+	FACE f;
+	f.type = 1;
+
+	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
+	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
+	f.nz = (v2.x - v1.x)*(v3.y - v1.y) - (v2.y - v1.y)*(v3.x - v1.x);
+	NormalizeN(&f);
+	f.nd = - f.nx * v1.x - f.ny * v1.y - f.nz * v1.z;
+
+	f.a = v1;
+	f.b = v2;
+	f.c = v3;
+	f.d = v4;
 
 	_FaceList.push_back(f);
 }

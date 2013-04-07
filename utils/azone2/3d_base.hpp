@@ -38,12 +38,14 @@ struct Vertex {
 } typedef Vertex;
 
 
-struct Polygon {
+struct Polygon
+{
+  uint8 type;	// 0 = triangle, 1 = quad
   int32 flags;
-
-  int32 v1, v2, v3;
-
+  int32 v1, v2, v3, v4;
   int32 tex;
+
+  Polygon() { type = 0; }
 } typedef Polygon;
 
 

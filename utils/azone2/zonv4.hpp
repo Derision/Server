@@ -29,7 +29,7 @@ struct zonv4_object {
 
 class Zonv4Loader : public FileLoader {
 public:
-  Zonv4Loader();
+  Zonv4Loader(bool iGenerateQuads = false);
   ~Zonv4Loader();
  
   virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
@@ -38,6 +38,7 @@ public:
 private:
   DATLoader datloader;
   TERLoader *model_loaders;
+  bool GenerateQuads;
 };
 
 #endif

@@ -176,6 +176,10 @@ bool intersectLineSegmentAABB(VERTEX bmin, VERTEX bmax, VERTEX p1, VERTEX dir,do
 
 static inline bool rayIntersectsTriangle(VERTEX p,VERTEX d, VERTEX v0, VERTEX v1, VERTEX v2,double &t)
 {
+	// p = point
+	// d = direction
+	// v0, v1, v2 = Triangle Vertices
+
 	DVERTEX e1,e2,h,s,q;
 	double a,f,u,v;
 
@@ -367,10 +371,17 @@ public:
 		uint32 c1 = getClipCode(f.a);
 		uint32 c2 = getClipCode(f.b);
 		uint32 c3 = getClipCode(f.c);
+		uint32 c4 = 0;
+
 		andCode&=c1;
 		andCode&=c2;
 		andCode&=c3;
-		return c1|c2|c3;
+		if(f.type == 1)
+		{
+			c4 = getClipCode(f.d);
+			andCode &= getClipCode(f.d);
+		}
+		return c1|c2|c3|c4;
 	}
 
 	inline uint32 getClipCode(VERTEX p) const
@@ -466,6 +477,8 @@ public:
 				mBounds.include(Faces[i].a);
 				mBounds.include(Faces[i].b);
 				mBounds.include(Faces[i].c);
+				if(Faces[i].type == 1)
+					mBounds.include(Faces[i].d);
 			}
 			split(triangles, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 		}
@@ -585,6 +598,9 @@ public:
 							leftBounds.include(Faces[tri].a);
 							leftBounds.include(Faces[tri].b);
 							leftBounds.include(Faces[tri].c);
+							if(Faces[tri].type == 1)
+								leftBounds.include(Faces[tri].d);
+
 							leftTriangles.push_back(tri); // Add this triangle to the 'left triangles' array and revise the left triangles bounding volume
 						}
 						// if the orCode is zero; meaning the triangle was fully self-contiained int he left bounding box; then we don't need to test against the right
@@ -599,6 +615,8 @@ public:
 							rightBounds.include(Faces[tri].a);
 							rightBounds.include(Faces[tri].b);
 							rightBounds.include(Faces[tri].c);
+							if(Faces[tri].type == 1)
+								rightBounds.include(Faces[tri].d);
 							rightTriangles.push_back(tri); // Add this triangle to the 'right triangles' array and revise the right triangles bounding volume.
 						}
 						assert( addCount );
@@ -732,7 +750,30 @@ public:
 						}
 				
 						double t;
-						if ( rayIntersectsTriangle(from, dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t))
+						/*
+						if(Faces[tri].type == 1)
+						{
+							printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
+								Faces[tri].a.x, Faces[tri].a.y, Faces[tri].a.z,
+								Faces[tri].b.x, Faces[tri].b.y, Faces[tri].b.z,
+								Faces[tri].c.x, Faces[tri].c.y, Faces[tri].c.z,
+								Faces[tri].d.x, Faces[tri].d.y, Faces[tri].d.z);
+
+						}
+						else
+						{
+							printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
+								Faces[tri].a.x, Faces[tri].a.y, Faces[tri].a.z,
+								Faces[tri].b.x, Faces[tri].b.y, Faces[tri].b.z,
+								Faces[tri].c.x, Faces[tri].c.y, Faces[tri].c.z);
+						}
+						*/
+						bool Intersects = rayIntersectsTriangle(from,dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t);
+
+						if(!Intersects && (Faces[tri].type == 1))
+							Intersects = rayIntersectsTriangle(from, dir, Faces[tri].c, Faces[tri].d, Faces[tri].a, t);
+
+						if (Intersects)
 						{
 							bool accept = false;
 							if ( t == nearestDistance && tri < nearestTriIndex )
@@ -1042,8 +1083,31 @@ public:
 
 		for (uint32 tri=0; tri<mFaceCount; ++tri)
 		{
+			if(mFaces[tri].type == 1)
+			{
+				printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
+					mFaces[tri].a.x, mFaces[tri].a.y, mFaces[tri].a.z,
+					mFaces[tri].b.x, mFaces[tri].b.y, mFaces[tri].b.z,
+					mFaces[tri].c.x, mFaces[tri].c.y, mFaces[tri].c.z,
+					mFaces[tri].d.x, mFaces[tri].d.y, mFaces[tri].d.z);
+
+			}
+			else
+			{
+				printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
+					mFaces[tri].a.x, mFaces[tri].a.y, mFaces[tri].a.z,
+					mFaces[tri].b.x, mFaces[tri].b.y, mFaces[tri].b.z,
+					mFaces[tri].c.x, mFaces[tri].c.y, mFaces[tri].c.z);
+
+			}
+
 			double t;
-			if ( rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t))
+			bool Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t);
+
+			if(!Intersects && mFaces[tri].type == 1)
+				Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].b, mFaces[tri].c, mFaces[tri].d, t);
+
+			if(Intersects)
 			{
 				if ( t < nearestDistance )
 				{

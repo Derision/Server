@@ -56,6 +56,9 @@ public:
   ~DATLoader();
   virtual int32 Open(char *base_path, char *zone_name, Archive *archive);
   virtual int32 Close();
+  void ReturnQuads();
+private:
+  bool GenerateQuads;
 };
 
 #endif
