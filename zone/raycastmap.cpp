@@ -138,7 +138,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 	}
 	printf("Loading RaycastMesh.\n");
 	rm = loadRaycastMesh(fp, m_Faces,mFinalFaces);
-	
+	/*	
 	printf("Starting Benchmarks on loaded file\n");
 	
 	time_t StartTime = time(NULL);
@@ -164,7 +164,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 	time_t EndTime = time(NULL);
 
 	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
-
+	*/
 
 	//printf("Building raycast mesh\n"); fflush(stdout);
 	//rm = createRaycastMesh(m_Faces, mFinalFaces);
