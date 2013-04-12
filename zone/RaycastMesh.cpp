@@ -81,7 +81,6 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			//if(IR(dir.axis[i]))	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
 			if(dir.axis[i] != 0.0f)	MaxT.axis[i] = (MinB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
 		else if(origin.axis[i] > MaxB.axis[i])
@@ -90,7 +89,6 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 			Inside		= false;
 
 			// Calculate T distances to candidate planes
-			//if(IR(dir.axis[i]))	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
 			if(dir.axis[i] != 0.0f)	MaxT.axis[i] = (MaxB.axis[i] - origin.axis[i]) / dir.axis[i];
 		}
 	}
@@ -118,11 +116,7 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 		if(i!=WhichPlane)
 		{
 			coord.axis[i] = origin.axis[i] + MaxT.axis[WhichPlane] * dir.axis[i];
-			#ifdef RAYAABB_EPSILON
 			if(coord.axis[i] < MinB.axis[i] - RAYAABB_EPSILON || coord.axis[i] > MaxB.axis[i] + RAYAABB_EPSILON)	return false;
-			#else
-			if(coord.axis[i] < MinB.axis[i] || coord.axis[i] > MaxB.axis[i])	return false;
-			#endif
 		}
 	}
 	return true;	// ray hits box
@@ -340,17 +334,6 @@ public:
 		if ((mMin.z > b.mMax.z) || (b.mMin.z > mMax.z)) return false;
 		return true;
 	}
-	/*
-	bool containsTriangle(FACE f) const
-	{
-		BoundsAABB b;
-		b.setMin(f.vert[0]);
-		b.setMax(f.vert[0]);
-		b.include(f.vert[1]);
-		b.include(f.vert[2]);
-		return intersects(b);
-	}
-	*/
 
 	bool containsTriangleExact(FACE f,uint32 &orCode) const
 	{
@@ -751,24 +734,7 @@ public:
 						}
 				
 						double t;
-						/*
-						if(Faces[tri].type == 1)
-						{
-							printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-								Faces[tri].vert[0].x, Faces[tri].vert[0].y, Faces[tri].vert[0].z,
-								Faces[tri].vert[1].x, Faces[tri].vert[1].y, Faces[tri].vert[1].z,
-								Faces[tri].vert[2].x, Faces[tri].vert[2].y, Faces[tri].vert[2].z,
-								Faces[tri].d.x, Faces[tri].d.y, Faces[tri].d.z);
 
-						}
-						else
-						{
-							printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-								Faces[tri].vert[0].x, Faces[tri].vert[0].y, Faces[tri].vert[0].z,
-								Faces[tri].vert[1].x, Faces[tri].vert[1].y, Faces[tri].vert[1].z,
-								Faces[tri].vert[2].x, Faces[tri].vert[2].y, Faces[tri].vert[2].z);
-						}
-						*/
 						bool Intersects = rayIntersectsTriangle(from,dir, Faces[tri].vert[0], Faces[tri].vert[1], Faces[tri].vert[2], t);
 
 						if(!Intersects && (Faces[tri].flags.type == 1))
@@ -790,12 +756,7 @@ public:
 									hitLocation->y = from.y + dir.y * t;
 									hitLocation->z = from.z + dir.z * t;
 								}
-								/*
-								if ( hitNormal )
-								{
-									callback->getFaceNormal(tri,hitNormal);
-								}
-								*/
+
 								if ( hitDistance )
 								{
 									*hitDistance = t;
@@ -826,9 +787,6 @@ public:
 
 		void Dump(uint32 Depth)
 		{
-			//if(Depth > 3)
-			//	return;
-
 			printf("Dump at depth %i, mLeafTriangleIndex is %i\n", Depth, mLeafTriangleIndex);
 			if((mLeafTriangleIndex != 0) && (mLeafTriangleIndex != 0xFFFFFFFF))
 				abort();
@@ -1064,78 +1022,6 @@ public:
 		}
 		VERTEX *src = &mFaceNormals[tri];
 		faceNormal = src;
-	}
-
-	virtual bool bruteForceRaycast(VERTEX from, VERTEX to,VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance)
-	{
-		bool ret = false;
-
-		VERTEX dir;
-
-		dir.x = to.x - from.x;
-		dir.y = to.y - from.y;
-		dir.z = to.z - from.z;
-
-		float distance = sqrtf( dir.x*dir.x + dir.y*dir.y+dir.z*dir.z );
-		if ( distance < 0.0000000001f ) return false;
-		float recipDistance = 1.0f / distance;
-		dir.x*=recipDistance;
-		dir.y*=recipDistance;
-		dir.z*=recipDistance;
-		float nearestDistance = distance;
-
-		for (uint32 tri=0; tri<mFaceCount; ++tri)
-		{
-			if(mFaces[tri].flags.type == 1)
-			{
-				printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-					mFaces[tri].vert[0].x, mFaces[tri].vert[0].y, mFaces[tri].vert[0].z,
-					mFaces[tri].vert[1].x, mFaces[tri].vert[1].y, mFaces[tri].vert[1].z,
-					mFaces[tri].vert[2].x, mFaces[tri].vert[2].y, mFaces[tri].vert[2].z,
-					mFaces[tri].vert[3].x, mFaces[tri].vert[3].y, mFaces[tri].vert[3].z);
-
-			}
-			else
-			{
-				printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-					mFaces[tri].vert[0].x, mFaces[tri].vert[0].y, mFaces[tri].vert[0].z,
-					mFaces[tri].vert[1].x, mFaces[tri].vert[1].y, mFaces[tri].vert[1].z,
-					mFaces[tri].vert[2].x, mFaces[tri].vert[2].y, mFaces[tri].vert[2].z);
-
-			}
-
-			double t;
-			bool Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].vert[0], mFaces[tri].vert[1], mFaces[tri].vert[2], t);
-
-			if(!Intersects && mFaces[tri].flags.type == 1)
-				Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].vert[1], mFaces[tri].vert[2], mFaces[tri].vert[3], t);
-
-			if(Intersects)
-			{
-				if ( t < nearestDistance )
-				{
-					nearestDistance = t;
-					if ( hitLocation )
-					{
-						hitLocation->x = from.x+dir.x*t;
-						hitLocation->y = from.y+dir.y*t;
-						hitLocation->z = from.z+dir.z*t;
-					}
-
-					if ( hitNormal )
-					{
-						getFaceNormal(tri,hitNormal);
-					}
-
-					if ( hitDistance )
-					{
-						*hitDistance = t;
-					}
-					ret = true;
-				}
-			}
-		}
-		return ret;
 	}
 
 	uint32		mRaycastFrame;

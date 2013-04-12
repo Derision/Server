@@ -54,23 +54,18 @@ RayCastMap::RayCastMap()
 	mFinalFaces = NULL;
 }
 
-bool RayCastMap::loadMap(FILE *fp) {
-#ifndef INVERSEXY
-#warning Map files do not work without inverted XY
-	return(false);
-#endif
+bool RayCastMap::loadMap(FILE *fp)
+{
 
 	mapHeader head;
 
 	rewind(fp);
 
-	if(fread(&head, sizeof(head), 1, fp) != 1) {
-		//map read error.
+	if(fread(&head, sizeof(head), 1, fp) != 1)
 		return(false);
-	}
-	if(head.version != 2) {
-		//invalid version... if there really are multiple versions,
-		//a conversion routine could be possible.
+
+	if(head.version != 2)
+	{
 		printf("Invalid map version 0x%lx\n", (unsigned long)head.version);
 		return(false);
 	}
@@ -79,7 +74,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 
 	m_Faces = head.face_count;
 	
-	mFinalFaces = new FACE	[m_Faces];
+	mFinalFaces = new FACE [m_Faces];
 
 	if(fread(mFinalFaces, sizeof(FACE), m_Faces, fp) != m_Faces)
 	{
@@ -87,58 +82,30 @@ bool RayCastMap::loadMap(FILE *fp) {
 		return(false);
 	}
 
-	//FILEFACE ff;
-	//uint32 r;
-	//for(r = 0; r < m_Faces; r++) {
-		//if(fread(mFinalFaces+r, sizeof(FACE), 1, fp) != 1) {
-		//if(fread(&ff, sizeof(FACE), 1, fp) != 1) {
-		//if(fread(&mFinalFaces[r], sizeof(FACE), 1, fp) != 1) {
-		//	printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
-		//	return(false);
-		//}
-		/*
-		mFinalFaces[r].vert[0] = ff.a;
-		mFinalFaces[r].vert[1] = ff.b;
-		mFinalFaces[r].vert[2] = ff.c;
-		mFinalFaces[r].nx = ff.nx;
-		mFinalFaces[r].ny = ff.ny;
-		mFinalFaces[r].nz = ff.nz;
-		mFinalFaces[r].nd = ff.nd;
-		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
-		*/
-	//}
-	
-	uint32 i;
-	float v;
-	for(i = 0; i < m_Faces; i++)
+	for(uint32 i = 0; i < m_Faces; i++)
 	{
-		v = Vmax3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v > _maxx)
-			_maxx = v;
-		v = Vmin3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v < _minx)
-			_minx = v;
-		v = Vmax3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v > _maxy)
-			_maxy = v;
-		v = Vmin3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v < _miny)
-			_miny = v;
-		v = Vmax3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v > _maxz)
-			_maxz = v;
-		v = Vmin3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
-		if(v < _minz)
-			_minz = v;
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.maxxvert].x > _maxx)
+			_maxx = mFinalFaces[i].vert[mFinalFaces[i].flags.maxxvert].x;
+
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.minxvert].x < _minx)
+			_minx = mFinalFaces[i].vert[mFinalFaces[i].flags.minxvert].x;
+
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.maxyvert].y > _maxy)
+			_maxy = mFinalFaces[i].vert[mFinalFaces[i].flags.maxyvert].y;
+
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.minyvert].y < _miny)
+			_miny = mFinalFaces[i].vert[mFinalFaces[i].flags.minyvert].y;
+
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.maxzvert].z > _maxz)
+			_maxz = mFinalFaces[i].vert[mFinalFaces[i].flags.maxzvert].z;
+
+		if(mFinalFaces[i].vert[mFinalFaces[i].flags.minzvert].z < _minz)
+			_minz = mFinalFaces[i].vert[mFinalFaces[i].flags.minzvert].z;
 	}
+
 	printf("Loading RaycastMesh.\n");
 	rm = loadRaycastMesh(fp, m_Faces,mFinalFaces);
-	
+#ifdef MAPBENCH	
 	printf("Starting Benchmarks on loaded file\n");
 	
 	time_t StartTime = time(NULL);
@@ -164,41 +131,10 @@ bool RayCastMap::loadMap(FILE *fp) {
 	time_t EndTime = time(NULL);
 
 	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
-
-
-	//printf("Building raycast mesh\n"); fflush(stdout);
-	//rm = createRaycastMesh(m_Faces, mFinalFaces);
-
-	//printf("Done building raycast mesh\n"); fflush(stdout);
+#endif // MAPBENCH
 	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
 	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
-	/*
-	printf("Starting Benchmarks on created RCM\n");
 	
-	time_t StartTime = time(NULL);
-
-	float x, y, z, Sum = 0;
-	uint32 Tests = 0, Hits = 0;
-
-	for(x = _minx; x < _maxx; x = x + 1.0f)
-	{
-		for(y = _miny; y < _maxy; y = y + 1.0f)
-		{
-			VERTEX start(x, y, 10000);
-			z = FindBestZ(start, NULL, NULL);
-			
-			++Tests;
-			if(z != BEST_Z_INVALID)
-			{
-				++Hits;
-				Sum += z;
-			}
-		}
-	}
-	time_t EndTime = time(NULL);
-
-	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
-	*/
 	return(true);
 }
 
@@ -227,7 +163,6 @@ float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 
 	VERTEX from(p1.x, p1.y, p1.z);
 	VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
-	//VERTEX hitLocation;
 	VERTEX normal;
 
 	float hitDistance;
@@ -330,7 +265,5 @@ bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step
 
 bool RayCastMap::CheckLosFN(VERTEX myloc, VERTEX oloc)
 {
-	bool hit = rm->raycast(myloc, oloc, NULL, NULL, NULL, NULL);
-	//printf("RayCastMap::CheckLosFN, hit is %i\n", hit); fflush(stdout);
-	return !hit;
+	return !rm->raycast(myloc, oloc, NULL, NULL, NULL, NULL);
 }
