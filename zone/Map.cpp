@@ -122,6 +122,7 @@ bool Map::loadMap(FILE *fp) {
 			printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
 			return(false);
 		}
+		mFinalFaces[r].flags.type = 0;
 		mFinalFaces[r].vert[0] = ff.a;
 		mFinalFaces[r].vert[1] = ff.b;
 		mFinalFaces[r].vert[2] = ff.c;
@@ -129,12 +130,45 @@ bool Map::loadMap(FILE *fp) {
 		mFinalFaces[r].ny = ff.ny;
 		mFinalFaces[r].nz = ff.nz;
 		mFinalFaces[r].nd = ff.nd;
+		/*
 		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		*/
+
+		mFinalFaces[r].flags.minxvert = 0;
+		mFinalFaces[r].flags.maxxvert = 0;
+		mFinalFaces[r].flags.minyvert = 0;
+		mFinalFaces[r].flags.maxyvert = 0;
+		mFinalFaces[r].flags.minzvert = 0;
+		mFinalFaces[r].flags.maxzvert = 0;
+
+		uint8 NumberOfFaces = (mFinalFaces[r].flags.type == 1) ? 4 : 3;
+
+		for(int i = 1; i < NumberOfFaces; ++i)
+		{
+			if(mFinalFaces[r].vert[i].x < mFinalFaces[r].vert[mFinalFaces[r].flags.minxvert].x)
+				mFinalFaces[r].flags.minxvert = i;
+
+			if(mFinalFaces[r].vert[i].y < mFinalFaces[r].vert[mFinalFaces[r].flags.minyvert].y)
+				mFinalFaces[r].flags.minyvert = i;
+
+			if(mFinalFaces[r].vert[i].z < mFinalFaces[r].vert[mFinalFaces[r].flags.minzvert].z)
+				mFinalFaces[r].flags.minzvert = i;
+
+			if(mFinalFaces[r].vert[i].x > mFinalFaces[r].vert[mFinalFaces[r].flags.maxxvert].x)
+				mFinalFaces[r].flags.maxxvert = i;
+
+			if(mFinalFaces[r].vert[i].y > mFinalFaces[r].vert[mFinalFaces[r].flags.maxyvert].y)
+				mFinalFaces[r].flags.maxyvert = i;
+
+			if(mFinalFaces[r].vert[i].z > mFinalFaces[r].vert[mFinalFaces[r].flags.maxzvert].z)
+				mFinalFaces[r].flags.maxzvert = i;
+		}
+	
 	}
 #else
 	uint32 count;
@@ -552,31 +586,31 @@ printf("Start finding best Z...\n");
 
 			cur = &mFinalFaces[ *cfl ];
 
-			if(cur->minz > p1.z)
+			if(cur->vert[cur->flags.minzvert].z > p1.z)
 			{	
 				cfl++;
 				continue;
 			}
 
-			if(cur->maxx < p1.x)
+			if(cur->vert[cur->flags.maxxvert].x < p1.x)
 			{
 				cfl++;
 				continue;
 			}
 
-			if(cur->minx > p1.x)
+			if(cur->vert[cur->flags.minxvert].x > p1.x)
 			{
 				cfl++;
 				continue;
 			}
 
-			if(cur->maxy < p1.y)
+			if(cur->vert[cur->flags.maxyvert].y < p1.y)
 			{
 				cfl++;
 				continue;
 			}
 
-			if(cur->miny > p1.y)
+			if(cur->vert[cur->flags.minyvert].y > p1.y)
 			{
 				cfl++;
 				continue;
@@ -624,18 +658,18 @@ bool Map::LineIntersectsFace( PFACE cface, VERTEX p1, VERTEX p2, VERTEX *result)
 	//quick bounding box checks
 	//float tbb;
 	
-	if(p1.x < cface->minx && p2.x < cface->minx)
+	if(p1.x < cface->vert[cface->flags.minxvert].x && p2.x < cface->vert[cface->flags.minxvert].x)
 		return(false);
-	if(p1.y < cface->miny && p2.y < cface->miny)
+	if(p1.y < cface->vert[cface->flags.minyvert].y && p2.y < cface->vert[cface->flags.minyvert].y)
 		return(false);
-	if(p1.z < cface->minz && p2.z < cface->minz)
+	if(p1.z < cface->vert[cface->flags.minzvert].z && p2.z < cface->vert[cface->flags.minzvert].z)
 		return(false);
 	
-	if(p1.x > cface->maxx && p2.x > cface->maxx)
+	if(p1.x > cface->vert[cface->flags.maxxvert].x && p2.x > cface->vert[cface->flags.maxxvert].x)
 		return(false);
-	if(p1.y > cface->maxy && p2.y > cface->maxy)
+	if(p1.y > cface->vert[cface->flags.maxyvert].y && p2.y > cface->vert[cface->flags.maxyvert].y)
 		return(false);
-	if(p1.z > cface->maxz && p2.z > cface->maxz)
+	if(p1.z > cface->vert[cface->flags.maxzvert].z && p2.z > cface->vert[cface->flags.maxzvert].z)
 		return(false);
 	
 	//begin attempt 2

@@ -199,12 +199,14 @@ bool RCMBuilder::build(const char *shortname) {
 	for(r = 0; r < faceCount; r++)
 	{
 		faceBlock[r] = _FaceList[r];
+		/*
 		faceBlock[r].minx = Vmin3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 		faceBlock[r].maxx = Vmax3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 		faceBlock[r].miny = Vmin3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 		faceBlock[r].maxy = Vmax3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 		faceBlock[r].minz = Vmin3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 		faceBlock[r].maxz = Vmax3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		*/
 
 		faceBlock[r].flags.minxvert = 0;
 		faceBlock[r].flags.maxxvert = 0;
@@ -235,7 +237,7 @@ bool RCMBuilder::build(const char *shortname) {
 			if(faceBlock[r].vert[i].z > faceBlock[r].vert[faceBlock[r].flags.maxzvert].z)
 				faceBlock[r].flags.maxzvert = i;
 		}
-	
+		/*	
 		if(faceBlock[r].flags.type == 1)
 		{
 			if(faceBlock[r].vert[3].x < faceBlock[r].minx)
@@ -251,14 +253,15 @@ bool RCMBuilder::build(const char *shortname) {
 			if(faceBlock[r].vert[3].z > faceBlock[r].maxz)
 				faceBlock[r].maxz = faceBlock[r].vert[3].z;
 		}
-
+		*/
+		/*
 		assert(faceBlock[r].minx == faceBlock[r].vert[faceBlock[r].flags.minxvert].x);
 		assert(faceBlock[r].miny == faceBlock[r].vert[faceBlock[r].flags.minyvert].y);
 		assert(faceBlock[r].minz == faceBlock[r].vert[faceBlock[r].flags.minzvert].z);
 		assert(faceBlock[r].maxx == faceBlock[r].vert[faceBlock[r].flags.maxxvert].x);
 		assert(faceBlock[r].maxy == faceBlock[r].vert[faceBlock[r].flags.maxyvert].y);
 		assert(faceBlock[r].maxz == faceBlock[r].vert[faceBlock[r].flags.maxzvert].z);
-
+		*/
 
 		//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", r, faceBlock[r].vert[0].z, faceBlock[r].vert[1].z, faceBlock[r].vert[2].z, faceBlock[r].minz);
 	}

@@ -542,7 +542,7 @@ public:
 					bool Inserted = false;
 					for (TriVector::iterator j = SortedTriangles.begin(); j != SortedTriangles.end(); ++j)
 					{
-						if(Faces[*i].minz > Faces[*j].minz)
+						if(Faces[*i].vert[Faces[*i].flags.minzvert].z > Faces[*j].vert[Faces[*j].flags.minzvert].z)
 						{
 							SortedTriangles.insert(j, *i);
 							Inserted = true;
@@ -716,37 +716,37 @@ public:
 					{
 						raycastTriangles[tri] = raycastFrame;
 						// If we are doing a Z test and the faces minimum z is above us, don't check further					
-						if(ZTest && (Faces[tri].minz > from.z))
+						if(ZTest && (Faces[tri].vert[Faces[tri].flags.minzvert].z > from.z))
 						{
 							continue;
 						}
 						// Some quick checks to see if we can hit
 						if(ZTest)
 						{
-							if(from.x < Faces[tri].minx)
+							if(from.x < Faces[tri].vert[Faces[tri].flags.minxvert].x)
 								continue;
-							if(from.y < Faces[tri].miny)
+							if(from.y < Faces[tri].vert[Faces[tri].flags.minyvert].y)
 								continue;
 		
-							if(from.x > Faces[tri].maxx)
+							if(from.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x)
 								continue;
-							if(from.y > Faces[tri].maxy)
+							if(from.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y)
 								continue;
 						}
 						else
 						{
-							if(from.x < Faces[tri].minx && to.x < Faces[tri].minx)
+							if(from.x < Faces[tri].vert[Faces[tri].flags.minxvert].x && to.x < Faces[tri].vert[Faces[tri].flags.minxvert].x)
 								continue;
-							if(from.y < Faces[tri].miny && to.y < Faces[tri].miny)
+							if(from.y < Faces[tri].vert[Faces[tri].flags.minyvert].y && to.y < Faces[tri].vert[Faces[tri].flags.minyvert].y)
 								continue;
-							if(from.z < Faces[tri].minz && to.z < Faces[tri].minz)
+							if(from.z < Faces[tri].vert[Faces[tri].flags.minzvert].z && to.z < Faces[tri].vert[Faces[tri].flags.minzvert].z)
 								continue;
 		
-							if(from.x > Faces[tri].maxx && to.x > Faces[tri].maxx)
+							if(from.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x && to.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x)
 								continue;
-							if(from.y > Faces[tri].maxy && to.y > Faces[tri].maxy)
+							if(from.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y && to.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y)
 								continue;
-							if(from.z > Faces[tri].maxz && to.z > Faces[tri].maxz)
+							if(from.z > Faces[tri].vert[Faces[tri].flags.maxzvert].z && to.z > Faces[tri].vert[Faces[tri].flags.maxzvert].z)
 								continue;
 						}
 				

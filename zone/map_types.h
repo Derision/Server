@@ -98,7 +98,7 @@ typedef struct _face
 	FACEFLAGS flags;
 	VERTEX vert[4];
 	float nx, ny, nz, nd;
-	float minx, maxx, miny, maxy, minz, maxz;
+	//float minx, maxx, miny, maxy, minz, maxz;
 }FACE, *PFACE;
 
 typedef struct _mapHeader {
