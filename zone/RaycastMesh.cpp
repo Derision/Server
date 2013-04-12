@@ -790,10 +790,12 @@ public:
 									hitLocation->y = from.y + dir.y * t;
 									hitLocation->z = from.z + dir.z * t;
 								}
+								/*
 								if ( hitNormal )
 								{
 									callback->getFaceNormal(tri,hitNormal);
 								}
+								*/
 								if ( hitDistance )
 								{
 									*hitDistance = t;
