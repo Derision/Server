@@ -122,19 +122,19 @@ bool Map::loadMap(FILE *fp) {
 			printf("Unable to read %lu faces from map file, got %lu.\n", (unsigned long)m_Faces, (unsigned long)r);
 			return(false);
 		}
-		mFinalFaces[r].a = ff.a;
-		mFinalFaces[r].b = ff.b;
-		mFinalFaces[r].c = ff.c;
+		mFinalFaces[r].vert[0] = ff.a;
+		mFinalFaces[r].vert[1] = ff.b;
+		mFinalFaces[r].vert[2] = ff.c;
 		mFinalFaces[r].nx = ff.nx;
 		mFinalFaces[r].ny = ff.ny;
 		mFinalFaces[r].nz = ff.nz;
 		mFinalFaces[r].nd = ff.nd;
-		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 	}
 #else
 	uint32 count;
@@ -179,25 +179,25 @@ bool Map::loadMap(FILE *fp) {
 	uint32 i;
 	float v;
 	for(i = 0; i < m_Faces; i++) {
-		v = Vmax3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxx)
 			_maxx = v;
-		v = Vmin3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _minx)
 		{
 			printf("_minx of face %i is %8.3f\n", i, v);
 			_minx = v;
 		}
-		v = Vmax3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxy)
 			_maxy = v;
-		v = Vmin3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _miny)
 			_miny = v;
-		v = Vmax3(z, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxz)
 			_maxz = v;
-		v = Vmin3(z, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _minz)
 			_minz = v;
 	}
@@ -343,9 +343,9 @@ int* Map::SeekFace(  NodeRef node_r, float x, float y ) {
 	unsigned long i;
 	for( i=0;i<_node->faces.count;i++ ) {
 		const FACE &cf = mFinalFaces[ mFaceLists[_node->faces.offset + i] ];
-		const VERTEX &v1 = cf.a;
-		const VERTEX &v2 = cf.b;
-		const VERTEX &v3 = cf.c;
+		const VERTEX &v1 = cf.vert[0];
+		const VERTEX &v2 = cf.vert[1];
+		const VERTEX &v3 = cf.vert[2];
 		
 		dx = v2.x - v1.x; dy = v2.y - v1.y;
 		nx =    x - v1.x; ny =    y - v1.y;
@@ -617,9 +617,9 @@ bool Map::LineIntersectsFace( PFACE cface, VERTEX p1, VERTEX p2, VERTEX *result)
 		return(false);  //cant intersect a face we dont have... i guess
 	}
 	
-	const VERTEX &pa = cface->a;
-	const VERTEX &pb = cface->b;
-	const VERTEX &pc = cface->c;
+	const VERTEX &pa = cface->vert[0];
+	const VERTEX &pb = cface->vert[1];
+	const VERTEX &pc = cface->vert[2];
 	
 	//quick bounding box checks
 	//float tbb;

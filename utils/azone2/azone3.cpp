@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <assert.h>
 #include "types.h"
 #include "azone3.h"
 #include "wld.hpp"
@@ -198,30 +199,68 @@ bool RCMBuilder::build(const char *shortname) {
 	for(r = 0; r < faceCount; r++)
 	{
 		faceBlock[r] = _FaceList[r];
-		faceBlock[r].minx = Vmin3(x, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
-		faceBlock[r].maxx = Vmax3(x, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
-		faceBlock[r].miny = Vmin3(y, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
-		faceBlock[r].maxy = Vmax3(y, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
-		faceBlock[r].minz = Vmin3(z, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
-		faceBlock[r].maxz = Vmax3(z, faceBlock[r].a, faceBlock[r].b, faceBlock[r].c);
+		faceBlock[r].minx = Vmin3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		faceBlock[r].maxx = Vmax3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		faceBlock[r].miny = Vmin3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		faceBlock[r].maxy = Vmax3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		faceBlock[r].minz = Vmin3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
+		faceBlock[r].maxz = Vmax3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
 
-		if(faceBlock[r].type == 1)
+		faceBlock[r].flags.minxvert = 0;
+		faceBlock[r].flags.maxxvert = 0;
+		faceBlock[r].flags.minyvert = 0;
+		faceBlock[r].flags.maxyvert = 0;
+		faceBlock[r].flags.minzvert = 0;
+		faceBlock[r].flags.maxzvert = 0;
+
+		uint8 NumberOfFaces = (faceBlock[r].flags.type == 1) ? 4 : 3;
+
+		for(int i = 1; i < NumberOfFaces; ++i)
 		{
-			if(faceBlock[r].d.x < faceBlock[r].minx)
-				faceBlock[r].minx = faceBlock[r].d.x;
-			if(faceBlock[r].d.y < faceBlock[r].miny)
-				faceBlock[r].miny = faceBlock[r].d.y;
-			if(faceBlock[r].d.z < faceBlock[r].minz)
-				faceBlock[r].minz = faceBlock[r].d.z;
-			if(faceBlock[r].d.x > faceBlock[r].maxx)
-				faceBlock[r].maxx = faceBlock[r].d.x;
-			if(faceBlock[r].d.y > faceBlock[r].maxy)
-				faceBlock[r].maxy = faceBlock[r].d.y;
-			if(faceBlock[r].d.z > faceBlock[r].maxz)
-				faceBlock[r].maxz = faceBlock[r].d.z;
+			if(faceBlock[r].vert[i].x < faceBlock[r].vert[faceBlock[r].flags.minxvert].x)
+				faceBlock[r].flags.minxvert = i;
+
+			if(faceBlock[r].vert[i].y < faceBlock[r].vert[faceBlock[r].flags.minyvert].y)
+				faceBlock[r].flags.minyvert = i;
+
+			if(faceBlock[r].vert[i].z < faceBlock[r].vert[faceBlock[r].flags.minzvert].z)
+				faceBlock[r].flags.minzvert = i;
+
+			if(faceBlock[r].vert[i].x > faceBlock[r].vert[faceBlock[r].flags.maxxvert].x)
+				faceBlock[r].flags.maxxvert = i;
+
+			if(faceBlock[r].vert[i].y > faceBlock[r].vert[faceBlock[r].flags.maxyvert].y)
+				faceBlock[r].flags.maxyvert = i;
+
+			if(faceBlock[r].vert[i].z > faceBlock[r].vert[faceBlock[r].flags.maxzvert].z)
+				faceBlock[r].flags.maxzvert = i;
+		}
+	
+		if(faceBlock[r].flags.type == 1)
+		{
+			if(faceBlock[r].vert[3].x < faceBlock[r].minx)
+				faceBlock[r].minx = faceBlock[r].vert[3].x;
+			if(faceBlock[r].vert[3].y < faceBlock[r].miny)
+				faceBlock[r].miny = faceBlock[r].vert[3].y;
+			if(faceBlock[r].vert[3].z < faceBlock[r].minz)
+				faceBlock[r].minz = faceBlock[r].vert[3].z;
+			if(faceBlock[r].vert[3].x > faceBlock[r].maxx)
+				faceBlock[r].maxx = faceBlock[r].vert[3].x;
+			if(faceBlock[r].vert[3].y > faceBlock[r].maxy)
+				faceBlock[r].maxy = faceBlock[r].vert[3].y;
+			if(faceBlock[r].vert[3].z > faceBlock[r].maxz)
+				faceBlock[r].maxz = faceBlock[r].vert[3].z;
 		}
 
-		//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", r, faceBlock[r].a.z, faceBlock[r].b.z, faceBlock[r].c.z, faceBlock[r].minz);
+		assert(faceBlock[r].minx == faceBlock[r].vert[faceBlock[r].flags.minxvert].x);
+		assert(faceBlock[r].miny == faceBlock[r].vert[faceBlock[r].flags.minyvert].y);
+		assert(faceBlock[r].minz == faceBlock[r].vert[faceBlock[r].flags.minzvert].z);
+		assert(faceBlock[r].maxx == faceBlock[r].vert[faceBlock[r].flags.maxxvert].x);
+		assert(faceBlock[r].maxy == faceBlock[r].vert[faceBlock[r].flags.maxyvert].y);
+		assert(faceBlock[r].maxz == faceBlock[r].vert[faceBlock[r].flags.maxzvert].z);
+
+
+		//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", r, faceBlock[r].vert[0].z, faceBlock[r].vert[1].z, faceBlock[r].vert[2].z, faceBlock[r].minz);
 	}
 
 	float minx, miny, maxx, maxy;
@@ -233,7 +272,7 @@ bool RCMBuilder::build(const char *shortname) {
 	//find our limits.
 	for(r = 0; r < faceCount; r++)
 	{
-		VERTEX v = faceBlock[r].a;
+		VERTEX v = faceBlock[r].vert[0];
 		if(v.x > maxx)
 			maxx = v.x;
 		if(v.x < minx)
@@ -243,7 +282,7 @@ bool RCMBuilder::build(const char *shortname) {
 		if(v.y < miny)
 			miny = v.y;
 
-		v = faceBlock[r].b;
+		v = faceBlock[r].vert[1];
 		if(v.x > maxx)
 			maxx = v.x;
 		if(v.x < minx)
@@ -253,7 +292,7 @@ bool RCMBuilder::build(const char *shortname) {
 		if(v.y < miny)
 			miny = v.y;
 
-		v = faceBlock[r].c;
+		v = faceBlock[r].vert[2];
 		if(v.x > maxx)
 			maxx = v.x;
 		if(v.x < minx)
@@ -313,9 +352,9 @@ bool RCMBuilder::writeMap(const char *file)
 	for(int32 i = 0; i < faceCount; ++i)
 	{
 		printf("Face: %i, (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f),(%8.3f, %8.3f, %8.3f)\n", i,
-			faceBlock[i].a.x, faceBlock[i].a.y, faceBlock[i].a.z,
-			faceBlock[i].b.x, faceBlock[i].b.y, faceBlock[i].b.z,
-			faceBlock[i].c.x, faceBlock[i].c.y, faceBlock[i].c.z);
+			faceBlock[i].vert[0].x, faceBlock[i].vert[0].y, faceBlock[i].vert[0].z,
+			faceBlock[i].vert[1].x, faceBlock[i].vert[1].y, faceBlock[i].vert[1].z,
+			faceBlock[i].vert[2].x, faceBlock[i].vert[2].y, faceBlock[i].vert[2].z);
 	}
 	*/
 
@@ -341,7 +380,7 @@ bool RCMBuilder::writeMap(const char *file)
 void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 {
 	FACE f;
-	f.type = 0;
+	f.flags.type = 0;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
 	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
@@ -349,9 +388,9 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 	NormalizeN(&f);
 	f.nd = - f.nx * v1.x - f.ny * v1.y - f.nz * v1.z;
 
-	f.a = v1;
-	f.b = v2;
-	f.c = v3;
+	f.vert[0] = v1;
+	f.vert[1] = v2;
+	f.vert[2] = v3;
 
 	_FaceList.push_back(f);
 }
@@ -360,7 +399,7 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4)
 {
 	FACE f;
-	f.type = 1;
+	f.flags.type = 1;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
 	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
@@ -368,10 +407,10 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4)
 	NormalizeN(&f);
 	f.nd = - f.nx * v1.x - f.ny * v1.y - f.nz * v1.z;
 
-	f.a = v1;
-	f.b = v2;
-	f.c = v3;
-	f.d = v4;
+	f.vert[0] = v1;
+	f.vert[1] = v2;
+	f.vert[2] = v3;
+	f.vert[3] = v4;
 
 	_FaceList.push_back(f);
 }

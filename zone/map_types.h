@@ -21,7 +21,7 @@ typedef struct _vertex{
 		};
 		float axis[3];
 	};
-
+	
 	_vertex()
 	{
 		x  = y = z = 0.0f;
@@ -33,6 +33,7 @@ typedef struct _vertex{
 		y = iy;
 		z = iz;
 	}
+
 	bool  operator==(const _vertex &v1) const
 	{
 		return((v1.x == x) && (v1.y == y) && (v1.z ==z));
@@ -80,13 +81,22 @@ struct FILEFACE
 	float nx, ny, nz, nd;
 };
 
+struct FACEFLAGS
+{
+	uint32 type:1;		// 0 = triangle, 1 = quad
+	uint32 minxvert:2;
+	uint32 maxxvert:2;
+	uint32 minyvert:2;
+	uint32 maxyvert:2;
+	uint32 minzvert:2;
+	uint32 maxzvert:2;
+	uint32 padding:19;
+};
+
 typedef struct _face
 {	
-	uint8  type;	// 0 = triangle, 1 = quad
-	VERTEX a;
-	VERTEX b;
-	VERTEX c;
-	VERTEX d;
+	FACEFLAGS flags;
+	VERTEX vert[4];
 	float nx, ny, nz, nd;
 	float minx, maxx, miny, maxy, minz, maxz;
 }FACE, *PFACE;

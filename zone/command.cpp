@@ -8062,9 +8062,9 @@ void command_bestz(Client *c, const Seperator *sep) {
 		c->Message(0, "Hit = %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
 		if(hitFace)
 			c->Message(0, "HitFace = (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)",
-				hitFace->a.x, hitFace->a.y, hitFace->a.z,
-				hitFace->b.x, hitFace->b.y, hitFace->b.z,
-				hitFace->c.x, hitFace->c.y, hitFace->c.z);
+				hitFace->vert[0].x, hitFace->vert[0].y, hitFace->vert[0].z,
+				hitFace->vert[1].x, hitFace->vert[1].y, hitFace->vert[1].z,
+				hitFace->vert[2].x, hitFace->vert[2].y, hitFace->vert[2].z);
 		else
 			c->Message(0, "HitFace is NULL");
 	}

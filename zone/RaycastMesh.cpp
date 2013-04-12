@@ -340,16 +340,17 @@ public:
 		if ((mMin.z > b.mMax.z) || (b.mMin.z > mMax.z)) return false;
 		return true;
 	}
-
+	/*
 	bool containsTriangle(FACE f) const
 	{
 		BoundsAABB b;
-		b.setMin(f.a);
-		b.setMax(f.a);
-		b.include(f.b);
-		b.include(f.c);
+		b.setMin(f.vert[0]);
+		b.setMax(f.vert[0]);
+		b.include(f.vert[1]);
+		b.include(f.vert[2]);
 		return intersects(b);
 	}
+	*/
 
 	bool containsTriangleExact(FACE f,uint32 &orCode) const
 	{
@@ -368,18 +369,18 @@ public:
 	inline uint32 getClipCode(FACE f, uint32 &andCode) const
 	{
 		andCode = 0xFFFFFFFF;
-		uint32 c1 = getClipCode(f.a);
-		uint32 c2 = getClipCode(f.b);
-		uint32 c3 = getClipCode(f.c);
+		uint32 c1 = getClipCode(f.vert[0]);
+		uint32 c2 = getClipCode(f.vert[1]);
+		uint32 c3 = getClipCode(f.vert[2]);
 		uint32 c4 = 0;
 
 		andCode&=c1;
 		andCode&=c2;
 		andCode&=c3;
-		if(f.type == 1)
+		if(f.flags.type == 1)
 		{
-			c4 = getClipCode(f.d);
-			andCode &= getClipCode(f.d);
+			c4 = getClipCode(f.vert[3]);
+			andCode &= getClipCode(f.vert[3]);
 		}
 		return c1|c2|c3|c4;
 	}
@@ -469,16 +470,16 @@ public:
 			{
 				triangles.push_back(i);
 			}
-			mBounds.setMin( Faces[0].a );
-			mBounds.setMax( Faces[0].a );
+			mBounds.setMin( Faces[0].vert[0] );
+			mBounds.setMax( Faces[0].vert[0] );
 
 			for(uint32 i = 0; i < FaceCount; ++i)
 			{
-				mBounds.include(Faces[i].a);
-				mBounds.include(Faces[i].b);
-				mBounds.include(Faces[i].c);
-				if(Faces[i].type == 1)
-					mBounds.include(Faces[i].d);
+				mBounds.include(Faces[i].vert[0]);
+				mBounds.include(Faces[i].vert[1]);
+				mBounds.include(Faces[i].vert[2]);
+				if(Faces[i].flags.type == 1)
+					mBounds.include(Faces[i].vert[3]);
 			}
 			split(triangles, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
 		}
@@ -592,14 +593,14 @@ public:
 							addCount++;
 							if ( leftTriangles.empty() )
 							{
-								leftBounds.setMin(Faces[tri].a);
-								leftBounds.setMax(Faces[tri].a);
+								leftBounds.setMin(Faces[tri].vert[0]);
+								leftBounds.setMax(Faces[tri].vert[0]);
 							}
-							leftBounds.include(Faces[tri].a);
-							leftBounds.include(Faces[tri].b);
-							leftBounds.include(Faces[tri].c);
-							if(Faces[tri].type == 1)
-								leftBounds.include(Faces[tri].d);
+							leftBounds.include(Faces[tri].vert[0]);
+							leftBounds.include(Faces[tri].vert[1]);
+							leftBounds.include(Faces[tri].vert[2]);
+							if(Faces[tri].flags.type == 1)
+								leftBounds.include(Faces[tri].vert[3]);
 
 							leftTriangles.push_back(tri); // Add this triangle to the 'left triangles' array and revise the left triangles bounding volume
 						}
@@ -609,14 +610,14 @@ public:
 							addCount++;
 							if ( rightTriangles.empty() )
 							{
-								rightBounds.setMin(Faces[tri].a);
-								rightBounds.setMax(Faces[tri].a);
+								rightBounds.setMin(Faces[tri].vert[0]);
+								rightBounds.setMax(Faces[tri].vert[0]);
 							}
-							rightBounds.include(Faces[tri].a);
-							rightBounds.include(Faces[tri].b);
-							rightBounds.include(Faces[tri].c);
-							if(Faces[tri].type == 1)
-								rightBounds.include(Faces[tri].d);
+							rightBounds.include(Faces[tri].vert[0]);
+							rightBounds.include(Faces[tri].vert[1]);
+							rightBounds.include(Faces[tri].vert[2]);
+							if(Faces[tri].flags.type == 1)
+								rightBounds.include(Faces[tri].vert[3]);
 							rightTriangles.push_back(tri); // Add this triangle to the 'right triangles' array and revise the right triangles bounding volume.
 						}
 						assert( addCount );
@@ -754,24 +755,24 @@ public:
 						if(Faces[tri].type == 1)
 						{
 							printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-								Faces[tri].a.x, Faces[tri].a.y, Faces[tri].a.z,
-								Faces[tri].b.x, Faces[tri].b.y, Faces[tri].b.z,
-								Faces[tri].c.x, Faces[tri].c.y, Faces[tri].c.z,
+								Faces[tri].vert[0].x, Faces[tri].vert[0].y, Faces[tri].vert[0].z,
+								Faces[tri].vert[1].x, Faces[tri].vert[1].y, Faces[tri].vert[1].z,
+								Faces[tri].vert[2].x, Faces[tri].vert[2].y, Faces[tri].vert[2].z,
 								Faces[tri].d.x, Faces[tri].d.y, Faces[tri].d.z);
 
 						}
 						else
 						{
 							printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-								Faces[tri].a.x, Faces[tri].a.y, Faces[tri].a.z,
-								Faces[tri].b.x, Faces[tri].b.y, Faces[tri].b.z,
-								Faces[tri].c.x, Faces[tri].c.y, Faces[tri].c.z);
+								Faces[tri].vert[0].x, Faces[tri].vert[0].y, Faces[tri].vert[0].z,
+								Faces[tri].vert[1].x, Faces[tri].vert[1].y, Faces[tri].vert[1].z,
+								Faces[tri].vert[2].x, Faces[tri].vert[2].y, Faces[tri].vert[2].z);
 						}
 						*/
-						bool Intersects = rayIntersectsTriangle(from,dir, Faces[tri].a, Faces[tri].b, Faces[tri].c, t);
+						bool Intersects = rayIntersectsTriangle(from,dir, Faces[tri].vert[0], Faces[tri].vert[1], Faces[tri].vert[2], t);
 
-						if(!Intersects && (Faces[tri].type == 1))
-							Intersects = rayIntersectsTriangle(from, dir, Faces[tri].c, Faces[tri].d, Faces[tri].a, t);
+						if(!Intersects && (Faces[tri].flags.type == 1))
+							Intersects = rayIntersectsTriangle(from, dir, Faces[tri].vert[2], Faces[tri].vert[3], Faces[tri].vert[0], t);
 
 						if (Intersects)
 						{
@@ -884,11 +885,11 @@ public:
 			fread(&mBounds.mMin, sizeof(VERTEX), 1, fp);
 			fread(&mBounds.mMax, sizeof(VERTEX), 1, fp);
 			fread(&mLeafTriangleIndex, sizeof(mLeafTriangleIndex), 1, fp);
-
-			//printf("Bounds: mMin %8.3f, %8.3f, %8.3f\n", mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
-			//printf("        mMax %8.3f, %8.3f, %8.3f\n", mBounds.mMax.x, mBounds.mMax.y, mBounds.mMax.z);
-			//printf("\nLeafTriangleIndex = %i\n", mLeafTriangleIndex);
-
+			/*
+			printf("Bounds: mMin %8.3f, %8.3f, %8.3f\n", mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
+			printf("        mMax %8.3f, %8.3f, %8.3f\n", mBounds.mMax.x, mBounds.mMax.y, mBounds.mMax.z);
+			printf("\nLeafTriangleIndex = %i\n", mLeafTriangleIndex);
+			*/
 			fread(&LeafExists, sizeof(LeafExists), 1, fp);
 
 			if(LeafExists)
@@ -1056,7 +1057,7 @@ public:
 			for (uint32 i = 0; i < mFaceCount; ++i)
 			{
 				VERTEX *dest = &mFaceNormals[i];
-				computePlane(mFaces[i].c, mFaces[i].b, mFaces[i].a, dest);
+				computePlane(mFaces[i].vert[2], mFaces[i].vert[1], mFaces[i].vert[0], dest);
 			}
 		}
 		VERTEX *src = &mFaceNormals[tri];
@@ -1083,29 +1084,29 @@ public:
 
 		for (uint32 tri=0; tri<mFaceCount; ++tri)
 		{
-			if(mFaces[tri].type == 1)
+			if(mFaces[tri].flags.type == 1)
 			{
 				printf("Testing Quad: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-					mFaces[tri].a.x, mFaces[tri].a.y, mFaces[tri].a.z,
-					mFaces[tri].b.x, mFaces[tri].b.y, mFaces[tri].b.z,
-					mFaces[tri].c.x, mFaces[tri].c.y, mFaces[tri].c.z,
-					mFaces[tri].d.x, mFaces[tri].d.y, mFaces[tri].d.z);
+					mFaces[tri].vert[0].x, mFaces[tri].vert[0].y, mFaces[tri].vert[0].z,
+					mFaces[tri].vert[1].x, mFaces[tri].vert[1].y, mFaces[tri].vert[1].z,
+					mFaces[tri].vert[2].x, mFaces[tri].vert[2].y, mFaces[tri].vert[2].z,
+					mFaces[tri].vert[3].x, mFaces[tri].vert[3].y, mFaces[tri].vert[3].z);
 
 			}
 			else
 			{
 				printf("Testing Triangle: (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)\n",
-					mFaces[tri].a.x, mFaces[tri].a.y, mFaces[tri].a.z,
-					mFaces[tri].b.x, mFaces[tri].b.y, mFaces[tri].b.z,
-					mFaces[tri].c.x, mFaces[tri].c.y, mFaces[tri].c.z);
+					mFaces[tri].vert[0].x, mFaces[tri].vert[0].y, mFaces[tri].vert[0].z,
+					mFaces[tri].vert[1].x, mFaces[tri].vert[1].y, mFaces[tri].vert[1].z,
+					mFaces[tri].vert[2].x, mFaces[tri].vert[2].y, mFaces[tri].vert[2].z);
 
 			}
 
 			double t;
-			bool Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].a, mFaces[tri].b, mFaces[tri].c, t);
+			bool Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].vert[0], mFaces[tri].vert[1], mFaces[tri].vert[2], t);
 
-			if(!Intersects && mFaces[tri].type == 1)
-				Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].b, mFaces[tri].c, mFaces[tri].d, t);
+			if(!Intersects && mFaces[tri].flags.type == 1)
+				Intersects = rayIntersectsTriangle(from,dir,mFaces[tri].vert[1], mFaces[tri].vert[2], mFaces[tri].vert[3], t);
 
 			if(Intersects)
 			{

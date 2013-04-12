@@ -97,19 +97,19 @@ bool RayCastMap::loadMap(FILE *fp) {
 		//	return(false);
 		//}
 		/*
-		mFinalFaces[r].a = ff.a;
-		mFinalFaces[r].b = ff.b;
-		mFinalFaces[r].c = ff.c;
+		mFinalFaces[r].vert[0] = ff.a;
+		mFinalFaces[r].vert[1] = ff.b;
+		mFinalFaces[r].vert[2] = ff.c;
 		mFinalFaces[r].nx = ff.nx;
 		mFinalFaces[r].ny = ff.ny;
 		mFinalFaces[r].nz = ff.nz;
 		mFinalFaces[r].nd = ff.nd;
-		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
-		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].a, mFinalFaces[r].b, mFinalFaces[r].c);
+		mFinalFaces[r].minx = Vmin3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxx = Vmax3(x, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].miny = Vmin3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxy = Vmax3(y, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].minz = Vmin3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
+		mFinalFaces[r].maxz = Vmax3(z, mFinalFaces[r].vert[0], mFinalFaces[r].vert[1], mFinalFaces[r].vert[2]);
 		*/
 	//}
 	
@@ -117,28 +117,28 @@ bool RayCastMap::loadMap(FILE *fp) {
 	float v;
 	for(i = 0; i < m_Faces; i++)
 	{
-		v = Vmax3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxx)
 			_maxx = v;
-		v = Vmin3(x, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(x, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _minx)
 			_minx = v;
-		v = Vmax3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxy)
 			_maxy = v;
-		v = Vmin3(y, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(y, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _miny)
 			_miny = v;
-		v = Vmax3(z, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmax3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v > _maxz)
 			_maxz = v;
-		v = Vmin3(z, mFinalFaces[i].a, mFinalFaces[i].b, mFinalFaces[i].c);
+		v = Vmin3(z, mFinalFaces[i].vert[0], mFinalFaces[i].vert[1], mFinalFaces[i].vert[2]);
 		if(v < _minz)
 			_minz = v;
 	}
 	printf("Loading RaycastMesh.\n");
 	rm = loadRaycastMesh(fp, m_Faces,mFinalFaces);
-	/*	
+	
 	printf("Starting Benchmarks on loaded file\n");
 	
 	time_t StartTime = time(NULL);
@@ -164,7 +164,7 @@ bool RayCastMap::loadMap(FILE *fp) {
 	time_t EndTime = time(NULL);
 
 	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
-	*/
+
 
 	//printf("Building raycast mesh\n"); fflush(stdout);
 	//rm = createRaycastMesh(m_Faces, mFinalFaces);
