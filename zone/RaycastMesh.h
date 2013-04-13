@@ -38,7 +38,7 @@
 class RaycastMesh
 {
 public:
-	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation,VERTEX *hitNormal,float *hitDistance, FACE **hitFace) = 0;
+	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation,float *hitDistance, FACE **hitFace) = 0;
 
 	virtual const VERTEX getBoundMin(void) const = 0; // return the minimum bounding box
 	virtual const VERTEX getBoundMax(void) const = 0; // return the maximum bounding box.

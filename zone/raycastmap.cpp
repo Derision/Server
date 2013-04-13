@@ -153,7 +153,7 @@ RayCastMap::~RayCastMap()
 
 bool RayCastMap::LineIntersectsZone(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) const
 {
-	return rm->raycast(start, end, result, NULL, NULL, on);
+	return rm->raycast(start, end, result, NULL, on);
 }
 
 float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
@@ -177,7 +177,7 @@ float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 
 	for(int zAttempt = 0; zAttempt < 2; ++zAttempt)
 	{
-		hit = rm->raycast(from, to, result, NULL, &hitDistance, on);
+		hit = rm->raycast(from, to, result, &hitDistance, on);
 
 		if(hit)
 			return result->z;
@@ -271,5 +271,5 @@ bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step
 
 bool RayCastMap::CheckLoS(VERTEX myloc, VERTEX oloc)
 {
-	return !rm->raycast(myloc, oloc, NULL, NULL, NULL, NULL);
+	return !rm->raycast(myloc, oloc, NULL, NULL, NULL);
 }

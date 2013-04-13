@@ -108,7 +108,6 @@ bool intersectRayAABB(VERTEX MinB, VERTEX MaxB, VERTEX origin, VERTEX dir, VERTE
 	if(MaxT.axis[2] > MaxT.axis[WhichPlane])	WhichPlane = 2;
 
 	// Check final candidate actually inside box
-	//if(IR(MaxT.axis[WhichPlane])&0x80000000) return false;
 	if(MaxT.axis[WhichPlane] < 0) return false;
 
 	for(uint32 i=0;i<3;i++)
@@ -663,21 +662,9 @@ public:
 		}
 
 
-		virtual void raycast(bool &hit,
-							VERTEX from,
-							VERTEX to,
-							VERTEX dir,
-							VERTEX *hitLocation,
-							VERTEX *hitNormal,
-							float *hitDistance,
-							PFACE Faces,
-							float &nearestDistance,
-							NodeInterface *callback,
-							uint32 *raycastTriangles,
-							uint32 raycastFrame,
-							const TriVector &leafTriangles,
-							uint32 &nearestTriIndex,
-							bool ZTest)
+		virtual void raycast(	bool &hit, VERTEX from, VERTEX to, VERTEX dir, VERTEX *hitLocation, float *hitDistance, PFACE Faces, float &nearestDistance,
+					NodeInterface *callback, uint32 *raycastTriangles, uint32 raycastFrame, const TriVector &leafTriangles,
+					uint32 &nearestTriIndex, bool ZTest)
 		{
 			VERTEX sect;
 			double nd = nearestDistance;
@@ -776,11 +763,11 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitNormal,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
 				}
 			}
 		}
@@ -964,7 +951,7 @@ public:
 		mRoot->Load(fp, this);
 	}
 
-	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation, VERTEX *hitNormal, float *hitDistance, FACE **hitFace)
+	virtual bool raycast(VERTEX from, VERTEX to, VERTEX *hitLocation, float *hitDistance, FACE **hitFace)
 	{
 		bool ret = false;
 
@@ -978,7 +965,7 @@ public:
 		dir.z*=recipDistance;
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitNormal,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
 
 		if((nearestTriIndex != TRI_EOF) && hitFace)
 			*hitFace = &mFaces[nearestTriIndex];
