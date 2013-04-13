@@ -410,9 +410,8 @@ public:
     void ClearFeignMemory();
     void PrintHateListToClient(Client *who) { hate_list.PrintToClient(who); }
     void GetHateList(std::list<tHateEntry*> &h_list) { return hate_list.GetHateList(h_list); }
-    bool CheckLos(Mob* other);
-    bool CheckLosFN(Mob* other);
-    bool CheckLosFN(float posX, float posY, float posZ, float mobSize);
+    bool CheckLoS(Mob* other);
+    bool CheckLoS(float posX, float posY, float posZ, float mobSize);
     inline void SetChanged() { pLastChange = Timer::GetCurrentTime(); }
     inline const uint32 LastChange() const { return pLastChange; }
 

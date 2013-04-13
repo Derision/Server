@@ -30,7 +30,7 @@ public:
 	virtual bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const = 0;
 	virtual PFACE GetFace( int _idx) = 0;
 	virtual bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) = 0;
-	virtual bool CheckLosFN(VERTEX myloc, VERTEX oloc) = 0;
+	virtual bool CheckLoS(VERTEX myloc, VERTEX oloc) = 0;
 	virtual bool loadMap(FILE *fp) = 0;
 
 private:

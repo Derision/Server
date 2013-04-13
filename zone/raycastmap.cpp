@@ -269,7 +269,7 @@ bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step
 	return(false);
 }
 
-bool RayCastMap::CheckLosFN(VERTEX myloc, VERTEX oloc)
+bool RayCastMap::CheckLoS(VERTEX myloc, VERTEX oloc)
 {
 	return !rm->raycast(myloc, oloc, NULL, NULL, NULL, NULL);
 }

@@ -163,7 +163,7 @@ const char *__zp_names[ZoneProfiler::MaxZoneProfilerId] = {
 		"HateList_GetMostHate",
 		
 		"Mob_CheckWillAggro",
-		"Mob_CheckLosFN",
+		"Mob_CheckLoS",
 		"Mob_Dist",
 		"Mob_DistNoZ",
 		"Mob_DistNoRoot",

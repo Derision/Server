@@ -4295,7 +4295,7 @@ Mob* EntityList::GetTargetForMez(Mob* caster)
 				continue;
 			}
 
-			if(!caster->CheckLosFN(d)){ //this is wasteful but can't really think of another way to do it 
+			if(!caster->CheckLoS(d)){ //this is wasteful but can't really think of another way to do it 
 				iterator.Advance();		//that wont have us trying to los the same target every time
 				continue;			   //it's only in combat so it's impact should be minimal.. but stil.
 			}
@@ -5263,7 +5263,7 @@ Mob* EntityList::GetTargetForVirus(Mob* spreader)
 		// Make sure the target is in range, has los and is not the mob doing the spreading
 		if ((iterator.GetData()->GetID() != spreader->GetID()) && 
 			(iterator.GetData()->CalculateDistance(spreader->GetX(), spreader->GetY(), spreader->GetZ()) <= max_spread_range) &&
-			(spreader->CheckLosFN(iterator.GetData())))
+			(spreader->CheckLoS(iterator.GetData())))
 		{
 			// If the spreader is an npc it can only spread to other npc controlled mobs
 			if (spreader->IsNPC() && !spreader->IsPet() && iterator.GetData()->IsNPC()) {

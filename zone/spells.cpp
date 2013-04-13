@@ -1708,7 +1708,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 	}
 
 	// check line of sight to target if it's a detrimental spell
-	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id))
+	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLoS(spell_target) && !IsHarmonySpell(spell_id))
 	{
 		mlog(SPELLS__CASTING, "Spell %d: cannot see target %s", spell_target->GetName());
 		Message_StringID(13,CANT_SEE_TARGET);
@@ -1930,7 +1930,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 					if((heading_to_target >= angle_start && heading_to_target <= 360.0f) ||
 						(heading_to_target >= 0.0f && heading_to_target <= angle_end))
 					{
-						if(CheckLosFN(spell_target))
+						if(CheckLoS(spell_target))
 							SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
 					}
 				}
@@ -1938,7 +1938,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, uint16 slot, uint16 
 				{
 					if(heading_to_target >= angle_start && heading_to_target <= angle_end)
 					{
-						if(CheckLosFN((*iter)))
+						if(CheckLoS((*iter)))
 							SpellOnTarget(spell_id, (*iter), false, true, resist_adjust);
 					}
 				}
@@ -2053,7 +2053,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, uint16 slot) {
 	
 	
 	// check line of sight to target if it's a detrimental spell
-	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target))
+	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLoS(spell_target))
 	{
 		mlog(SPELLS__CASTING, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
 		Message_StringID(13, CANT_SEE_TARGET);

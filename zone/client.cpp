@@ -3197,7 +3197,7 @@ void Client::Insight(uint32 t_id)
 		Message(0,"You must get closer to your target!");
 		return;
 	}
-	if (!CheckLosFN(who))
+	if (!CheckLoS(who))
 	{
 		Message(0,"You must be able to see your target!");
 		return;

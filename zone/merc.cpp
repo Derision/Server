@@ -1634,7 +1634,7 @@ void Merc::AI_Process() {
 		// Let's check if we have a los with our target.
 		// If we don't, our hate_list is wiped.
 		// Else, it was causing the merc to aggro behind wall etc... causing massive trains.
-		if(!CheckLosFN(GetTarget()) || GetTarget()->IsMezzed() || !IsAttackAllowed(GetTarget())) {
+		if(!CheckLoS(GetTarget()) || GetTarget()->IsMezzed() || !IsAttackAllowed(GetTarget())) {
 			WipeHateList();
 
 			if(IsMoving()) {

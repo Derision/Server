@@ -67,7 +67,7 @@ public:
 	list<int> FindRoute(int startID, int endID);
 
 	VERTEX GetPathNodeCoordinates(int NodeNumber, bool BestZ = true);
-	bool CheckLosFN(VERTEX a, VERTEX b);
+	bool CheckLoS(VERTEX a, VERTEX b);
 	void SpawnPathNodes();
 	void MeshTest();
 	void SimpleMeshTest();

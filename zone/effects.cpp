@@ -653,7 +653,7 @@ void EntityList::AETaunt(Client* taunter, float range) {
 			&& taunter->IsAttackAllowed(them)
 			&& taunter->DistNoRootNoZ(*them) <= range) {
 			
-			if (taunter->CheckLosFN(them)) {
+			if (taunter->CheckLoS(them)) {
 				taunter->Taunt(them, true);
 			}
 		}
@@ -703,7 +703,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		if(bad) {
 			if(!caster->IsAttackAllowed(curmob, true))
 				continue;
-			if(!center->CheckLosFN(curmob))
+			if(!center->CheckLoS(curmob))
 				continue;
 		}
 
@@ -809,7 +809,7 @@ void EntityList::AEBardPulse(Mob *caster, Mob *center, uint16 spell_id, bool aff
 		}
 		//finally, make sure they are within range
 		if(bad) {
-			if(!center->CheckLosFN(curmob))
+			if(!center->CheckLoS(curmob))
 				continue;
 		}
 		//if we get here... cast the spell.

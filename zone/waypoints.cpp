@@ -334,7 +334,7 @@ void NPC::CalculateNewWaypoint()
 		list<wplist>::iterator iter = closest.begin();
 		while(iter != closest.end())
 		{
-			if(CheckLosFN((*iter).x, (*iter).y, (*iter).z, GetSize()))
+			if(CheckLoS((*iter).x, (*iter).y, (*iter).z, GetSize()))
 			{
 				iter++;
 			}

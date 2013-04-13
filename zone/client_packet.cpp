@@ -1335,7 +1335,7 @@ void Client::Handle_OP_AutoAttack(const EQApplicationPacket *app)
 			aa_los_them.x = aa_los_them_mob->GetX();
 			aa_los_them.y = aa_los_them_mob->GetY();
 			aa_los_them.z = aa_los_them_mob->GetZ();
-			if(CheckLosFN(aa_los_them_mob))
+			if(CheckLoS(aa_los_them_mob))
 				los_status = true;
 			else
 				los_status = false;

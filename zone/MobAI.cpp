@@ -136,7 +136,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -157,7 +157,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							) 
                         {
                             if(!checked_los) {
-                                if(!CheckLosFN(tar)) 
+                                if(!CheckLoS(tar)) 
                                     return(false); 
                                 checked_los = true; 
                             } 
@@ -194,7 +194,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -207,7 +207,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						if(MakeRandomInt(0, 100) < 15)
 						{
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -262,7 +262,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -279,7 +279,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -297,7 +297,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(!checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLoS(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
 							}
@@ -398,7 +398,7 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 			|| t3 > iRange
 			|| mob->DistNoRoot(*caster) > iRange2
 				//this call should seem backwards:
-			|| !mob->CheckLosFN(caster)
+			|| !mob->CheckLoS(caster)
 			|| mob->GetReverseFactionCon(caster) >= FACTION_KINDLY
 		) {
 			continue;

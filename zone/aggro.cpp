@@ -231,7 +231,7 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 	   towho->Message(0, "...%s threatening to me, so they only have a %d chance per check of attacking.", mob->GetName());
 	}
 	
-	if(!CheckLosFN(mob)) {
+	if(!CheckLoS(mob)) {
 	   towho->Message(0, "...%s is out of sight.", mob->GetName());		
 	}
 	
@@ -346,7 +346,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	)
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
-		if(CheckLosFN(mob)) {
+		if(CheckLoS(mob)) {
 
 			// Aggro
 			#if EQDEBUG>=6
@@ -479,7 +479,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 				{
 					//attacking someone on same faction, or a friend
 					//Father Nitwit:  make sure we can see them.
-					if(mob->CheckLosFN(sender)) {
+					if(mob->CheckLoS(sender)) {
 #if (EQDEBUG>=5) 
 						LogFile->write(EQEMuLog::Debug, "AIYellForHelp(\"%s\",\"%s\") %s attacking %s Dist %f Z %f", 
 						sender->GetName(), attacker->GetName(), mob->GetName(), attacker->GetName(), mob->DistNoRoot(*sender), fabs(sender->GetZ()+mob->GetZ()));
@@ -889,16 +889,16 @@ bool Mob::CombatRange(Mob* other)
 }
 
 //Father Nitwit's LOS code
-bool Mob::CheckLosFN(Mob* other) {
+bool Mob::CheckLoS(Mob* other) {
 	bool Result = false;
 
 	if(other)
-		Result = CheckLosFN(other->GetX(), other->GetY(), other->GetZ(), other->GetSize());
+		Result = CheckLoS(other->GetX(), other->GetY(), other->GetZ(), other->GetSize());
 
 	return Result;
 }
 
-bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
+bool Mob::CheckLoS(float posX, float posY, float posZ, float mobSize) {
 	if(zone->zonemap == NULL) {
 		//not sure what the best return is on error
 		//should make this a database variable, but im lazy today
@@ -908,7 +908,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 		return(false);
 #endif
 	}
-	_ZP(Mob_CheckLosFN);
+	_ZP(Mob_CheckLoS);
 	
 	VERTEX myloc;
 	VERTEX oloc;
@@ -926,7 +926,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 #if LOSDEBUG>=5
 	LogFile->write(EQEMuLog::Debug, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
 #endif
-	return zone->zonemap->CheckLosFN(myloc, oloc);	
+	return zone->zonemap->CheckLoS(myloc, oloc);	
 }
 
 //offensive spell aggro

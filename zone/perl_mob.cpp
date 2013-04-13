@@ -6687,7 +6687,7 @@ XS(XS_Mob_CheckLoS)
 		if(mob == NULL)
 			Perl_croak(aTHX_ "mob is NULL, avoiding crash.");
 
-		RETVAL = THIS->CheckLosFN(mob);
+		RETVAL = THIS->CheckLoS(mob);
 		ST(0) = boolSV(RETVAL);
 		sv_2mortal(ST(0));
 	}
@@ -6724,7 +6724,7 @@ XS(XS_Mob_CheckLoSToLoc)
 		if(THIS == NULL)
 			Perl_croak(aTHX_ "THIS is NULL, avoiding crash.");
 
-		RETVAL = THIS->CheckLosFN(loc_x, loc_y, loc_z, mob_size);
+		RETVAL = THIS->CheckLoS(loc_x, loc_y, loc_z, mob_size);
 		ST(0) = boolSV(RETVAL);
 		sv_2mortal(ST(0));
 	}

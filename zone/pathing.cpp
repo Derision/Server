@@ -2084,7 +2084,7 @@ bool PathManager::NodesConnected(PathNode *a, PathNode *b)
 	return false;
 }
 
-bool PathManager::CheckLosFN(VERTEX a, VERTEX b)
+bool PathManager::CheckLoS(VERTEX a, VERTEX b)
 {
 	if(zone->zonemap)
 	{
@@ -2136,7 +2136,7 @@ void PathManager::ProcessNodesAndSave(string filename)
 				{
 					if(VertexDistance(PathNodes[x].v, PathNodes[y].v) <= 200)
 					{
-						if(CheckLosFN(PathNodes[x].v, PathNodes[y].v))
+						if(CheckLoS(PathNodes[x].v, PathNodes[y].v))
 						{
 							if(NoHazardsAccurate(PathNodes[x].v, PathNodes[y].v))
 							{

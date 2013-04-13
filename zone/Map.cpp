@@ -802,7 +802,7 @@ float Map::FindClosestZ(VERTEX p ) const
 	return ClosestZ;
 }
 
-bool Map::CheckLosFN(VERTEX myloc, VERTEX oloc)
+bool Map::CheckLoS(VERTEX myloc, VERTEX oloc)
 {
 	FACE *onhit;
 	NodeRef mynode;

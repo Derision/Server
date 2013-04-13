@@ -312,7 +312,7 @@ bool Client::Process() {
 					if(ranged_timer.Check(false)){
 						if(GetTarget() && (GetTarget()->IsNPC() || GetTarget()->IsClient())){
 							if(!GetTarget()->BehindMob(this, GetTarget()->GetX(), GetTarget()->GetY())){
-								if(CheckLosFN(GetTarget())){
+								if(CheckLoS(GetTarget())){
 									//client has built in los check, but auto fire does not.. done last.
 									RangedAttack(GetTarget());
 								}
@@ -330,7 +330,7 @@ bool Client::Process() {
 					if(ranged_timer.Check(false)){
 						if(GetTarget() && (GetTarget()->IsNPC() || GetTarget()->IsClient())){
 							if(!GetTarget()->BehindMob(this, GetTarget()->GetX(), GetTarget()->GetY())){
-								if(CheckLosFN(GetTarget())){
+								if(CheckLoS(GetTarget())){
 									//client has built in los check, but auto fire does not.. done last.
 									ThrowingAttack(GetTarget());
 								}
@@ -369,7 +369,7 @@ bool Client::Process() {
 					aa_los_them.x = aa_los_them_mob->GetX();
 					aa_los_them.y = aa_los_them_mob->GetY();
 					aa_los_them.z = aa_los_them_mob->GetZ();
-					if(CheckLosFN(auto_attack_target))
+					if(CheckLoS(auto_attack_target))
 						los_status = true;
 					else
 						los_status = false;
@@ -384,7 +384,7 @@ bool Client::Process() {
 				aa_los_them.x = aa_los_them_mob->GetX();
 				aa_los_them.y = aa_los_them_mob->GetY();
 				aa_los_them.z = aa_los_them_mob->GetZ();
-				if(CheckLosFN(auto_attack_target))
+				if(CheckLoS(auto_attack_target))
 					los_status = true;
 				else
 					los_status = false;

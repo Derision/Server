@@ -2209,7 +2209,7 @@ bool Mob::PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, fl
 			tempY = GetY() + (tempSize * static_cast<float>(cos(double(look_heading))));
 			tempZ = target->GetZ();
 
-			if(!CheckLosFN(tempX, tempY, tempZ, tempSize)) {
+			if(!CheckLoS(tempX, tempY, tempZ, tempSize)) {
 				tempSize -= rangeReduction;
 			}
 			else {
@@ -2232,7 +2232,7 @@ bool Mob::PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, fl
 				tempY = GetY() + (tempSize * static_cast<float>(cos(double(look_heading))));
 				tempZ = target->GetZ();
 
-				if(!CheckLosFN(tempX, tempY, tempZ, tempSize)) {
+				if(!CheckLoS(tempX, tempY, tempZ, tempSize)) {
 					tempSize -= rangeReduction;
 				}
 				else {
@@ -2263,7 +2263,7 @@ bool Mob::HateSummon() {
 		mob_owner = entity_list.GetMob(GetOwnerID());
 		
 	if (GetHPRatio() >= 98 || SpecAttacks[SPECATK_SUMMON] == false || !GetTarget() || 
-		(mob_owner && mob_owner->IsClient() && !CheckLosFN(GetTarget())))
+		(mob_owner && mob_owner->IsClient() && !CheckLoS(GetTarget())))
         return false;
 
     // now validate the timer
@@ -4231,17 +4231,17 @@ void Mob::DoGravityEffect()
 	if((fabs(my_x - cur_x) > 0.01) || (fabs(my_y - cur_y) > 0.01)) {
 		float new_ground = GetGroundZ(cur_x, cur_y);
 		// If we cant get LoS on our new spot then keep checking up to 5 units up.
-		if(!CheckLosFN(cur_x, cur_y, new_ground, GetSize())) {
+		if(!CheckLoS(cur_x, cur_y, new_ground, GetSize())) {
 			for(float z_adjust = 0.1f; z_adjust < 5; z_adjust += 0.1f) {
-				if(CheckLosFN(cur_x, cur_y, new_ground+z_adjust, GetSize())) {
+				if(CheckLoS(cur_x, cur_y, new_ground+z_adjust, GetSize())) {
 					new_ground += z_adjust;
 					break;
 				}
 			}
 			// If we still fail, then lets only use the x portion(ie sliding around a wall)
-			if(!CheckLosFN(cur_x, my_y, new_ground, GetSize())) {
+			if(!CheckLoS(cur_x, my_y, new_ground, GetSize())) {
 				// If that doesnt work, try the y
-				if(!CheckLosFN(my_x, cur_y, new_ground, GetSize())) {
+				if(!CheckLoS(my_x, cur_y, new_ground, GetSize())) {
 					// If everything fails, then lets do nothing
 					return;
 				}

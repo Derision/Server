@@ -43,7 +43,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_Mez: {
 			if (tar->GetBodyType() != BT_Giant) {
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;
@@ -272,7 +272,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_Root: {
 			if (!tar->IsRooted() && tar->DontRootMeBefore() < Timer::GetCurrentTime()) {
 					if(!checked_los) {
-						if(!CheckLosFN(tar))
+						if(!CheckLoS(tar))
 							break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 						
 						checked_los = true;
@@ -433,7 +433,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 			if((tar->GetHPRatio() <= 95.0f) || ((botClass == BARD) || (botClass == SHAMAN) || (botClass == ENCHANTER)))
 			{
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;
@@ -517,7 +517,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_Dispel: {
 			if(tar->GetHPRatio() > 95.0f) {
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;
@@ -587,7 +587,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_Lifetap: {
 			if (GetHPRatio() < 90.0f) {
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;
@@ -608,7 +608,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_Snare: {
 			if (tar->DontSnareMeBefore() < Timer::GetCurrentTime()) {
 					if(!checked_los) {
-						if(!CheckLosFN(tar))
+						if(!CheckLoS(tar))
 							break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 						
 						checked_los = true;
@@ -634,7 +634,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 		case SpellType_DOT: {
 			if ((tar->GetHPRatio() <= 98.0f) && (tar->DontDotMeBefore() < Timer::GetCurrentTime()) && (tar->GetHPRatio() > 15.0f)) {
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 
 					checked_los = true;
@@ -677,7 +677,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 			if (tar->GetHPRatio() <= 99.0f) {
 
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;
@@ -721,7 +721,7 @@ bool Bot::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 			if((tar->GetHPRatio() <= 99.0f) || ((botClass == BARD) || (botClass == SHAMAN) || (botClass == ENCHANTER) || (botClass == DRUID)) && (tar->GetHPRatio() > 40.0f))
 			{
 				if(!checked_los) {
-					if(!CheckLosFN(tar))
+					if(!CheckLoS(tar))
 						break;	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 					
 					checked_los = true;

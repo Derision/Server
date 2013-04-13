@@ -6693,7 +6693,7 @@ void command_checklos(Client *c, const Seperator *sep)
 	if(c->GetTarget())
 	{
 //		if(c->CheckLos(c->GetTarget()))
-		if(c->CheckLosFN(c->GetTarget()))
+		if(c->CheckLoS(c->GetTarget()))
 			c->Message(0, "You have LOS to %s", c->GetTarget()->GetName());
 		else
 			c->Message(0, "You do not have LOS to %s", c->GetTarget()->GetName());
