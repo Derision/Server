@@ -2659,18 +2659,18 @@ void Zone::ReloadWorld(uint32 Option){
 	}
 }
 
-BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
+BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
+{
 	FILE *fp;
 	char zBuf[64];
 	char cWork[256];
 	BaseMap* ret = 0;
 	
-	//have to convert to lower because the short names im getting
-	//are not all lower anymore, copy since strlwr edits the str.
 	strn0cpy(zBuf, in_zonename, 64);
 	
 	if(directory == NULL)
 		directory = MAP_DIR;
+
 	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
 	
 	if ((fp = fopen( cWork, "rb" )))
@@ -2678,11 +2678,12 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
 		mapHeader head;
 		if(fread(&head, sizeof(head), 1, fp) != 1)
 		{
-			//map read error.
+			LogFile->write(EQEMuLog::Error, "Map file %s corrupt (error reading header).", cWork);
 			fclose(fp);
 			return NULL;
 		}
-		printf("MAP Version: %8X\n", head.version);
+		LogFile->write(EQEMuLog::Status, "MAP Version: %8X", head.version);
+
 		if(head.version == 0x01000000)
 		{
 			ret = new Map();
@@ -2691,16 +2692,31 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory) {
 		{
 			ret = new RayCastMap();
 		}
-		if(ret != NULL) {
-			ret->loadMap(fp);
-			printf("Map %s loaded.\n", cWork);
-		} else {
-			printf("Map %s loading failed.\n", cWork);
+		else
+		{
+			LogFile->write(EQEMuLog::Error, "Map file %s corrupt (unknown version).", cWork);
+		}
+		if(ret != NULL)
+		{
+			if(ret->loadMap(fp))
+			{
+				LogFile->write(EQEMuLog::Status, "Map %s loaded.", cWork);
+			}
+			else
+			{
+				LogFile->write(EQEMuLog::Error, "Map %s loading failed.", cWork);
+				safe_delete(ret);
+			}
+		}
+		else
+		{
+			LogFile->write(EQEMuLog::Error, "Map %s loading failed.", cWork);
 		}
 		fclose(fp);
 	}
-	else {
-		printf("Map %s not found.\n", cWork);
+	else
+	{
+		LogFile->write(EQEMuLog::Error, "Map %s not found.", cWork);
 	}
 	return ret;
 }

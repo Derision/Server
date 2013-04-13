@@ -77,7 +77,7 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 	}
 	else
 	{
-		LogFile->write(EQEMuLog::Error, "Path File %s not found.", ZonePathFileName);
+		LogFile->write(EQEMuLog::Status, "Optional Path File %s not found.", ZonePathFileName);
 	}
 
 	return Ret;

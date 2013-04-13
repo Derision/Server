@@ -119,76 +119,91 @@ WaterMap* WaterMap::LoadWaterMapfile(const char* in_zonename, const char *direct
 	WaterMap* ret = NULL;
 
 
-	//have to convert to lower because the short names im getting
-	//are not all lower anymore, copy since strlwr edits the str.
 	strn0cpy(zBuf, in_zonename, 64);
 
 	if(directory == NULL)
 		directory = MAP_DIR;
 	snprintf(cWork, 250, "%s/%s.wtr", directory, strlwr(zBuf));
 
-	if ((fp = fopen( cWork, "rb" ))) {
+	if ((fp = fopen( cWork, "rb" )))
+	{
 		ret = new WaterMap();
-		if(ret != NULL) {
-			if(ret->loadWaterMap(fp)) {
-				printf("Water Map %s loaded.\n", cWork);
-			} else {
+		if(ret != NULL)
+		{
+			if(ret->loadWaterMap(fp))
+			{
+				LogFile->write(EQEMuLog::Status, "Water Map %s loaded.", cWork);
+			}
+			else
+			{
 				safe_delete(ret);
-				printf("Water Map %s exists but could not be processed.\n", cWork);
+				LogFile->write(EQEMuLog::Error, "Water Map %s exists but could not be processed.", cWork);
 				return NULL;
 			}
-		} else {
-			printf("Water Map %s loading failed.\n", cWork);
+		}
+		else
+		{
+			LogFile->write(EQEMuLog::Error, "Water Map %s loading failed.", cWork);
 		}
 		fclose(fp);
 	}
-	else {
-		printf("Water Map %s not found.\n", cWork);
+	else
+	{
+		LogFile->write(EQEMuLog::Status, "Optional Water Map %s not found.", cWork);
 	}
 	return ret;
 }
 
-bool WaterMap::loadWaterMap(FILE *fp) {
+bool WaterMap::loadWaterMap(FILE *fp)
+{
 	char EQWMagic[10];
 	uint32 BSPTreeSize;
 	uint32 EQWVersion;
 	
-	if(fread(EQWMagic, 10, 1, fp)!=1) {
-		printf("Error reading Water region map.\n");
+	if(fread(EQWMagic, 10, 1, fp)!=1)
+	{
+		LogFile->write(EQEMuLog::Error, "Error reading Water region map.");
 		return(false);
 	}
-	if(strncmp(EQWMagic,"EQEMUWATER",10)) {
-		printf("Bad header in Water  region map.\n");
+	if(strncmp(EQWMagic,"EQEMUWATER",10))
+	{
+		LogFile->write(EQEMuLog::Error, "Bad header in Water  region map.");
 		return(false);
 	}
-	if(fread(&EQWVersion, sizeof(EQWVersion), 1, fp)!=1) {
-		printf("Error reading Water region map.\n");
+	if(fread(&EQWVersion, sizeof(EQWVersion), 1, fp)!=1)
+	{
+		LogFile->write(EQEMuLog::Error, "Error reading Water region map.");
 		return(false);
 	}
-	if(EQWVersion!=WATERMAP_VERSION) {
-		printf("Incompatible Water region map version.\n");
+	if(EQWVersion != WATERMAP_VERSION)
+	{
+		LogFile->write(EQEMuLog::Error, "Incompatible Water region map version.");
 		return(false);
 	}
 	
-	if(fread(&BSPTreeSize, sizeof(BSPTreeSize), 1, fp)!=1) {
-		printf("Error reading Water region map.\n");
+	if(fread(&BSPTreeSize, sizeof(BSPTreeSize), 1, fp) !=1 )
+	{
+		LogFile->write(EQEMuLog::Error, "Error reading Water region map.");
 		return(false);
 	}
 	
 	BSP_Root = (ZBSP_Node *) new ZBSP_Node[BSPTreeSize];
 	
-	if(BSP_Root==NULL) {
-		printf("Memory allocation failed while reading water map.\n");
+	if(BSP_Root==NULL)
+	{
+		LogFile->write(EQEMuLog::Error, "Memory allocation failed while reading water map.");
 		return(false);
 	}
 	
-	if(fread(BSP_Root, sizeof(ZBSP_Node), BSPTreeSize, fp) != BSPTreeSize) {
-		printf("Error reading Water region map.\n");
+	if(fread(BSP_Root, sizeof(ZBSP_Node), BSPTreeSize, fp) != BSPTreeSize)
+	{
+		LogFile->write(EQEMuLog::Error, "Error reading Water region map.");
 		safe_delete_array(BSP_Root);
 		return(false);
 	}
 	
-	printf("Water region map has %d nodes.\n", BSPTreeSize);
+	LogFile->write(EQEMuLog::Status, "Water region map has %d nodes.", BSPTreeSize);
+
 	return(true);
 }
 

@@ -52,6 +52,8 @@ RayCastMap::RayCastMap()
 	
 	m_Faces = 0;
 	mFinalFaces = NULL;
+
+	rm = NULL;
 }
 
 bool RayCastMap::loadMap(FILE *fp)
@@ -65,12 +67,12 @@ bool RayCastMap::loadMap(FILE *fp)
 		return(false);
 
 	if(head.version != 2)
-	{
-		printf("Invalid map version 0x%lx\n", (unsigned long)head.version);
+	{ 
+		LogFile->write(EQEMuLog::Error, "Invalid map version 0x%8X", head.version);
 		return(false);
 	}
 	
-	printf("Map header: %lu faces, %u nodes, %lu facelists\n", (unsigned long)head.face_count, (unsigned int)head.node_count, (unsigned long)head.facelist_count);
+	LogFile->write(EQEMuLog::Status, "Map header: %u faces, %u nodes, %u facelists", head.face_count, head.node_count, head.facelist_count);
 
 	m_Faces = head.face_count;
 	
@@ -78,7 +80,7 @@ bool RayCastMap::loadMap(FILE *fp)
 
 	if(fread(mFinalFaces, sizeof(FACE), m_Faces, fp) != m_Faces)
 	{
-		printf("Unable to read %lu faces from map file.\n", (unsigned long)m_Faces);
+		LogFile->write(EQEMuLog::Error, "Unable to read %lu faces from map file.", m_Faces);
 		return(false);
 	}
 
@@ -103,7 +105,6 @@ bool RayCastMap::loadMap(FILE *fp)
 			_minz = mFinalFaces[i].vert[mFinalFaces[i].flags.minzvert].z;
 	}
 
-	printf("Loading RaycastMesh.\n");
 	rm = loadRaycastMesh(fp, m_Faces,mFinalFaces);
 #ifdef MAPBENCH	
 	printf("Starting Benchmarks on loaded file\n");
@@ -132,15 +133,20 @@ bool RayCastMap::loadMap(FILE *fp)
 
 	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
 #endif // MAPBENCH
-	printf("Loaded map: %lu vertices, %lu faces\n", (unsigned long)m_Faces*3, (unsigned long)m_Faces);
-	printf("Map BB: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)\n", _minx, _maxx, _miny, _maxy, _minz, _maxz);
+
+	LogFile->write(EQEMuLog::Status, "Loaded map: %u faces", m_Faces);
+	LogFile->write(EQEMuLog::Status, "Map Bounds: (%.2f -> %.2f, %.2f -> %.2f, %.2f -> %.2f)", _minx, _maxx, _miny, _maxy, _minz, _maxz);
 	
 	return(true);
 }
 
-RayCastMap::~RayCastMap() {
-	rm->release();
-	rm = 0;
+RayCastMap::~RayCastMap()
+{
+	if(rm)
+	{
+		rm->release();
+		rm = 0;
+	}
 	safe_delete_array(mFinalFaces);
 }
 
