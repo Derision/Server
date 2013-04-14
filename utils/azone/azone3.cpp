@@ -40,7 +40,8 @@
 
 using namespace std;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
 	printf("AZONE3: EQEmu .MAP file generator with placeable object support.\n");
 
@@ -66,9 +67,9 @@ int main(int argc, char *argv[]) {
 
 RCMBuilder::RCMBuilder()
 {
-
 	faceCount = 0;
 	faceBlock = NULL;
+	rm = NULL;
 
 }
 
@@ -78,16 +79,20 @@ RCMBuilder::~RCMBuilder()
 		delete [] faceBlock;
 
 	faceBlock = NULL;
+
+	if(rm)
+		rm->release();
+
+	rm = NULL;
 }
 
-bool RCMBuilder::build(const char *shortname) {
-
-
+bool RCMBuilder::build(const char *shortname)
+{
 	char bufs[96];
   	Archive *archive;
   	FileLoader *fileloader;
   	Zone_Model *zm;
-	FILE *fff;
+	FILE *fp;
 	EQFileType FileType = UNKNOWN;
 
 	bool V4Zone = false;
@@ -95,40 +100,47 @@ bool RCMBuilder::build(const char *shortname) {
 	sprintf(bufs, "%s.s3d", shortname);
 
 	archive = new PFSLoader();
-	fff = fopen(bufs, "rb");
-	if(fff != NULL)
+	fp = fopen(bufs, "rb");
+	if(fp != NULL)
 		FileType = S3D;
-	else {
+	else
+	{
 		sprintf(bufs, "%s.eqg", shortname);
-		fff = fopen(bufs, "rb");
-		if(fff != NULL)
+		fp = fopen(bufs, "rb");
+		if(fp != NULL)
 			FileType = EQG;
 	}
 
-	if(FileType == UNKNOWN) {
+	if(FileType == UNKNOWN)
+	{
 		printf("Unable to locate %s.s3d or %s.eqg\n", shortname, shortname);
 		return(false);
 	}
 
-  	if(archive->Open(fff) == 0) {
+  	if(archive->Open(fp) == 0)
+	{
 		printf("Unable to open container file '%s'\n", bufs);
 		return(false);
 	}
 
-	switch(FileType) {
+	switch(FileType)
+	{
 		case S3D:
   			fileloader = new WLDLoader();
-  			if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
+  			if(fileloader->Open(NULL, (char *) shortname, archive) == 0)
+			{
 	  			printf("Error reading WLD from %s\n", bufs);
 	  			return(false);
   			}
 			break;
 		case EQG:
 			fileloader = new ZonLoader();
-			if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
+			if(fileloader->Open(NULL, (char *) shortname, archive) == 0)
+			{
 				delete fileloader;
 				fileloader = new Zonv4Loader(true);
-				if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
+				if(fileloader->Open(NULL, (char *) shortname, archive) == 0)
+				{
 					printf("Error reading ZON/TER from %s\n", bufs);
 					return(false);
 				}
@@ -169,7 +181,7 @@ bool RCMBuilder::build(const char *shortname) {
 			AddFace(v1, v2, v3);
 	}
 
-	printf("There are %lu vertices and %lu faces.\n", _FaceList.size()*3, _FaceList.size());
+	printf("There are and %u faces.\n", _FaceList.size());
 
 	if(fileloader->model_data.plac_count)
 	{
@@ -192,21 +204,11 @@ bool RCMBuilder::build(const char *shortname) {
 
 	faceCount = _FaceList.size();
 
-
-
 	faceBlock = new FACE[faceCount];
 
 	for(r = 0; r < faceCount; r++)
 	{
 		faceBlock[r] = _FaceList[r];
-		/*
-		faceBlock[r].minx = Vmin3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		faceBlock[r].maxx = Vmax3(x, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		faceBlock[r].miny = Vmin3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		faceBlock[r].maxy = Vmax3(y, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		faceBlock[r].minz = Vmin3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		faceBlock[r].maxz = Vmax3(z, faceBlock[r].vert[0], faceBlock[r].vert[1], faceBlock[r].vert[2]);
-		*/
 
 		faceBlock[r].flags.minxvert = 0;
 		faceBlock[r].flags.maxxvert = 0;
@@ -237,76 +239,39 @@ bool RCMBuilder::build(const char *shortname) {
 			if(faceBlock[r].vert[i].z > faceBlock[r].vert[faceBlock[r].flags.maxzvert].z)
 				faceBlock[r].flags.maxzvert = i;
 		}
-		/*	
-		if(faceBlock[r].flags.type == 1)
-		{
-			if(faceBlock[r].vert[3].x < faceBlock[r].minx)
-				faceBlock[r].minx = faceBlock[r].vert[3].x;
-			if(faceBlock[r].vert[3].y < faceBlock[r].miny)
-				faceBlock[r].miny = faceBlock[r].vert[3].y;
-			if(faceBlock[r].vert[3].z < faceBlock[r].minz)
-				faceBlock[r].minz = faceBlock[r].vert[3].z;
-			if(faceBlock[r].vert[3].x > faceBlock[r].maxx)
-				faceBlock[r].maxx = faceBlock[r].vert[3].x;
-			if(faceBlock[r].vert[3].y > faceBlock[r].maxy)
-				faceBlock[r].maxy = faceBlock[r].vert[3].y;
-			if(faceBlock[r].vert[3].z > faceBlock[r].maxz)
-				faceBlock[r].maxz = faceBlock[r].vert[3].z;
-		}
-		*/
-		/*
-		assert(faceBlock[r].minx == faceBlock[r].vert[faceBlock[r].flags.minxvert].x);
-		assert(faceBlock[r].miny == faceBlock[r].vert[faceBlock[r].flags.minyvert].y);
-		assert(faceBlock[r].minz == faceBlock[r].vert[faceBlock[r].flags.minzvert].z);
-		assert(faceBlock[r].maxx == faceBlock[r].vert[faceBlock[r].flags.maxxvert].x);
-		assert(faceBlock[r].maxy == faceBlock[r].vert[faceBlock[r].flags.maxyvert].y);
-		assert(faceBlock[r].maxz == faceBlock[r].vert[faceBlock[r].flags.maxzvert].z);
-		*/
-
-		//printf("index: %i, Node face Zs %8.3f, %8.3f, %8.3f  MinZ is %8.3f\n", r, faceBlock[r].vert[0].z, faceBlock[r].vert[1].z, faceBlock[r].vert[2].z, faceBlock[r].minz);
 	}
 
-	float minx, miny, maxx, maxy;
+	float minx, miny, minz, maxx, maxy, maxz;
 	minx = 1e12;
 	miny = 1e12;
+	minz = 1e12;
 	maxx = -1e12;
 	maxy = -1e12;
+	maxz = -1e12;
 
 	//find our limits.
-	for(r = 0; r < faceCount; r++)
+	for(uint32 i = 0; i < faceCount; ++i)
 	{
-		VERTEX v = faceBlock[r].vert[0];
-		if(v.x > maxx)
-			maxx = v.x;
-		if(v.x < minx)
-			minx = v.x;
-		if(v.y > maxy)
-			maxy = v.y;
-		if(v.y < miny)
-			miny = v.y;
+		if(faceBlock[i].vert[faceBlock[i].flags.maxxvert].x > maxx)
+			maxx = faceBlock[i].vert[faceBlock[i].flags.maxxvert].x;
 
-		v = faceBlock[r].vert[1];
-		if(v.x > maxx)
-			maxx = v.x;
-		if(v.x < minx)
-			minx = v.x;
-		if(v.y > maxy)
-			maxy = v.y;
-		if(v.y < miny)
-			miny = v.y;
+		if(faceBlock[i].vert[faceBlock[i].flags.minxvert].x < minx)
+			minx = faceBlock[i].vert[faceBlock[i].flags.minxvert].x;
 
-		v = faceBlock[r].vert[2];
-		if(v.x > maxx)
-			maxx = v.x;
-		if(v.x < minx)
-			minx = v.x;
-		if(v.y > maxy)
-			maxy = v.y;
-		if(v.y < miny)
-			miny = v.y;
+		if(faceBlock[i].vert[faceBlock[i].flags.maxyvert].y > maxy)
+			maxy = faceBlock[i].vert[faceBlock[i].flags.maxyvert].y;
+
+		if(faceBlock[i].vert[faceBlock[i].flags.minyvert].y < miny)
+			miny = faceBlock[i].vert[faceBlock[i].flags.minyvert].y;
+
+		if(faceBlock[i].vert[faceBlock[i].flags.maxzvert].z > maxz)
+			maxz = faceBlock[i].vert[faceBlock[i].flags.maxzvert].z;
+
+		if(faceBlock[i].vert[faceBlock[i].flags.minzvert].z < minz)
+			minz = faceBlock[i].vert[faceBlock[i].flags.minzvert].z;
 	}
 
-	printf("Bounding box: %.2f < x < %.2f, %.2f < y < %.2f\n", minx, maxx, miny, maxy);
+	printf("Bounding box: %.2f < x < %.2f, %.2f < y < %.2f, %.2f < z < %.2f\n", minx, maxx, miny, maxy, minz, maxz);
 
 	printf("Building RayCastMesh.\n");
 
@@ -332,7 +297,8 @@ bool RCMBuilder::writeMap(const char *file)
 	printf("Writing map file.\n");
 
 	FILE *out = fopen(file, "wb");
-	if(out == NULL) {
+	if(out == NULL)
+	{
 		printf("Unable to open output file '%s'.\n", file);
 		return(1);
 	}
@@ -343,7 +309,8 @@ bool RCMBuilder::writeMap(const char *file)
 	head.node_count = 0;
 	head.facelist_count = 0;
 
-	if(fwrite(&head, sizeof(head), 1, out) != 1) {
+	if(fwrite(&head, sizeof(head), 1, out) != 1)
+	{
 		printf("Error writing map file header.\n");
 		fclose(out);
 		return(1);
@@ -351,17 +318,6 @@ bool RCMBuilder::writeMap(const char *file)
 	}
 
 	printf("Map header: Version: 0x%08lX. %lu faces, %u nodes, %lu facelists\n", head.version, head.face_count, head.node_count, head.facelist_count);
-	/*
-	for(int32 i = 0; i < faceCount; ++i)
-	{
-		printf("Face: %i, (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f),(%8.3f, %8.3f, %8.3f)\n", i,
-			faceBlock[i].vert[0].x, faceBlock[i].vert[0].y, faceBlock[i].vert[0].z,
-			faceBlock[i].vert[1].x, faceBlock[i].vert[1].y, faceBlock[i].vert[1].z,
-			faceBlock[i].vert[2].x, faceBlock[i].vert[2].y, faceBlock[i].vert[2].z);
-	}
-	*/
-
-	//write faceBlock
 	
 	if(fwrite(faceBlock, sizeof(FACE), faceCount, out) != faceCount) {
 		printf("Error writing map file faces.\n");
@@ -384,6 +340,7 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 {
 	FACE f;
 	f.flags.type = 0;
+	f.flags.padding = 0;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
 	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
@@ -403,6 +360,7 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4)
 {
 	FACE f;
 	f.flags.type = 1;
+	f.flags.padding = 0;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
 	f.ny = (v2.z - v1.z)*(v3.x - v1.x) - (v2.x - v1.x)*(v3.z - v1.z);
@@ -427,7 +385,8 @@ void RCMBuilder::NormalizeN(FACE *p)
 	p->nz /= len;
 }
 
-void RCMBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool ListPlaceable) {
+void RCMBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool ListPlaceable)
+{
 	Polygon *poly;
 	Vertex *verts[3];
 	float XOffset, YOffset, ZOffset;
