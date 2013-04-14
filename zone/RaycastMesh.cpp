@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdio.h>
 
-// This code snippet allows you to create an axis aligned bounding volume tree for a triangle mesh so that you can do
+// This code snippet allows you to create an axis aligned bounding volume tree for a polyangle mesh so that you can do
 // high-speed raycasting.
 //
 // There are much better implementations of this available on the internet.  In particular I recommend that you use 
@@ -37,7 +37,7 @@
 namespace RAYCAST_MESH
 {
 
-typedef std::vector< uint32 > TriVector;
+typedef std::vector< uint32 > PolyVector;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -334,7 +334,7 @@ public:
 		return true;
 	}
 
-	bool containsTriangleExact(FACE f,uint32 &orCode) const
+	bool containsPolyExact(FACE f,uint32 &orCode) const
 	{
 		bool ret = false;
 
@@ -359,7 +359,7 @@ public:
 		andCode&=c1;
 		andCode&=c2;
 		andCode&=c3;
-		if(f.flags.type == 1)
+		if(f.flags.type == FACEQuad)
 		{
 			c4 = getClipCode(f.vert[3]);
 			andCode &= getClipCode(f.vert[3]);
@@ -422,7 +422,7 @@ class NodeInterface
 {
 public:
 	virtual NodeAABB * getNode(void) = 0;
-	virtual void getFaceNormal(uint32 tri, VERTEX *faceNormal) = 0;
+	virtual void getFaceNormal(uint32 poly, VERTEX *faceNormal) = 0;
 };
 
 	class NodeAABB
@@ -432,25 +432,25 @@ public:
 		{
 			mLeft = NULL;
 			mRight = NULL;
-			mLeafTriangleIndex= TRI_EOF;
+			mLeafPolyIndex= TRI_EOF;
 		}
 
 		NodeAABB(uint32 FaceCount,PFACE Faces,
-			uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
-			uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+			uint32 maxDepth,	// Maximum recursion depth for the poly mesh.
+			uint32 minLeafSize,	// minimum polys to treat as a 'leaf' node.
 			float	minAxisSize,
 			NodeInterface *callback,
-			TriVector &leafTriangles)	// once a particular axis is less than this size, stop sub-dividing.
+			PolyVector &leafPolys)	// once a particular axis is less than this size, stop sub-dividing.
 
 		{
 			mLeft = NULL;
 			mRight = NULL;
-			mLeafTriangleIndex = TRI_EOF;
-			TriVector triangles;
-			triangles.reserve(FaceCount);
+			mLeafPolyIndex = TRI_EOF;
+			PolyVector polys;
+			polys.reserve(FaceCount);
 			for (uint32 i=0; i<FaceCount; i++)
 			{
-				triangles.push_back(i);
+				polys.push_back(i);
 			}
 			mBounds.setMin( Faces[0].vert[0] );
 			mBounds.setMax( Faces[0].vert[0] );
@@ -460,10 +460,10 @@ public:
 				mBounds.include(Faces[i].vert[0]);
 				mBounds.include(Faces[i].vert[1]);
 				mBounds.include(Faces[i].vert[2]);
-				if(Faces[i].flags.type == 1)
+				if(Faces[i].flags.type == FACEQuad)
 					mBounds.include(Faces[i].vert[3]);
 			}
-			split(triangles, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
+			split(polys, FaceCount, Faces, 0, maxDepth, minLeafSize, minAxisSize, callback, leafPolys);
 		}
 
 		NodeAABB(const BoundsAABB &aabb)
@@ -471,7 +471,7 @@ public:
 			mBounds = aabb;
 			mLeft = NULL;
 			mRight = NULL;
-			mLeafTriangleIndex = TRI_EOF;
+			mLeafPolyIndex = TRI_EOF;
 		}
 
 		~NodeAABB(void)
@@ -479,13 +479,13 @@ public:
 		}
 
 		// here is where we split the mesh..
-		void split(const TriVector &triangles, uint32 FaceCount, PFACE Faces,
+		void split(const PolyVector &polys, uint32 FaceCount, PFACE Faces,
 			uint32 depth,
-			uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
-			uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+			uint32 maxDepth,	// Maximum recursion depth for the poly mesh.
+			uint32 minLeafSize,	// minimum polys to treat as a 'leaf' node.
 			float	minAxisSize,
 			NodeInterface *callback,
-			TriVector &leafTriangles)	// once a particular axis is less than this size, stop sub-dividing.
+			PolyVector &leafPolys)	// once a particular axis is less than this size, stop sub-dividing.
 
 		{
 			// Find the longest axis of the bounding volume of this node
@@ -508,41 +508,41 @@ public:
 				laxis = dz;
 			}
 
-			uint32 count = triangles.size();
+			uint32 count = polys.size();
 
-			// if the number of triangles is less than the minimum allowed for a leaf node or...
+			// if the number of polys is less than the minimum allowed for a leaf node or...
 			// we have reached the maximum recursion depth or..
 			// the width of the longest axis is less than the minimum axis size then...
-			// we create the leaf node and copy the triangles into the leaf node triangle array.
+			// we create the leaf node and copy the polys into the leaf node poly array.
 			if ( count < minLeafSize || depth >= maxDepth || laxis < minAxisSize )
 			{ 
-				// sort the triangles into highest Z order
-				TriVector SortedTriangles;
+				// sort the polys into highest Z order
+				PolyVector SortedPolys;
 				
-				for (TriVector::const_iterator i=triangles.begin(); i!=triangles.end(); ++i)
+				for (PolyVector::const_iterator i=polys.begin(); i!=polys.end(); ++i)
 				{
 					bool Inserted = false;
-					for (TriVector::iterator j = SortedTriangles.begin(); j != SortedTriangles.end(); ++j)
+					for (PolyVector::iterator j = SortedPolys.begin(); j != SortedPolys.end(); ++j)
 					{
 						if(Faces[*i].vert[Faces[*i].flags.minzvert].z > Faces[*j].vert[Faces[*j].flags.minzvert].z)
 						{
-							SortedTriangles.insert(j, *i);
+							SortedPolys.insert(j, *i);
 							Inserted = true;
 							break;
 						}
 					}
 					if(!Inserted)
-						SortedTriangles.push_back(*i);
+						SortedPolys.push_back(*i);
 
 				}
-				// Copy the triangle indices into the leaf triangles array
-				mLeafTriangleIndex = leafTriangles.size(); // assign the array start location for these leaf triangles.
-				leafTriangles.push_back(count);
-				for (TriVector::const_iterator i=SortedTriangles.begin(); i!=SortedTriangles.end(); ++i)
+				// Copy the poly indices into the leaf polys array
+				mLeafPolyIndex = leafPolys.size(); // assign the array start location for these leaf polys.
+				leafPolys.push_back(count);
+				for (PolyVector::const_iterator i=SortedPolys.begin(); i!=SortedPolys.end(); ++i)
 				{
-					uint32 tri = *i;
-					//printf("Minz = %8.3f\n", Faces[tri].minz);
-					leafTriangles.push_back(tri);
+					uint32 poly = *i;
+					//printf("Minz = %8.3f\n", Faces[poly].minz);
+					leafPolys.push_back(poly);
 				}
 			}
 			else
@@ -556,72 +556,72 @@ public:
 
 				BoundsAABB leftBounds,rightBounds;
 
-				TriVector leftTriangles;
-				TriVector rightTriangles;
+				PolyVector leftPolys;
+				PolyVector rightPolys;
 
 
-				// Create two arrays; one of all triangles which intersect the 'left' half of the bounding volume node
-				// and another array that includes all triangles which intersect the 'right' half of the bounding volume node.
-				for (TriVector::const_iterator i=triangles.begin(); i!=triangles.end(); ++i)
+				// Create two arrays; one of all polys which intersect the 'left' half of the bounding volume node
+				// and another array that includes all polys which intersect the 'right' half of the bounding volume node.
+				for (PolyVector::const_iterator i=polys.begin(); i!=polys.end(); ++i)
 				{
 
-					uint32 tri = (*i); 
+					uint32 poly = (*i); 
 
 					{
 						uint32 addCount = 0;
 						uint32 orCode=0xFFFFFFFF;
-						if ( b1.containsTriangleExact(Faces[tri],orCode))
+						if ( b1.containsPolyExact(Faces[poly],orCode))
 						{
 							addCount++;
-							if ( leftTriangles.empty() )
+							if ( leftPolys.empty() )
 							{
-								leftBounds.setMin(Faces[tri].vert[0]);
-								leftBounds.setMax(Faces[tri].vert[0]);
+								leftBounds.setMin(Faces[poly].vert[0]);
+								leftBounds.setMax(Faces[poly].vert[0]);
 							}
-							leftBounds.include(Faces[tri].vert[0]);
-							leftBounds.include(Faces[tri].vert[1]);
-							leftBounds.include(Faces[tri].vert[2]);
-							if(Faces[tri].flags.type == 1)
-								leftBounds.include(Faces[tri].vert[3]);
+							leftBounds.include(Faces[poly].vert[0]);
+							leftBounds.include(Faces[poly].vert[1]);
+							leftBounds.include(Faces[poly].vert[2]);
+							if(Faces[poly].flags.type == FACEQuad)
+								leftBounds.include(Faces[poly].vert[3]);
 
-							leftTriangles.push_back(tri); // Add this triangle to the 'left triangles' array and revise the left triangles bounding volume
+							leftPolys.push_back(poly); // Add this poly to the 'left polys' array and revise the left polys bounding volume
 						}
-						// if the orCode is zero; meaning the triangle was fully self-contiained int he left bounding box; then we don't need to test against the right
-						if ( orCode && b2.containsTriangleExact(Faces[tri],orCode))
+						// if the orCode is zero; meaning the poly was fully self-contiained int he left bounding box; then we don't need to test against the right
+						if ( orCode && b2.containsPolyExact(Faces[poly],orCode))
 						{
 							addCount++;
-							if ( rightTriangles.empty() )
+							if ( rightPolys.empty() )
 							{
-								rightBounds.setMin(Faces[tri].vert[0]);
-								rightBounds.setMax(Faces[tri].vert[0]);
+								rightBounds.setMin(Faces[poly].vert[0]);
+								rightBounds.setMax(Faces[poly].vert[0]);
 							}
-							rightBounds.include(Faces[tri].vert[0]);
-							rightBounds.include(Faces[tri].vert[1]);
-							rightBounds.include(Faces[tri].vert[2]);
-							if(Faces[tri].flags.type == 1)
-								rightBounds.include(Faces[tri].vert[3]);
-							rightTriangles.push_back(tri); // Add this triangle to the 'right triangles' array and revise the right triangles bounding volume.
+							rightBounds.include(Faces[poly].vert[0]);
+							rightBounds.include(Faces[poly].vert[1]);
+							rightBounds.include(Faces[poly].vert[2]);
+							if(Faces[poly].flags.type == FACEQuad)
+								rightBounds.include(Faces[poly].vert[3]);
+							rightPolys.push_back(poly); // Add this poly to the 'right polys' array and revise the right polys bounding volume.
 						}
 						assert( addCount );
 					}
 				}
 
-				if ( !leftTriangles.empty() ) // If there are triangles in the left half then...
+				if ( !leftPolys.empty() ) // If there are polys in the left half then...
 				{
 					leftBounds.clamp(b1); // we have to clamp the bounding volume so it stays inside the parent volume.
 					mLeft = callback->getNode();	// get a new AABB node
 					new ( mLeft ) NodeAABB(leftBounds);		// initialize it to default constructor values.  
 					// Then recursively split this node.
-					mLeft->split(leftTriangles, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
+					mLeft->split(leftPolys, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafPolys);
 				}
 
-				if ( !rightTriangles.empty() ) // If there are triangles in the right half then..
+				if ( !rightPolys.empty() ) // If there are polys in the right half then..
 				{
 					rightBounds.clamp(b2);	// clamps the bounding volume so it stays restricted to the size of the parent volume.
 					mRight = callback->getNode(); // allocate and default initialize a new node
 					new ( mRight ) NodeAABB(rightBounds);
 					// Recursively split this node.
-					mRight->split(rightTriangles, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafTriangles);
+					mRight->split(rightPolys, FaceCount, Faces, depth+1, maxDepth, minLeafSize, minAxisSize, callback, leafPolys);
 				}
 
 			}
@@ -663,7 +663,7 @@ public:
 
 
 		virtual void raycast(	bool &hit, VERTEX from, VERTEX to, VERTEX dir, VERTEX *hitLocation, float *hitDistance, PFACE Faces, float &nearestDistance,
-					NodeInterface *callback, uint32 *raycastTriangles, uint32 raycastFrame, const TriVector &leafTriangles,
+					NodeInterface *callback, uint32 *raycastPolys, uint32 raycastFrame, const PolyVector &leafPolys,
 					uint32 &nearestTriIndex, bool ZTest)
 		{
 			VERTEX sect;
@@ -673,64 +673,64 @@ public:
 				return;	
 			}
 
-			if ( mLeafTriangleIndex != TRI_EOF )
+			if ( mLeafPolyIndex != TRI_EOF )
 			{
-				const uint32 *scan = &leafTriangles[mLeafTriangleIndex];
+				const uint32 *scan = &leafPolys[mLeafPolyIndex];
 				uint32 count = *scan++;
 				for (uint32 i=0; i<count; i++)
 				{
-					uint32 tri = *scan++;
-					// This is raycastFrame check is checking if we checked this triangle during this call to raycast
+					uint32 poly = *scan++;
+					// This is raycastFrame check is checking if we checked this poly during this call to raycast
 					//
-					if ( raycastTriangles[tri] != raycastFrame )
+					if ( raycastPolys[poly] != raycastFrame )
 					{
-						raycastTriangles[tri] = raycastFrame;
+						raycastPolys[poly] = raycastFrame;
 						// If we are doing a Z test and the faces minimum z is above us, don't check further					
-						if(ZTest && (Faces[tri].vert[Faces[tri].flags.minzvert].z > from.z))
+						if(ZTest && (Faces[poly].vert[Faces[poly].flags.minzvert].z > from.z))
 						{
 							continue;
 						}
 						// Some quick checks to see if we can hit
 						if(ZTest)
 						{
-							if(from.x < Faces[tri].vert[Faces[tri].flags.minxvert].x)
+							if(from.x < Faces[poly].vert[Faces[poly].flags.minxvert].x)
 								continue;
-							if(from.y < Faces[tri].vert[Faces[tri].flags.minyvert].y)
+							if(from.y < Faces[poly].vert[Faces[poly].flags.minyvert].y)
 								continue;
 		
-							if(from.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x)
+							if(from.x > Faces[poly].vert[Faces[poly].flags.maxxvert].x)
 								continue;
-							if(from.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y)
+							if(from.y > Faces[poly].vert[Faces[poly].flags.maxyvert].y)
 								continue;
 						}
 						else
 						{
-							if(from.x < Faces[tri].vert[Faces[tri].flags.minxvert].x && to.x < Faces[tri].vert[Faces[tri].flags.minxvert].x)
+							if(from.x < Faces[poly].vert[Faces[poly].flags.minxvert].x && to.x < Faces[poly].vert[Faces[poly].flags.minxvert].x)
 								continue;
-							if(from.y < Faces[tri].vert[Faces[tri].flags.minyvert].y && to.y < Faces[tri].vert[Faces[tri].flags.minyvert].y)
+							if(from.y < Faces[poly].vert[Faces[poly].flags.minyvert].y && to.y < Faces[poly].vert[Faces[poly].flags.minyvert].y)
 								continue;
-							if(from.z < Faces[tri].vert[Faces[tri].flags.minzvert].z && to.z < Faces[tri].vert[Faces[tri].flags.minzvert].z)
+							if(from.z < Faces[poly].vert[Faces[poly].flags.minzvert].z && to.z < Faces[poly].vert[Faces[poly].flags.minzvert].z)
 								continue;
 		
-							if(from.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x && to.x > Faces[tri].vert[Faces[tri].flags.maxxvert].x)
+							if(from.x > Faces[poly].vert[Faces[poly].flags.maxxvert].x && to.x > Faces[poly].vert[Faces[poly].flags.maxxvert].x)
 								continue;
-							if(from.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y && to.y > Faces[tri].vert[Faces[tri].flags.maxyvert].y)
+							if(from.y > Faces[poly].vert[Faces[poly].flags.maxyvert].y && to.y > Faces[poly].vert[Faces[poly].flags.maxyvert].y)
 								continue;
-							if(from.z > Faces[tri].vert[Faces[tri].flags.maxzvert].z && to.z > Faces[tri].vert[Faces[tri].flags.maxzvert].z)
+							if(from.z > Faces[poly].vert[Faces[poly].flags.maxzvert].z && to.z > Faces[poly].vert[Faces[poly].flags.maxzvert].z)
 								continue;
 						}
 				
 						double t;
 
-						bool Intersects = rayIntersectsTriangle(from,dir, Faces[tri].vert[0], Faces[tri].vert[1], Faces[tri].vert[2], t);
+						bool Intersects = rayIntersectsTriangle(from,dir, Faces[poly].vert[0], Faces[poly].vert[1], Faces[poly].vert[2], t);
 
-						if(!Intersects && (Faces[tri].flags.type == 1))
-							Intersects = rayIntersectsTriangle(from, dir, Faces[tri].vert[2], Faces[tri].vert[3], Faces[tri].vert[0], t);
+						if(!Intersects && (Faces[poly].flags.type == FACEQuad))
+							Intersects = rayIntersectsTriangle(from, dir, Faces[poly].vert[2], Faces[poly].vert[3], Faces[poly].vert[0], t);
 
 						if (Intersects)
 						{
 							bool accept = false;
-							if ( t == nearestDistance && tri < nearestTriIndex )
+							if ( t == nearestDistance && poly < nearestTriIndex )
 							{
 								accept = true;
 							}
@@ -748,10 +748,10 @@ public:
 								{
 									*hitDistance = t;
 								}
-								nearestTriIndex = tri;
+								nearestTriIndex = poly;
 								hit = true;
-								// Triangles are sorted from highest to lowest minz. If we hit something, it must be the first
-								// triangle below the test point, hence the best Z.
+								// Polys are sorted from highest to lowest minz. If we hit something, it must be the first
+								// poly below the test point, hence the best Z.
 								if(ZTest)
 									break;
 							}
@@ -763,19 +763,19 @@ public:
 			{
 				if ( mLeft )
 				{
-					mLeft->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
+					mLeft->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastPolys,raycastFrame,leafPolys,nearestTriIndex, ZTest);
 				}
 				if ( mRight )
 				{
-					mRight->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastTriangles,raycastFrame,leafTriangles,nearestTriIndex, ZTest);
+					mRight->raycast(hit,from,to,dir,hitLocation,hitDistance, Faces, nearestDistance,callback,raycastPolys,raycastFrame,leafPolys,nearestTriIndex, ZTest);
 				}
 			}
 		}
 
 		void Dump(uint32 Depth)
 		{
-			printf("Dump at depth %i, mLeafTriangleIndex is %i\n", Depth, mLeafTriangleIndex);
-			if((mLeafTriangleIndex != 0) && (mLeafTriangleIndex != 0xFFFFFFFF))
+			printf("Dump at depth %i, mLeafPolyIndex is %i\n", Depth, mLeafPolyIndex);
+			if((mLeafPolyIndex != 0) && (mLeafPolyIndex != 0xFFFFFFFF))
 				abort();
 			if(mLeft)
 				mLeft->Dump(Depth + 1);
@@ -790,7 +790,7 @@ public:
 
 			fwrite(&mBounds.mMin, sizeof(VERTEX), 1, fp);
 			fwrite(&mBounds.mMax, sizeof(VERTEX), 1, fp);
-			fwrite(&mLeafTriangleIndex, sizeof(mLeafTriangleIndex), 1, fp);
+			fwrite(&mLeafPolyIndex, sizeof(mLeafPolyIndex), 1, fp);
 
 			if(mLeft)
 			{
@@ -831,11 +831,11 @@ public:
 
 			fread(&mBounds.mMin, sizeof(VERTEX), 1, fp);
 			fread(&mBounds.mMax, sizeof(VERTEX), 1, fp);
-			fread(&mLeafTriangleIndex, sizeof(mLeafTriangleIndex), 1, fp);
+			fread(&mLeafPolyIndex, sizeof(mLeafPolyIndex), 1, fp);
 			/*
 			printf("Bounds: mMin %8.3f, %8.3f, %8.3f\n", mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
 			printf("        mMax %8.3f, %8.3f, %8.3f\n", mBounds.mMax.x, mBounds.mMax.y, mBounds.mMax.z);
-			printf("\nLeafTriangleIndex = %i\n", mLeafTriangleIndex);
+			printf("\nLeafPolyIndex = %i\n", mLeafPolyIndex);
 			*/
 			fread(&LeafExists, sizeof(LeafExists), 1, fp);
 
@@ -858,7 +858,7 @@ public:
 		NodeAABB		*mLeft;			// left node
 		NodeAABB		*mRight;		// right node
 		BoundsAABB		mBounds;		// bounding volume of node
-		uint32		mLeafTriangleIndex;	// if it is a leaf node; then these are the triangle indices.
+		uint32		mLeafPolyIndex;	// if it is a leaf node; then these are the poly indices.
 	};
 
 class MyRaycastMesh : public RaycastMesh, public NodeInterface
@@ -887,19 +887,19 @@ public:
 		mNodeCount = 0;
 		mFaceCount = FaceCount;
 		mFaces = Faces;
-		mRaycastTriangles = (uint32 *)::malloc(mFaceCount*sizeof(uint32));
-		memset(mRaycastTriangles,0,mFaceCount*sizeof(uint32));
+		mRaycastPolys = (uint32 *)::malloc(mFaceCount*sizeof(uint32));
+		memset(mRaycastPolys,0,mFaceCount*sizeof(uint32));
 		mRoot = getNode();
 		mFaceNormals = NULL;
 		if(CreateTree)
-			new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafTriangles);
+			new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafPolys);
 	}
 
 	~MyRaycastMesh(void)
 	{
 		delete []mNodes;
 		::free(mFaceNormals);
-		::free(mRaycastTriangles);
+		::free(mRaycastPolys);
 	}
 	
 	void Dump(uint32 Depth)
@@ -912,20 +912,20 @@ public:
 
 		fwrite(&mNodeCount, sizeof(mNodeCount), 1, fp);	
 
-		uint32 LeafTriangleCount = mLeafTriangles.size();
+		uint32 LeafPolyCount = mLeafPolys.size();
 
-		fwrite(&LeafTriangleCount, sizeof(LeafTriangleCount), 1, fp);	
+		fwrite(&LeafPolyCount, sizeof(LeafPolyCount), 1, fp);	
 		
-		//printf("Writing %i mLeafTriangles\n", mLeafTriangles.size());
-		for (int i = 0; i < mLeafTriangles.size(); ++i)
-			fwrite(&mLeafTriangles[i], sizeof(uint32), 1, fp);
+		//printf("Writing %i mLeafPolys\n", mLeafPolys.size());
+		for (int i = 0; i < mLeafPolys.size(); ++i)
+			fwrite(&mLeafPolys[i], sizeof(uint32), 1, fp);
 
 		mRoot->Save(fp);
 	}
 
 	void Load(FILE *fp)
 	{
-		uint32 LeafTriangleCount = 0;
+		uint32 LeafPolyCount = 0;
 
 		//printf("MyRayCastMesh::Load()\n");
 
@@ -935,16 +935,16 @@ public:
 
 		//printf(" FileNodeCount is %i\n", FileNodeCount);
 
-		fread(&LeafTriangleCount, sizeof(LeafTriangleCount), 1, fp);	
+		fread(&LeafPolyCount, sizeof(LeafPolyCount), 1, fp);	
 
-		//printf(" LeafTriangleCount is %i\n", LeafTriangleCount);
+		//printf(" LeafPolyCount is %i\n", LeafPolyCount);
 
-		mLeafTriangles.resize(LeafTriangleCount);
+		mLeafPolys.resize(LeafPolyCount);
 
-		for (int i = 0; i < mLeafTriangles.size(); ++i)
-			fread(&mLeafTriangles[i], sizeof(uint32), 1, fp);
+		for (int i = 0; i < mLeafPolys.size(); ++i)
+			fread(&mLeafPolys[i], sizeof(uint32), 1, fp);
 
-		//printf("Read leaf triangles\n");
+		//printf("Read leaf polys\n");
 
 		mRoot = getNode();
 
@@ -965,7 +965,7 @@ public:
 		dir.z*=recipDistance;
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitDistance,mFaces,distance,this,mRaycastTriangles,mRaycastFrame,mLeafTriangles,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitDistance,mFaces,distance,this,mRaycastPolys,mRaycastFrame,mLeafPolys,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
 
 		if((nearestTriIndex != TRI_EOF) && hitFace)
 			*hitFace = &mFaces[nearestTriIndex];
@@ -995,7 +995,7 @@ public:
 		return ret;
 	}
 
-	virtual void getFaceNormal(uint32 tri, VERTEX *faceNormal) 
+	virtual void getFaceNormal(uint32 poly, VERTEX *faceNormal) 
 	{
 		if ( mFaceNormals == NULL )
 		{
@@ -1007,12 +1007,12 @@ public:
 				computePlane(mFaces[i].vert[2], mFaces[i].vert[1], mFaces[i].vert[0], dest);
 			}
 		}
-		VERTEX *src = &mFaceNormals[tri];
+		VERTEX *src = &mFaceNormals[poly];
 		faceNormal = src;
 	}
 
 	uint32		mRaycastFrame;
-	uint32		*mRaycastTriangles;
+	uint32		*mRaycastPolys;
 	PFACE		mFaces;
 	uint32		mFaceCount;
 	VERTEX		*mFaceNormals;
@@ -1020,7 +1020,7 @@ public:
 	uint32		mNodeCount;
 	uint32		mMaxNodeCount;
 	NodeAABB	*mNodes;
-	TriVector	mLeafTriangles;
+	PolyVector	mLeafPolys;
 };
 
 };
@@ -1032,8 +1032,8 @@ using namespace RAYCAST_MESH;
 
 RaycastMesh * createRaycastMesh(uint32 FaceCount,
 				PFACE Faces,
-				uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
-				uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+				uint32 maxDepth,	// Maximum recursion depth for the poly mesh.
+				uint32 minLeafSize,	// minimum polys to treat as a 'leaf' node.
 				float	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
 				)
 {
@@ -1044,8 +1044,8 @@ RaycastMesh * createRaycastMesh(uint32 FaceCount,
 
 RaycastMesh * loadRaycastMesh(FILE *fp, uint32 FaceCount,
 				PFACE Faces,
-				uint32 maxDepth,	// Maximum recursion depth for the triangle mesh.
-				uint32 minLeafSize,	// minimum triangles to treat as a 'leaf' node.
+				uint32 maxDepth,	// Maximum recursion depth for the poly mesh.
+				uint32 minLeafSize,	// minimum polys to treat as a 'leaf' node.
 				float	minAxisSize	// once a particular axis is less than this size, stop sub-dividing.
 				)
 {

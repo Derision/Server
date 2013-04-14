@@ -897,6 +897,7 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 			zm->polys[PolyNumber] = new Polygon;
 
+			zm->polys[PolyNumber]->type = FACETriangle;
 			zm->polys[PolyNumber]->v1 = VertexNumber;
 			zm->polys[PolyNumber]->v2 = VertexNumber - 2;
 			zm->polys[PolyNumber]->v3 = VertexNumber - 1;
@@ -906,6 +907,7 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 			zm->polys[PolyNumber] = new Polygon;
 
+			zm->polys[PolyNumber]->type = FACETriangle;
 			zm->polys[PolyNumber]->v1 = VertexNumber;
 			zm->polys[PolyNumber]->v2 = VertexNumber - 3;
 			zm->polys[PolyNumber]->v3 = VertexNumber - 2;
@@ -959,6 +961,7 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 				if(!GenerateQuads)
 				{	
+					zm->polys[PolyNumber]->type = FACETriangle;
 					zm->polys[PolyNumber]->v1 = VertexNumber;
 					zm->polys[PolyNumber]->v2 = VertexNumber - 2;
 					zm->polys[PolyNumber]->v3 = VertexNumber - 1;
@@ -975,7 +978,7 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 				}
 				else
 				{
-					zm->polys[PolyNumber]->type = 1;
+					zm->polys[PolyNumber]->type = FACEQuad;
 					zm->polys[PolyNumber]->v1 = VertexNumber;
 					zm->polys[PolyNumber]->v2 = VertexNumber - 3;
 					zm->polys[PolyNumber]->v3 = VertexNumber - 2;

@@ -81,6 +81,8 @@ struct FILEFACE
 	float nx, ny, nz, nd;
 };
 
+enum { FACETriangle = 0, FACEQuad = 1 };
+
 struct FACEFLAGS
 {
 	uint32 type:1;		// 0 = triangle, 1 = quad
@@ -98,7 +100,6 @@ typedef struct _face
 	FACEFLAGS flags;
 	VERTEX vert[4];
 	float nx, ny, nz, nd;
-	//float minx, maxx, miny, maxy, minz, maxz;
 }FACE, *PFACE;
 
 typedef struct _mapHeader {

@@ -170,7 +170,7 @@ bool RCMBuilder::build(const char *shortname)
 		v3.x = zm->verts[zm->polys[i]->v3]->y;
 		v3.z = zm->verts[zm->polys[i]->v3]->z;
 
-		if(zm->polys[i]->type == 1)
+		if(zm->polys[i]->type == FACEQuad)
 		{
 			v4.y = zm->verts[zm->polys[i]->v4]->x;
 			v4.x = zm->verts[zm->polys[i]->v4]->y;
@@ -217,7 +217,7 @@ bool RCMBuilder::build(const char *shortname)
 		faceBlock[r].flags.minzvert = 0;
 		faceBlock[r].flags.maxzvert = 0;
 
-		uint8 NumberOfFaces = (faceBlock[r].flags.type == 1) ? 4 : 3;
+		uint8 NumberOfFaces = (faceBlock[r].flags.type == FACEQuad) ? 4 : 3;
 
 		for(int i = 1; i < NumberOfFaces; ++i)
 		{
@@ -339,7 +339,7 @@ bool RCMBuilder::writeMap(const char *file)
 void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 {
 	FACE f;
-	f.flags.type = 0;
+	f.flags.type = FACETriangle;
 	f.flags.padding = 0;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
@@ -359,7 +359,7 @@ void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3)
 void RCMBuilder::AddFace(VERTEX &v1, VERTEX &v2, VERTEX &v3, VERTEX &v4)
 {
 	FACE f;
-	f.flags.type = 1;
+	f.flags.type = FACEQuad;
 	f.flags.padding = 0;
 
 	f.nx = (v2.y - v1.y)*(v3.z - v1.z) - (v2.z - v1.z)*(v3.y - v1.y);
