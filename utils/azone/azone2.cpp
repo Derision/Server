@@ -170,6 +170,10 @@ bool QTBuilder::build(const char *shortname) {
 					printf("Error reading ZON/TER from %s\n", bufs);
 					return(false);
 				}
+				printf("***********************************************************************************\n");
+				printf("*** WARNING: It is recommended to use azone3 to generate maps for EQGv4 zones. ****\n");
+				printf("***********************************************************************************\n");
+
 				V4Zone = true;
 	        	}
 			break;

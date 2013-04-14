@@ -110,7 +110,7 @@ ENDIF(EQEMU_ENABLE_BOTS)
 #What to build
 OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
 OPTION(EQEMU_BUILD_LOGIN "Build the login server." OFF)
-OPTION(EQEMU_BUILD_AZONE "Build azone utility." OFF)
+OPTION(EQEMU_BUILD_AZONE "Build azone utilities." OFF)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
 
 #C++11 stuff
