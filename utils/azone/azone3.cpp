@@ -181,7 +181,7 @@ bool RCMBuilder::build(const char *shortname)
 			AddFace(v1, v2, v3);
 	}
 
-	printf("There are and %u faces.\n", _FaceList.size());
+	printf("There are %u faces.\n", _FaceList.size());
 
 	if(fileloader->model_data.plac_count)
 	{
@@ -198,7 +198,7 @@ bool RCMBuilder::build(const char *shortname)
 	else
 		printf("No placeable objects (or perhaps %s_obj.s3d not present).\n", shortname);
 
-	printf("After processing placeable objects, there are %lu vertices and %lu faces.\n", _FaceList.size()*3, _FaceList.size());
+	printf("After processing placeable objects, there are %u faces.\n", _FaceList.size());
 
 	uint32 r;
 
@@ -317,7 +317,7 @@ bool RCMBuilder::writeMap(const char *file)
 
 	}
 
-	printf("Map header: Version: 0x%08lX. %lu faces, %u nodes, %lu facelists\n", head.version, head.face_count, head.node_count, head.facelist_count);
+	printf("Map header: Version: 0x%08lX. %lu faces.\n", head.version, head.face_count);
 	
 	if(fwrite(faceBlock, sizeof(FACE), faceCount, out) != faceCount) {
 		printf("Error writing map file faces.\n");

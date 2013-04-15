@@ -98,7 +98,7 @@ FRAG_CONSTRUCTOR(Data15) {
   plac->scale[1] = hdr->scale[1];
   plac->scale[2] = hdr->scale[1];
 
-  plac->model = (int32) &wld->sHash[-(int32)hdr->ref];
+  plac->model_name = (char *) &wld->sHash[-(int32)hdr->ref];
 
   pl = new Placeable *[wld->model_data.plac_count + 1];
   memcpy(pl, wld->model_data.placeable, sizeof(Placeable *) * wld->model_data.plac_count);
@@ -655,9 +655,9 @@ int32 WLDLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
 
     for(i = 0; i < this->model_data.plac_count; ++i) {
-      mlen = strlen((char *) this->model_data.placeable[i]->model) - 8;
+      mlen = strlen((char *) this->model_data.placeable[i]->model_name) - 8;
       model_name = new char[mlen + 12];
-      memcpy(model_name, (char *) this->model_data.placeable[i]->model, mlen);
+      memcpy(model_name, (char *) this->model_data.placeable[i]->model_name, mlen);
       model_name[mlen] = 0;
       sprintf(model_name, "%sDMSPRITEDEF", model_name);
       this->model_data.placeable[i]->model = -1;

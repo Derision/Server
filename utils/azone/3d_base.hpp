@@ -100,7 +100,7 @@ public:
 	float x, y, z;
 	float rx, ry, rz;
 	float scale[3];
-
+	char *model_name;
 	int32 model;
 };
 
