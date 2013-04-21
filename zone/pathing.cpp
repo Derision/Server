@@ -1,3 +1,24 @@
+/*
+	EQEMu:  Everquest Server Emulator
+
+	Copyright (C) 2001-2013 EQEMu Development Team (http://eqemulator.net)
+
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; version 2 of the License.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY except by those people which sell it, which
+	are required to give you total support for your newly bought product;
+	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+	A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+*/
+
 #include "../common/debug.h"
 #include <string.h>
 #include <math.h>
@@ -1200,7 +1221,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 			
 		VERTEX TestPoint = {curx, cury, curz};
 		float NewZ = zone->zonemap->FindBestZ(TestPoint, NULL, NULL);
-		if(ABS(NewZ - last_z) > 5.0)
+		if(ABS(NewZ - last_z) > 5.0f)
 		{
 			_log(PATHING__DEBUG, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
 				From.x, From.y, From.z, TestPoint.x, TestPoint.y, TestPoint.z, NewZ, NewZ - From.z);
@@ -1217,7 +1238,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 
 			if(zone->watermap->InLiquid(TestPoint.x, TestPoint.y, NewZ))
 			{
-				VERTEX TestPointWater = {TestPoint.x, TestPoint.y, NewZ-0.5};
+				VERTEX TestPointWater = {TestPoint.x, TestPoint.y, NewZ - 0.5f};
 				VERTEX TestPointWaterDest = TestPointWater;
 				VERTEX hit;
 				TestPointWaterDest.z -= 500;

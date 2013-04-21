@@ -61,7 +61,7 @@ SET(zone_sources
     questmgr.cpp
     QuestParserCollection.cpp
     raids.cpp
-    raycastmap.cpp
+    map2.cpp
     RaycastMesh.cpp
     spawn2.cpp
     spawn2.h
@@ -112,6 +112,7 @@ SET(zone_headers
     hate_list.h
     horse.h
     map.h
+    map2.h
     masterentity.h
     maxskill.h
     message.h

@@ -1,20 +1,24 @@
-/*  EQEMu:  Everquest Server Emulator
-Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
+/*
+	EQEMu:  Everquest Server Emulator
 
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; version 2 of the License.
-  
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY except by those people which sell it, which
+	Copyright (C) 2001-2013 EQEMu Development Team (http://eqemulator.net)
+
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; version 2 of the License.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY except by those people which sell it, which
 	are required to give you total support for your newly bought product;
 	without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 	A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-	
-	  You should have received a copy of the GNU General Public License
-	  along with this program; if not, write to the Free Software
-	  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 */
+
 #include "../common/debug.h"
 #include "../common/MiscFunctions.h"
 #include <math.h>
@@ -28,7 +32,7 @@ Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
 #endif
 
 #include "zone_profile.h"
-#include "raycastmap.h"
+#include "map2.h"
 #include "zone.h"
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -41,7 +45,7 @@ extern Zone* zone;
 #define Vmax3(o, a, b, c) ((a.o>b.o)? (a.o>c.o?a.o:c.o) : (b.o>c.o?b.o:c.o))
 #define ABS(x) ((x)<0?-(x):(x))
 
-RayCastMap::RayCastMap()
+Map2::Map2()
 {
 	_minz = FLT_MAX;
 	_minx = FLT_MAX;
@@ -56,7 +60,7 @@ RayCastMap::RayCastMap()
 	rm = NULL;
 }
 
-bool RayCastMap::loadMap(FILE *fp)
+bool Map2::loadMap(FILE *fp)
 {
 
 	mapHeader head;
@@ -140,7 +144,7 @@ bool RayCastMap::loadMap(FILE *fp)
 	return(true);
 }
 
-RayCastMap::~RayCastMap()
+Map2::~Map2()
 {
 	if(rm)
 	{
@@ -151,12 +155,12 @@ RayCastMap::~RayCastMap()
 }
 
 
-bool RayCastMap::LineIntersectsZone(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) const
+bool Map2::LineIntersectsZone(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) const
 {
 	return rm->raycast(start, end, result, NULL, on);
 }
 
-float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
+float Map2::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 {
 	if(on)
 		*on = NULL;
@@ -189,7 +193,7 @@ float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 	return BEST_Z_INVALID;
 }
 
-bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) {
+bool Map2::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) {
 	float z = -999999;
 	VERTEX step;
 	VERTEX cur;
@@ -269,7 +273,7 @@ bool RayCastMap::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step
 	return(false);
 }
 
-bool RayCastMap::CheckLoS(VERTEX myloc, VERTEX oloc)
+bool Map2::CheckLoS(VERTEX myloc, VERTEX oloc)
 {
 	return !rm->raycast(myloc, oloc, NULL, NULL, NULL);
 }

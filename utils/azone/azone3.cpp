@@ -1,4 +1,7 @@
 /*
+	EQEMu:  Everquest Server Emulator
+
+	Copyright (C) 2001-2008 EQEMu Development Team (http://eqemulator.net)
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -13,6 +16,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 */
 
 #include <stdio.h>
@@ -36,7 +40,6 @@
 //#define DEBUG
 #include <vector>
 #include <map>
-#include "../../zone/RaycastMesh.h"
 
 using namespace std;
 
@@ -273,11 +276,11 @@ bool RCMBuilder::build(const char *shortname)
 
 	printf("Bounding box: %.2f < x < %.2f, %.2f < y < %.2f, %.2f < z < %.2f\n", minx, maxx, miny, maxy, minz, maxz);
 
-	printf("Building RayCastMesh.\n");
+	printf("Building RaycastMesh.\n");
 
 	rm = createRaycastMesh(faceCount, faceBlock);
 
-	printf("Done building RCM...\n");
+	printf("Done building RaycastMesh...\n");
 
 	fileloader->Close();
 
@@ -937,9 +940,3 @@ void RCMBuilder::TranslateVertex(VERTEX &v, float XOffset, float YOffset, float 
 	v.y = v.y + YOffset;
 	v.z = v.z + ZOffset;
 }
-
-
-
-
-
-

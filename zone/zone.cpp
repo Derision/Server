@@ -50,7 +50,7 @@ using namespace std;
 #include "ZoneConfig.h"
 #include "../common/breakdowns.h"
 #include "map.h"
-#include "raycastmap.h"
+#include "map2.h"
 #include "watermap.h"
 #include "object.h"
 #include "petitions.h"
@@ -2690,7 +2690,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
 		}
 		else if(head.version = 2)
 		{
-			ret = new RayCastMap();
+			ret = new Map2();
 		}
 		else
 		{

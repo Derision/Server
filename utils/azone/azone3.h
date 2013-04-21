@@ -1,8 +1,7 @@
 #ifndef AZONE_H
 #define AZONE_H
 
-//pull in datatypes from zone's raycastmap.h
-#include "../../zone/raycastmap.h"
+#include "../../zone/map2.h"
 #include "file_loader.hpp"
 
 /*
