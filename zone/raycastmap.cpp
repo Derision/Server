@@ -131,7 +131,7 @@ bool RayCastMap::loadMap(FILE *fp)
 	}
 	time_t EndTime = time(NULL);
 
-	printf("Elapsed Time: %i seconds, %i Tests, %i Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
+	printf("Elapsed Time: %llu seconds, %u Tests, %u Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
 #endif // MAPBENCH
 
 	LogFile->write(EQEMuLog::Status, "Loaded map: %u faces", m_Faces);
