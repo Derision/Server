@@ -975,7 +975,7 @@ public:
 	{
 		bool ret = false;
 
-		VERTEX dir(to.x - from .x, to.y - from.y, to.z - from.z);
+		VERTEX dir = {to.x - from .x, to.y - from.y, to.z - from.z};
 		
 		float distance = sqrtf( dir.x*dir.x + dir.y*dir.y+dir.z*dir.z );
 		if ( distance < 0.0000000001f ) return false;

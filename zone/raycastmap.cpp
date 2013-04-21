@@ -118,7 +118,7 @@ bool RayCastMap::loadMap(FILE *fp)
 	{
 		for(y = _miny; y < _maxy; y = y + 1.0f)
 		{
-			VERTEX start(x, y, 10000);
+			VERTEX start = {x, y, 10000};
 			z = FindBestZ(start, NULL, NULL);
 			
 			++Tests;
@@ -167,8 +167,8 @@ float RayCastMap::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
 
-	VERTEX from(p1.x, p1.y, p1.z);
-	VERTEX to(p1.x, p1.y, BEST_Z_INVALID);
+	VERTEX from = {p1.x, p1.y, p1.z};
+	VERTEX to = {p1.x, p1.y, BEST_Z_INVALID};
 	VERTEX normal;
 
 	float hitDistance;

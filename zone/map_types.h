@@ -8,41 +8,28 @@
 #define MAP_VERSION 0x01000000
 #define BEST_Z_INVALID -999999
 
-typedef struct _vertex{
-//	unsigned long order;
-	
+typedef struct _vertex
+{
 	union
 	{
+		float axis[3];
 		struct
 		{
 			float x;
 			float y;
 			float z;
 		};
-		float axis[3];
 	};
-	_vertex()
-	{
-		x  = y = z = 0.0f;
-	};
-
-	_vertex(float ix, float iy, float iz)
-	{
-		x = ix;
-		y = iy;
-		z = iz;
-	}
 
 	bool  operator==(const _vertex &v1) const
 	{
-		return((v1.x == x) && (v1.y == y) && (v1.z ==z));
+		return((v1.x == x) && (v1.y == y) && (v1.z == z));
 	}
 
 }VERTEX, *PVERTEX;
 
-typedef struct _dvertex{
-//	unsigned long order;
-	
+typedef struct _dvertex
+{
 	union
 	{
 		struct
@@ -54,17 +41,6 @@ typedef struct _dvertex{
 		double axis[3];
 	};
 
-	_dvertex()
-	{
-		x  = y = z = 0.0f;
-	};
-
-	_dvertex(double ix, double iy, double iz)
-	{
-		x = ix;
-		y = iy;
-		z = iz;
-	}
 	bool  operator==(const _dvertex &v1) const
 	{
 		return((v1.x == x) && (v1.y == y) && (v1.z ==z));

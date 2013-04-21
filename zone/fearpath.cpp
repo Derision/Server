@@ -157,7 +157,7 @@ void Mob::CalculateNewFearpoint()
 
 		++Loc.z;
 
-		VERTEX CurrentPosition(GetX(), GetY(), GetZ());
+		VERTEX CurrentPosition = {GetX(), GetY(), GetZ()};
 
 		list<int> Route = zone->pathing->FindRoute(CurrentPosition, Loc);
 

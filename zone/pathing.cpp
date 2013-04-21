@@ -671,11 +671,11 @@ VERTEX Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Waypo
 
 	VERTEX NodeLoc;
 
-	VERTEX From(GetX(), GetY(), GetZ());
+	VERTEX From = {GetX(), GetY(), GetZ()};
 
-	VERTEX HeadPosition(From.x, From.y,  From.z + (GetSize() < 6.0 ? 6 : GetSize()) * HEAD_POSITION);
+	VERTEX HeadPosition = {From.x, From.y,  From.z + (GetSize() < 6.0 ? 6 : GetSize()) * HEAD_POSITION};
 
-	VERTEX To(ToX, ToY, ToZ);
+	VERTEX To = {ToX, ToY, ToZ};
 
 	bool SameDestination = (To == PathingDestination);
 
@@ -1157,7 +1157,7 @@ bool PathManager::NoHazards(VERTEX From, VERTEX To)
 
 	// Test the Z coordinate at the mid point.
 	//
-	VERTEX MidPoint((From.x + To.x) / 2, (From.y + To.y) / 2, From.z);
+	VERTEX MidPoint = {(From.x + To.x) / 2, (From.y + To.y) / 2, From.z};
 
 	float NewZ = zone->zonemap->FindBestZ(MidPoint, NULL, NULL);
 
@@ -1198,7 +1198,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 		stepy = (stepy/factor)*step_size;
 		stepz = (stepz/factor)*step_size;
 			
-		VERTEX TestPoint(curx, cury, curz);
+		VERTEX TestPoint = {curx, cury, curz};
 		float NewZ = zone->zonemap->FindBestZ(TestPoint, NULL, NULL);
 		if(ABS(NewZ - last_z) > 5.0)
 		{
@@ -1217,8 +1217,8 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 
 			if(zone->watermap->InLiquid(TestPoint.x, TestPoint.y, NewZ))
 			{
-				VERTEX TestPointWater(TestPoint.x, TestPoint.y, NewZ-0.5);
-				VERTEX TestPointWaterDest(TestPointWater);
+				VERTEX TestPointWater = {TestPoint.x, TestPoint.y, NewZ-0.5};
+				VERTEX TestPointWaterDest = TestPointWater;
 				VERTEX hit;
 				TestPointWaterDest.z -= 500;
 				float best_z2 = -999990;
@@ -2013,7 +2013,7 @@ void PathManager::MoveNode(Client *c)
 
 	if(zone->zonemap)
 	{
-		VERTEX loc(c->GetX(), c->GetY(), c->GetZ());
+		VERTEX loc = {c->GetX(), c->GetY(), c->GetZ()};
 		Node->bestz = zone->zonemap->FindBestZ(loc, NULL, NULL);
 	}
 	else

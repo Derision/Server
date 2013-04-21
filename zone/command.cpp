@@ -7674,7 +7674,7 @@ void command_path(Client *c, const Seperator *sep)
 
 			if(zone->zonemap)
 			{
-				VERTEX loc(px, py, pz);
+				VERTEX loc = {px, py, pz};
 				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
 			}
 			else
@@ -7701,7 +7701,7 @@ void command_path(Client *c, const Seperator *sep)
 
 			if(zone->zonemap)
 			{
-				VERTEX loc(px, py, pz);
+				VERTEX loc = {px, py, pz};
 				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
 			}
 			else
@@ -7834,8 +7834,9 @@ void command_path(Client *c, const Seperator *sep)
 		{
 			if(c && c->GetTarget())
 			{
-				if(zone->pathing->NoHazardsAccurate(VERTEX(c->GetX(),c->GetY(),c->GetZ()), 
-					VERTEX(c->GetTarget()->GetX(),c->GetTarget()->GetY(),c->GetTarget()->GetZ())))
+				VERTEX From = {c->GetX(), c->GetY(), c->GetZ()};
+				VERTEX To = {c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ()};
+				if(zone->pathing->NoHazardsAccurate(From, To))
 				{
 					c->Message(0, "No hazards.");
 				}
@@ -7911,7 +7912,7 @@ void command_path(Client *c, const Seperator *sep)
 		{
 			Mob *m = c->GetTarget();
 
-			VERTEX Position(m->GetX(), m->GetY(), m->GetZ());
+			VERTEX Position = {m->GetX(), m->GetY(), m->GetZ()};
 
 			int Node = zone->pathing->FindNearestPathNode(Position);
 
@@ -8044,13 +8045,10 @@ void command_bestz(Client *c, const Seperator *sep) {
 		return;
 	}
 	
-	VERTEX me;
-	me.x = c->GetX();
-	me.y = c->GetY();
-	me.z = c->GetZ() + (c->GetSize()==0.0?6:c->GetSize()) * HEAD_POSITION;
+	VERTEX me = {c->GetX(), c->GetY(), c->GetZ() + (c->GetSize()==0.0?6:c->GetSize()) * HEAD_POSITION };
 	VERTEX hit;
 	FACE *hitFace;
-	VERTEX bme(me);
+	VERTEX bme = me;
 	bme.z -= 500;
 	
 	float best_z = zone->zonemap->FindBestZ(me, &hit, &hitFace);

@@ -1529,7 +1529,7 @@ void QTBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool 
 				// To make things align properly, we need to translate the object back to the origin
 				// before applying the model Z rotation. This is what the Correction VERTEX is for.
 				//
-				VERTEX Correction(XOffset, YOffset, ZOffset);
+				VERTEX Correction = {XOffset, YOffset, ZOffset};
 
 				RotateVertex(Correction, (*Iterator).RotX * 3.14159 / 180.0f, 0, 0);
 

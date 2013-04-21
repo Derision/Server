@@ -600,10 +600,10 @@ int32 DATLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 			float QuadVertex3Z = Floats[Quad + RowNumber + QuadsPerTile + 2];
 			float QuadVertex4Z = Floats[Quad + RowNumber + 1];
 
-			VERTEX P1(RowNumber * UnitsPerVertX, (Quad % QuadsPerTile) * UnitsPerVertY, QuadVertex1Z);
-			VERTEX P2(P1.x + UnitsPerVertX, P1.y, QuadVertex2Z);
-			VERTEX P3(P1.x + UnitsPerVertX, P1.y + UnitsPerVertY, QuadVertex3Z);
-			VERTEX P4(P1.x, P1.y + UnitsPerVertY, QuadVertex4Z);
+			VERTEX P1 = {RowNumber * UnitsPerVertX, (Quad % QuadsPerTile) * UnitsPerVertY, QuadVertex1Z};
+			VERTEX P2 = {P1.x + UnitsPerVertX, P1.y, QuadVertex2Z};
+			VERTEX P3 = {P1.x + UnitsPerVertX, P1.y + UnitsPerVertY, QuadVertex3Z};
+			VERTEX P4 = {P1.x, P1.y + UnitsPerVertY, QuadVertex4Z};
 
 			TerrainHeight = HeightWithinQuad(P1, P2, P3, P4, AdjustedY, AdjustedX);
 

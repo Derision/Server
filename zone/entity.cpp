@@ -3117,7 +3117,7 @@ void EntityList::FindPathsToAllNPCs()
 	while(Iterator.MoreElements())
 	{
 		VERTEX Node0 = zone->pathing->GetPathNodeCoordinates(0, false);
-		VERTEX Dest(Iterator.GetData()->GetX(), Iterator.GetData()->GetY(), Iterator.GetData()->GetZ());
+		VERTEX Dest = {Iterator.GetData()->GetX(), Iterator.GetData()->GetY(), Iterator.GetData()->GetZ()};
 		list<int> Route = zone->pathing->FindRoute(Node0, Dest);
 		if(Route.size() == 0)
 			printf("Unable to find a route to %s\n", Iterator.GetData()->GetName());
