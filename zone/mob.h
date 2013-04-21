@@ -1093,7 +1093,6 @@ protected:
     //temppet
     bool hasTempPet;
 
-    EGNode *_egnode;    //the EG node we are in
     float    tarx;
     float    tary;
     float    tarz;

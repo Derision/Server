@@ -122,7 +122,6 @@ Mob::Mob(const char*   in_name,
  	rewind_z = 0;		//Stored z_pos for /rewind
 	move_tic_count = 0;
 	
-	_egnode = NULL;
 	adverrorinfo = 0;
 	name[0]=0;
 	orig_name[0]=0;

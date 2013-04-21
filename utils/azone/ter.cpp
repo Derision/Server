@@ -105,6 +105,8 @@ int32 TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
 
   this->model_data.zone_model = new Zone_Model;
   zm = this->model_data.zone_model;
+  zm->minx = zm->miny = zm->minz = 100000;
+  zm->maxx = zm->maxy = zm->maxz = -100000;
   
   zm->vert_count = thdr->vert_count;
   zm->poly_count = thdr->tri_count;
@@ -155,7 +157,18 @@ int32 TERLoader::Open(char *base_path, char *zone_name, Archive *archive) {
         zm->verts[i]->v = tverV3->v;
         buffer += sizeof(ter_vertexV3);
     }
-
+    if(zm->verts[i]->x > zm->maxx)
+	zm->maxx = zm->verts[i]->x;
+    if(zm->verts[i]->y > zm->maxy)
+	zm->maxy = zm->verts[i]->y;
+    if(zm->verts[i]->z > zm->maxz)
+	zm->maxz = zm->verts[i]->z;
+    if(zm->verts[i]->x < zm->minx)
+	zm->minx = zm->verts[i]->x;
+    if(zm->verts[i]->y < zm->miny)
+	zm->miny = zm->verts[i]->y;
+    if(zm->verts[i]->z < zm->minz)
+	zm->minz = zm->verts[i]->z;
 
   }
   

@@ -514,8 +514,8 @@ public:
 			// we have reached the maximum recursion depth or..
 			// the width of the longest axis is less than the minimum axis size then...
 			// we create the leaf node and copy the polys into the leaf node poly array.
-			if ( count < minLeafSize || depth >= maxDepth || laxis < minAxisSize )
-			{ 
+			if ((count < minLeafSize) || depth >= maxDepth || (laxis < minAxisSize))
+			{
 				// sort the polys into highest Z order
 				PolyVector SortedPolys;
 				
@@ -529,6 +529,24 @@ public:
 							SortedPolys.insert(j, *i);
 							Inserted = true;
 							break;
+						}
+						else if(Faces[*i].vert[Faces[*i].flags.minzvert].z == Faces[*j].vert[Faces[*j].flags.minzvert].z)
+						{
+							if(Faces[*i].vert[Faces[*i].flags.minxvert].x > Faces[*j].vert[Faces[*j].flags.minxvert].x)
+							{
+								SortedPolys.insert(j, *i);
+								Inserted = true;
+								break;
+							}
+							else if(Faces[*i].vert[Faces[*i].flags.minxvert].x == Faces[*j].vert[Faces[*j].flags.minxvert].x)
+							{
+								if(Faces[*i].vert[Faces[*i].flags.minyvert].y > Faces[*j].vert[Faces[*j].flags.minyvert].y)
+								{
+									SortedPolys.insert(j, *i);
+									Inserted = true;
+									break;
+								}
+							}
 						}
 					}
 					if(!Inserted)
@@ -677,6 +695,7 @@ public:
 			{
 				const uint32 *scan = &leafPolys[mLeafPolyIndex];
 				uint32 count = *scan++;
+
 				for (uint32 i=0; i<count; i++)
 				{
 					uint32 poly = *scan++;
@@ -685,7 +704,8 @@ public:
 					if ( raycastPolys[poly] != raycastFrame )
 					{
 						raycastPolys[poly] = raycastFrame;
-						// If we are doing a Z test and the faces minimum z is above us, don't check further					
+						
+						// If we are doing a Z test and the faces minimum z is above us, don't check further
 						if(ZTest && (Faces[poly].vert[Faces[poly].flags.minzvert].z > from.z))
 						{
 							continue;
@@ -695,13 +715,13 @@ public:
 						{
 							if(from.x < Faces[poly].vert[Faces[poly].flags.minxvert].x)
 								continue;
-							if(from.y < Faces[poly].vert[Faces[poly].flags.minyvert].y)
-								continue;
-		
 							if(from.x > Faces[poly].vert[Faces[poly].flags.maxxvert].x)
+								continue;
+							if(from.y < Faces[poly].vert[Faces[poly].flags.minyvert].y)
 								continue;
 							if(from.y > Faces[poly].vert[Faces[poly].flags.maxyvert].y)
 								continue;
+		
 						}
 						else
 						{

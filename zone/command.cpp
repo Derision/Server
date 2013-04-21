@@ -31,7 +31,6 @@
 	    the command isn't listed in the addon.ini file.
 
 */
-
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
@@ -8061,10 +8060,13 @@ void command_bestz(Client *c, const Seperator *sep) {
 		c->Message(0,"Z is %.3f at (%.3f, %.3f).", best_z, me.x, me.y);
 		c->Message(0, "Hit = %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
 		if(hitFace)
+		{
 			c->Message(0, "HitFace = (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f), (%8.3f, %8.3f, %8.3f)",
 				hitFace->vert[0].x, hitFace->vert[0].y, hitFace->vert[0].z,
 				hitFace->vert[1].x, hitFace->vert[1].y, hitFace->vert[1].z,
 				hitFace->vert[2].x, hitFace->vert[2].y, hitFace->vert[2].z);
+			c->Message(0, "Face Normal (%8.3f, %8.3f, %8.3f), nd = %8.3f", hitFace->nx, hitFace->ny, hitFace->nz, hitFace->nd);	
+		}
 		else
 			c->Message(0, "HitFace is NULL");
 	}
@@ -8072,39 +8074,30 @@ void command_bestz(Client *c, const Seperator *sep) {
 	{
 		c->Message(0,"Found no Z.");
 	}
-	/*
 	VERTEX other(me);
 
 	other.y = 10000;
 	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
-		c->Message(0, "Obstacle to the North at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		c->Message(0, "Obstacle to the North at %8.3f, %8.3f, %8.3f, z normal = %8.3f", hit.x, hit.y, hit.z, hitFace->nz);
 	else
 		c->Message(0, "No obstacle to the north");
 
 	other.y = -10000;
 	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
-		c->Message(0, "Obstacle to the South at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		c->Message(0, "Obstacle to the South at %8.3f, %8.3f, %8.3f, z normal = %8.3f", hit.x, hit.y, hit.z, hitFace->nz);
 	else
 		c->Message(0, "No obstacle to the South");
 
 	other.y = me.y;
 	other.x = 10000;
-	other.x = -2.3;
-	c->Message(0, "Checking LoS to west between (%8.3f, %8.3f, %8.3f) and (%8.3f, %8.3f, %8.3f)",
-		me.x, me.y, me.z, other.x, other.y, other.z);
 	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
-		c->Message(0, "Obstacle to the West at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		c->Message(0, "Obstacle to the West at %8.3f, %8.3f, %8.3f, z normal = %8.3f", hit.x, hit.y, hit.z, hitFace->nz);
 	else
 		c->Message(0, "No obstacle to the West");
 
-	while(!zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
-		other.x = other.x + 1;
-
-	c->Message(0, "Finally found obstacle to the West at %8.3f, %8.3f, %8.3f when other.x = %8.3f", hit.x, hit.y, hit.z, other.x);
-
 	other.x = -10000;
 	if(zone->zonemap->LineIntersectsZone(me, other, 1.0f, &hit, &hitFace))
-		c->Message(0, "Obstacle to the East at %8.3f, %8.3f, %8.3f", hit.x, hit.y, hit.z);
+		c->Message(0, "Obstacle to the East at %8.3f, %8.3f, %8.3f, z normal = %8.3f", hit.x, hit.y, hit.z, hitFace->nz);
 	else
 		c->Message(0, "No obstacle to the East");
 
@@ -8121,7 +8114,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 		else
 			c->Message(0, "No obstacle to target");
 	}
-	*/
+	
 	/*
 	for(float x = -3960; x < 3960; x = x + 50)
 	{

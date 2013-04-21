@@ -44,13 +44,30 @@ class Zone_Model {
 public:
 	Zone_Model() {}
 	~Zone_Model() {}
+	float MaxDimension()
+	{
+		float sizex = maxx - minx;
+		float sizey = maxy - miny;
+		float sizez = maxz - minz;
 
+		float result = sizex;
+
+		if(sizey > result)
+			result = sizey;
+
+		if(sizez > result)
+			result = sizez;
+
+		return result;
+
+	}
 	Vertex **verts;
 	Polygon **polys;
 	Octree_Node *octree;
 	Texture **tex;
 
 	int32 vert_count, poly_count, tex_count;
+	float minx, miny, minz, maxx, maxy, maxz;
 };
 
 class MobModel {

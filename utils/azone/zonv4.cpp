@@ -140,17 +140,29 @@ int32 Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 			//
 			// For example, taking out all the tak_braziers from elddar saves around 30MB
 			//
+		
 			if(strstr(tmp, "tree") || strstr(tmp, "pine") || strstr(tmp, "palm") || strstr(tmp, "rock") ||
 			   strstr(tmp, "shrub") || strstr(tmp, "fern") || strstr(tmp, "bamboo") || strstr(tmp, "coral") ||
 			   strstr(tmp, "camp_bones") || strstr(tmp, "sponge") || strstr(tmp, "plant") || strstr(tmp, "shortplm") ||
-			   strstr(tmp, "tak_brazier") || strstr(tmp, "tak_banner") || strstr(tmp, "fung") || strstr(tmp, "bolete") ||
-			   strstr(tmp, "amanita") || strstr(tmp, "leopita"))
+			   strstr(tmp, "brazier") || strstr(tmp, "tak_banner") || strstr(tmp, "fung") || strstr(tmp, "bolete") ||
+			   strstr(tmp, "amanita") || strstr(tmp, "leopita") || strstr(tmp, "busha") || strstr(tmp, "vine") ||
+			   strstr(tmp, "lamp") || strstr(tmp, "torch") || strstr(tmp, "weaponsrack"))
 			{
 				if(!strstr(tmp, "arch"))
 				{
 					this->model_data.models[i]->IncludeInMap = false;
 				}
 			}
+			// Exclude any other small objects
+			if(model_loaders[i].model_data.zone_model->MaxDimension() < 20.0f)
+			{
+					this->model_data.models[i]->IncludeInMap = false;
+					printf("Excluding %s because of max dimension %8.3f\n", tmp, model_loaders[i].model_data.zone_model->MaxDimension());
+			}
+			
+			if(this->model_data.models[i]->IncludeInMap)
+				printf("Including placeable model %s with poly count of %i, max dim = %8.3f\n", tmp, this->model_data.models[i]->poly_count,
+					 model_loaders[i].model_data.zone_model->MaxDimension());
 		}
 		else
 		{

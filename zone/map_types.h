@@ -21,7 +21,6 @@ typedef struct _vertex{
 		};
 		float axis[3];
 	};
-	
 	_vertex()
 	{
 		x  = y = z = 0.0f;

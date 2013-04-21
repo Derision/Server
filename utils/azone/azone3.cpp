@@ -509,9 +509,12 @@ void RCMBuilder::AddPlaceable(FileLoader *fileloader, char *ZoneFileName, bool L
 
 		if(!fileloader->model_data.models[fileloader->model_data.placeable[i]->model]->IncludeInMap)
 			continue;
-		printf("Including Placeable Object %4d using model %4d (%s).\n", i,
+		printf("Including Placeable Object %4d using model %4d (%s) at (%8.3f, %8.3f)\n", i,
 			fileloader->model_data.placeable[i]->model,
-			fileloader->model_data.models[fileloader->model_data.placeable[i]->model]->name);
+			fileloader->model_data.models[fileloader->model_data.placeable[i]->model]->name,
+			fileloader->model_data.placeable[i]->x,
+			fileloader->model_data.placeable[i]->y
+			);
 
 		if(fileloader->model_data.placeable[i]->model>fileloader->model_data.model_count) continue;
 
@@ -788,6 +791,7 @@ void RCMBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool
 #endif
 				continue;
 			}
+			printf("Placing %s at %8.3f, %8.3f\n", model->name, (*Iterator).TileX, (*Iterator).TileY);
 			for(int32 j = 0; j < model->poly_count; ++j) {
 
 				poly = model->polys[j];
