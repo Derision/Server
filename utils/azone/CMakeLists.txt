@@ -36,6 +36,7 @@ SET(azone_common_headers
 )
 
 ADD_LIBRARY(azone_common ${azone_common_sources} ${azone_common_headers})
+TARGET_LINK_LIBRARIES(azone_common ${ZLIB_LIBRARY})
 SET(LIBRARY_OUTPUT_PATH ../../Bin)
 
 #azone2
