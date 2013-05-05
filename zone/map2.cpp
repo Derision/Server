@@ -179,15 +179,19 @@ float Map2::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 
 	bool hit = false;
 
-	for(int zAttempt = 0; zAttempt < 2; ++zAttempt)
+	hit = rm->raycast(from, to, result, &hitDistance, on);
+
+	if(hit)
+		return result->z;
+
+	// Find nearest Z above us
+
+	to.z = -BEST_Z_INVALID;
+	hit = rm->raycast(from, to, result, &hitDistance, on);
+
+	if(hit)
 	{
-		hit = rm->raycast(from, to, result, &hitDistance, on);
-
-		if(hit)
-			return result->z;
-
-		from.z = from.z + 10;
-
+		return result->z;
 	}
 
 	return BEST_Z_INVALID;

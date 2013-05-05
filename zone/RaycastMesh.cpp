@@ -1005,7 +1005,7 @@ public:
 		dir.z*=recipDistance;
 		mRaycastFrame++;
 		uint32 nearestTriIndex=TRI_EOF;
-		mRoot->raycast(ret,from,to,dir,hitLocation,hitDistance,mFaces,distance,this,mRaycastPolys,mRaycastFrame,mLeafPolys,nearestTriIndex, (from.x == to.x) && (from.y == to.y));
+		mRoot->raycast(ret,from,to,dir,hitLocation,hitDistance,mFaces,distance,this,mRaycastPolys,mRaycastFrame,mLeafPolys,nearestTriIndex, (from.x == to.x) && (from.y == to.y) && (from.z > to.z));
 
 		if((nearestTriIndex != TRI_EOF) && hitFace)
 			*hitFace = &mFaces[nearestTriIndex];
