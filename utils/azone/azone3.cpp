@@ -209,6 +209,8 @@ bool RCMBuilder::build(const char *shortname)
 
 	faceBlock = new FACE[faceCount];
 
+	uint32 nzBuckets[4] = {0, 0, 0, 0};
+
 	for(r = 0; r < faceCount; r++)
 	{
 		faceBlock[r] = _FaceList[r];
@@ -242,7 +244,23 @@ bool RCMBuilder::build(const char *shortname)
 			if(faceBlock[r].vert[i].z > faceBlock[r].vert[faceBlock[r].flags.maxzvert].z)
 				faceBlock[r].flags.maxzvert = i;
 		}
+
+		if(faceBlock[r].nz > 0.5f)
+			++nzBuckets[0];
+		else if(faceBlock[r].nz > 0.25f)
+			++nzBuckets[1];
+		else if(faceBlock[r].nz >= 0.00f)
+			++nzBuckets[2];
+		else
+			++nzBuckets[3];
+
+		if(faceBlock[r].nz <= 0.0f)
+			faceBlock[r].flags.canstandon = 0;
+		else
+			faceBlock[r].flags.canstandon = 1;
 	}
+	for(int i = 0; i < 4; ++i)
+		printf("nz Bucket %i count = %i\n", i, nzBuckets[i]);
 
 	float minx, miny, minz, maxx, maxy, maxz;
 	minx = 1e12;
@@ -721,6 +739,9 @@ void RCMBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool
 		else
 			printf("No azone.ini entry found for zone %s\n", ZoneFileName);
 	}
+	//printf("datloader.model_data.ModelNames.size() + 1 = %i\n", fileloader->datloader.model_data.ModelNames.size() + 1);
+	uint32 UseCount[fileloader->model_data.model_count];
+	memset(UseCount, 0, fileloader->model_data.model_count * sizeof(uint32));
 
 	Iterator = fileloader->model_data.ObjectGroups.begin();
 
@@ -794,6 +815,7 @@ void RCMBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool
 #endif
 				continue;
 			}
+			++UseCount[fileloader->model_data.placeable[SubModel]->model];
 			printf("Placing %s at %8.3f, %8.3f\n", model->name, (*Iterator).TileX, (*Iterator).TileY);
 			for(int32 j = 0; j < model->poly_count; ++j) {
 
@@ -893,8 +915,17 @@ void RCMBuilder::AddPlaceableV4(FileLoader *fileloader, char *ZoneFileName, bool
 
 		++Iterator;
 	}
+	
+	printf("Model Usage Summary:\n");
 
-
+	for(int i = 0; i < fileloader->model_data.model_count; ++i)
+	{
+		if(UseCount[i])
+		{
+			Model *model = fileloader->model_data.models[i];
+			printf("  Model %3i, %s, placed %i times, contributing %i polys\n", i, model->name, UseCount[i], UseCount[i] * model->poly_count);
+		}
+	}
 }
 
 void RCMBuilder::RotateVertex(VERTEX &v, float XRotation, float YRotation, float ZRotation) {

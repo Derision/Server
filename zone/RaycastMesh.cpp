@@ -724,13 +724,15 @@ public:
 						raycastPolys[poly] = raycastFrame;
 						
 						// If we are doing a Z test and the faces minimum z is above us, don't check further
-						if(ZTest && (Faces[poly].vert[Faces[poly].flags.minzvert].z > from.z))
-						{
-							continue;
-						}
-						// Some quick checks to see if we can hit
 						if(ZTest)
 						{
+							if(!Faces[poly].flags.canstandon)
+								continue;
+
+							if(Faces[poly].vert[Faces[poly].flags.minzvert].z > from.z)
+								continue;
+						
+							// Some quick checks to see if we can hit
 							if(from.x < Faces[poly].vert[Faces[poly].flags.minxvert].x)
 								continue;
 							if(from.x > Faces[poly].vert[Faces[poly].flags.maxxvert].x)

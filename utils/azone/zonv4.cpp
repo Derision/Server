@@ -103,7 +103,11 @@ int32 Zonv4Loader::Open(char *base_path, char *zone_name, Archive *archive)
 
 	model_loaders = new TERLoader[this->datloader.model_data.ModelNames.size() + 1];
 
+	printf("this->datloader.model_data.ModelNames.size() + 1 = %i\n", this->datloader.model_data.ModelNames.size() + 1);
+
 	this->model_data.models = new Model *[this->datloader.model_data.ModelNames.size() + 1];
+
+	printf("this->datloader.model_data.PlaceableList.size() = %i\n", this->datloader.model_data.PlaceableList.size());
 
 	this->model_data.placeable = new Placeable *[this->datloader.model_data.PlaceableList.size()];
 

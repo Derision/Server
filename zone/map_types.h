@@ -67,7 +67,8 @@ struct FACEFLAGS
 	uint32 maxyvert:2;
 	uint32 minzvert:2;
 	uint32 maxzvert:2;
-	uint32 padding:19;
+	uint32 canstandon:1;
+	uint32 padding:18;
 };
 
 typedef struct _face
