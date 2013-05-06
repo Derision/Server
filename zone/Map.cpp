@@ -70,9 +70,9 @@ Map::Map() {
 	m_Faces = 0;
 	m_Nodes = 0;
 	m_FaceLists = 0;
-	mFinalFaces = NULL;
-	mNodes = NULL;
-	mFaceLists = NULL;
+	mFinalFaces = nullptr;
+	mNodes = nullptr;
+	mFaceLists = nullptr;
 }
 
 bool Map::loadMap(FILE *fp)
@@ -268,11 +268,11 @@ NodeRef Map::SeekNode( NodeRef node_r, float x, float y ) const {
 // maybe precalc edges.
 int* Map::SeekFace(  NodeRef node_r, float x, float y ) {
 	if( node_r == NODE_NONE || node_r >= m_Nodes) {
-		return(NULL);
+		return(nullptr);
 	}
 	const PNODE _node = &mNodes[node_r];
 	if(!(_node->flags & nodeFinal)) {
-		return(NULL);   //not a final node... could find the proper node...
+		return(nullptr);   //not a final node... could find the proper node...
 	}
 	
 	float	dx,dy;
@@ -420,7 +420,7 @@ bool Map::LineIntersectsNode( NodeRef node_r, VERTEX p1, VERTEX p2, VERTEX *resu
 			continue;	//watch for invalid lists, they seem to happen
 		cur = &mFinalFaces[ *cfl ];
 		if(LineIntersectsFace(cur,p1, p2, result)) {
-			if(on != NULL)
+			if(on != nullptr)
 				*on = cur;
 			return(true);
 		}
@@ -456,7 +456,6 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 	if(!(_node->flags & nodeFinal)) {
 		return(BEST_Z_INVALID);   //not a final node... could find the proper node...
 	}
-	
 	
 	VERTEX p2(p1);
 	p2.z = BEST_Z_INVALID;
@@ -512,7 +511,7 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 			}
 			if(LineIntersectsFace(cur, p1, p2, result)) {
 				if (result->z > best_z) {
-					if(on != NULL)
+					if(on != nullptr)
 						*on = cur;
 					best_z = result->z;
 				}
@@ -530,7 +529,7 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 
 
 bool Map::LineIntersectsFace( PFACE cface, VERTEX p1, VERTEX p2, VERTEX *result) const {
-	if( cface == NULL ) {
+	if( cface == nullptr ) {
 		return(false);  //cant intersect a face we dont have... i guess
 	}
 	
@@ -560,7 +559,7 @@ bool Map::LineIntersectsFace( PFACE cface, VERTEX p1, VERTEX p2, VERTEX *result)
 	VERTEX n, intersect;
 	
 	VERTEX *p = &intersect;
-	if(result != NULL)
+	if(result != nullptr)
 		p = result;
 
 	// Calculate the parameters for the plane

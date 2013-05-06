@@ -25,7 +25,7 @@
 	3.  In the command_init function you must add a call to command_add
 	    for your function.  If you want an alias for your command, add
 	    a second call to command_add with the descriptin and access args
-	    set to NULL and 0 respectively since they aren't used when adding
+	    set to nullptr and 0 respectively since they aren't used when adding
 	    an alias.  The function pointers being equal is makes it an alias.
 	    The access level you set with command_add is only a default if
 	    the command isn't listed in the addon.ini file.
@@ -141,7 +141,7 @@ Access Levels:
  * When adding a command, if it's the first time that function pointer is
  * used it is a new command.  If that function pointer is used for another
  * command, the command is added as an alias; description and access level
- * are not used and can be NULL.
+ * are not used and can be nullptr.
  *
  */
 int command_init(void) {
@@ -164,7 +164,7 @@ int command_init(void) {
 		command_add("numauths","- TODO: describe this command",200,command_numauths) ||
 		command_add("setanim","[animnum] - Set target's appearance to animnum",200,command_setanim) ||
 		command_add("connectworldserver","- Make zone attempt to connect to worldserver",200,command_connectworldserver) ||
-		command_add("connectworld",NULL,0,command_connectworldserver) ||
+		command_add("connectworld",nullptr,0,command_connectworldserver) ||
 		command_add("serverinfo","- Get OS info about server host",200,command_serverinfo) ||
 		command_add("crashtest","- Crash the zoneserver",200,command_crashtest) ||
 		command_add("getvariable","[varname] - Get the value of a variable from the database",200,command_getvariable) ||
@@ -180,7 +180,7 @@ int command_init(void) {
 		command_add("zone","[zonename] [x] [y] [z] - Go to specified zone (coords optional)",50,command_zone) ||
 		command_add("zoneinstance","[instanceid] [x] [y] [z] - Go to specified instance zone (coords optional)",50,command_zone_instance) ||
         command_add("peqzone","[zonename] - Go to specified zone, if you have > 75% health",0,command_peqzone) ||
-		command_add("tgczone",NULL,0,command_peqzone) ||
+		command_add("tgczone",nullptr,0,command_peqzone) ||
 		command_add("showbuffs","- List buffs active on your target or you if no target",50,command_showbuffs) ||
 		command_add("movechar","[charname] [zonename] - Move charname to zonename",50,command_movechar) ||
 		command_add("viewpetition","[petition number] - View a petition",20,command_viewpetition) ||
@@ -192,9 +192,9 @@ int command_init(void) {
 		command_add("timezone","[HH] [MM] - Set timezone. Minutes are optional",90,command_timezone) ||
 		command_add("synctod","- Send a time of day update to every client in zone",90,command_synctod) ||
 		command_add("invulnerable","[on/off] - Turn player target's or your invulnerable flag on or off",80,command_invul) ||
-		command_add("invul",NULL,0,command_invul) ||
+		command_add("invul",nullptr,0,command_invul) ||
 		command_add("hideme","[on/off] - Hide yourself from spawn lists.",80,command_hideme) ||
-		command_add("gmhideme",NULL,0,command_hideme) ||
+		command_add("gmhideme",nullptr,0,command_hideme) ||
 		command_add("emote","['name'/'world'/'zone'] [type] [message] - Send an emote message",80,command_emote) ||
 		command_add("fov","- Check wether you're behind or in your target's field of view",80,command_fov) ||
 		command_add("manastat","- Report your or your target's cur/max mana",80,command_manastat) ||
@@ -208,7 +208,7 @@ int command_init(void) {
 		command_add("permagender","[gendernum] - Change your or your player target's gender (zone to take effect)",80,command_permagender) ||
 		command_add("weather","[0/1/2/3] (Off/Rain/Snow/Manual) - Change the weather",80,command_weather) ||
 		command_add("zheader","[zonename] - Load zheader for zonename from the database",80,command_zheader) ||
-		command_add("zhdr",NULL,0,command_zheader) ||
+		command_add("zhdr",nullptr,0,command_zheader) ||
 		command_add("zsky","[skytype] - Change zone sky type",80,command_zsky) ||
 		command_add("zcolor","[red] [green] [blue] - Change sky color",80,command_zcolor) ||
 		command_add("zuwcoords","[z coord] - Set underworld coord",80,command_zuwcoords) ||
@@ -237,14 +237,14 @@ int command_init(void) {
 		command_add("flymode","[0/1/2] - Set your or your player target's flymode to off/on/levitate",50,command_flymode) ||
 		command_add("showskills","- Show the values of your or your player target's skills",50,command_showskills) ||
 		command_add("findspell","[searchstring] - Search for a spell",50,command_findspell) ||
-		command_add("spfind",NULL,0,command_findspell) ||
+		command_add("spfind",nullptr,0,command_findspell) ||
 		command_add("castspell","[spellid] - Cast a spell",50,command_castspell) ||
-		command_add("cast",NULL,0,command_castspell) ||
+		command_add("cast",nullptr,0,command_castspell) ||
 		command_add("setlanguage","[language ID] [value] - Set your target's language skillnum to value",50,command_setlanguage) ||
 		command_add("setskill","[skillnum] [value] - Set your target's skill skillnum to value",50,command_setskill) ||
 		command_add("setskillall","[value] - Set all of your target's skills to value",50,command_setskillall) ||
-		command_add("setallskill",NULL,0,command_setskillall) ||
-		command_add("setallskills",NULL,0,command_setskillall) ||
+		command_add("setallskill",nullptr,0,command_setskillall) ||
+		command_add("setallskills",nullptr,0,command_setskillall) ||
 		command_add("race","[racenum] - Change your or your target's race.  Use racenum 0 to return to normal",50,command_race) ||
 		command_add("gender","[0/1/2] - Change your or your target's  gender to male/female/neuter",50,command_gender) ||
 		command_add("makepet","[level] [class] [race] [texture] - Make a pet",50,command_makepet) ||
@@ -252,7 +252,7 @@ int command_init(void) {
 		command_add("spawn","[name] [race] [level] [material] [hp] [gender] [class] [priweapon] [secweapon] [merchantid] - Spawn an NPC",10,command_spawn) ||
 		command_add("texture","[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment",10,command_texture) ||
 		command_add("npctypespawn","[npctypeid] [factionid] - Spawn an NPC from the db",10,command_npctypespawn) ||
-		command_add("dbspawn",NULL,0,command_npctypespawn) ||
+		command_add("dbspawn",nullptr,0,command_npctypespawn) ||
 		command_add("heal","- Completely heal your target",10,command_heal) ||
 		command_add("appearance","[type] [value] - Send an appearance packet for you or your target",150,command_appearance) ||
 		command_add("charbackup","[list/restore] - Query or restore character backups",150,command_charbackup) ||
@@ -260,17 +260,17 @@ int command_init(void) {
 		command_add("peekinv","[worn/cursor/inv/bank/trade/trib/all] - Print out contents of your player target's inventory",100,command_peekinv) ||
 		command_add("findnpctype","[search criteria] - Search database NPC types",100,command_findnpctype) ||
 		command_add("findzone","[search criteria] - Search database zones",100,command_findzone) ||
-		command_add("fz",NULL,100,command_findzone) ||
+		command_add("fz",nullptr,100,command_findzone) ||
 		command_add("viewnpctype","[npctype id] - Show info about an npctype",100,command_viewnpctype) ||
 		command_add("reloadstatic","- Reload Static Zone Data",150,command_reloadstatic) ||
 		command_add("reloadquest"," - Clear quest cache (any argument causes it to also stop all timers)",150,command_reloadqst) ||
-		command_add("reloadqst",NULL,0,command_reloadqst) ||
-		command_add("reloadpl",NULL,0,command_reloadqst) ||
-		command_add("reloadworld",NULL,255,command_reloadworld) ||
-		command_add("reloadlevelmods",NULL,255,command_reloadlevelmods) ||
-		command_add("rq",NULL,0,command_reloadqst) ||
+		command_add("reloadqst",nullptr,0,command_reloadqst) ||
+		command_add("reloadpl",nullptr,0,command_reloadqst) ||
+		command_add("reloadworld",nullptr,255,command_reloadworld) ||
+		command_add("reloadlevelmods",nullptr,255,command_reloadlevelmods) ||
+		command_add("rq",nullptr,0,command_reloadqst) ||
 		command_add("reloadzonepoints","- Reload zone points from database",150,command_reloadzps) ||
-		command_add("reloadzps",NULL,0,command_reloadzps) ||
+		command_add("reloadzps",nullptr,0,command_reloadzps) ||
 		command_add("zoneshutdown","[shortname] - Shut down a zone server",150,command_zoneshutdown) ||
 		command_add("zonebootup","[ZoneServerID] [shortname] - Make a zone server boot a specific zone",150,command_zonebootup) ||
 		command_add("kick","[charname] - Disconnect charname",150,command_kick) ||
@@ -303,17 +303,17 @@ int command_init(void) {
 		command_add("pvp","[on/off] - Set your or your player target's PVP status",100,command_pvp) ||
 		command_add("setxp","[value] - Set your or your player target's experience",100,command_setxp) ||
 		command_add("setpvppoints","[value] - Set your or your player target's PVP points",100,command_setpvppoints) ||
-		command_add("setexp",NULL,0,command_setxp) ||
+		command_add("setexp",nullptr,0,command_setxp) ||
 		command_add("setaaxp","[value] - Set your or your player target's AA experience",100,command_setaaxp) ||
-		command_add("setaaexp",NULL,0,command_setaaxp) ||
+		command_add("setaaexp",nullptr,0,command_setaaxp) ||
 		command_add("setaapts","[value] - Set your or your player target's available AA points",100,command_setaapts) ||
-		command_add("setaapoints",NULL,0,command_setaapts) ||
+		command_add("setaapoints",nullptr,0,command_setaapts) ||
 		command_add("setcrystals","[value] - Set your or your player target's available radiant or ebon crystals",100,command_setcrystals) ||
 		command_add("name","[newname] - Rename your player target",150,command_name) ||
 		command_add("tempname","[newname] - Temporarily renames your target. Leave name blank to restore the original name.",100,command_tempname) ||
 		command_add("npcspecialattk","[flagchar] [perm] - Set NPC special attack flags.  Flags are E(nrage) F(lurry) R(ampage) S(ummon).",80,command_npcspecialattk) ||
-		command_add("npcspecialattack",NULL,0,command_npcspecialattk) ||
-		command_add("npcspecialatk",NULL,0,command_npcspecialattk) ||
+		command_add("npcspecialattack",nullptr,0,command_npcspecialattk) ||
+		command_add("npcspecialatk",nullptr,0,command_npcspecialattk) ||
 		command_add("kill","- Kill your target",100,command_kill) ||
 		command_add("haste","[percentage] - Set your haste percentage",100,command_haste) ||
 		command_add("damage","[amount] - Damage your target",100,command_damage) ||
@@ -334,14 +334,14 @@ int command_init(void) {
 		command_add("uptime","[zone server id] - Get uptime of worldserver, or zone server if argument provided",10,command_uptime) ||
 		command_add("flag","[status] [acctname] - Refresh your admin status, or set an account's admin status if arguments provided",0,command_flag) ||
 		command_add("guild","- Guild manipulation commands.  Use argument help for more info.",10,command_guild) ||
-		command_add("guilds",NULL,0,command_guild) ||
+		command_add("guilds",nullptr,0,command_guild) ||
 		command_add("zonestatus","- Show connected zoneservers, synonymous with /servers",150,command_zonestatus) ||
 		command_add("manaburn","- Use AA Wizard class skill manaburn on target",10,command_manaburn) ||
 		command_add("viewmessage","[id] - View messages in your tell queue",100,command_viewmessage) ||
-		command_add("viewmessages",NULL,0,command_viewmessage) ||
+		command_add("viewmessages",nullptr,0,command_viewmessage) ||
 		command_add("doanim","[animnum] [type] - Send an EmoteAnim for you or your target",50,command_doanim) ||
 		command_add("randomfeatures","- Temporarily randomizes the Facial Features of your target",80,command_randomfeatures) ||
-		command_add("rf",NULL,80,command_randomfeatures) ||
+		command_add("rf",nullptr,80,command_randomfeatures) ||
 		command_add("face","- Change the face of your target",80,command_face) ||
 		command_add("helm","- Change the helm of your target",80,command_helm) ||
 		command_add("hair","- Change the hair style of your target",80,command_hair) ||
@@ -358,15 +358,15 @@ int command_init(void) {
 		command_add("interrupt","[message id] [color] - Interrupt your casting.  Arguments are optional.",50,command_interrupt) ||
 		command_add("d1","[type] [spell] [damage] - Send an OP_Action packet with the specified values",200,command_d1) ||
 		command_add("summonitem","[itemid] [charges] - Summon an item onto your cursor.  Charges are optional.",200,command_summonitem) ||
-		command_add("si",NULL,200,command_summonitem) ||
+		command_add("si",nullptr,200,command_summonitem) ||
 		command_add("giveitem","[itemid] [charges] - Summon an item onto your target's cursor.  Charges are optional.",200,command_giveitem) ||
-		command_add("gi",NULL,200,command_giveitem) ||
+		command_add("gi",nullptr,200,command_giveitem) ||
 		command_add("givemoney","[pp] [gp] [sp] [cp] - Gives specified amount of money to the target player.",200,command_givemoney) ||
 		command_add("itemsearch","[search criteria] - Search for an item",10,command_itemsearch) ||
-		command_add("search",NULL,10,command_itemsearch) ||
+		command_add("search",nullptr,10,command_itemsearch) ||
 		command_add("stun","[duration] - Stuns you or your target for duration",100,command_stun) ||
-		command_add("finditem",NULL,10,command_itemsearch) ||
-		command_add("fi",NULL,10,command_itemsearch) ||
+		command_add("finditem",nullptr,10,command_itemsearch) ||
+		command_add("fi",nullptr,10,command_itemsearch) ||
 #ifdef PACKET_PROFILER
 		command_add("packetprofile","- Dump packet profile for target or self.",250,command_packetprofile) || 
 #endif
@@ -384,7 +384,7 @@ int command_init(void) {
 		command_add("oocmute","[1/0] - Mutes OOC chat",200,command_oocmute) ||
 		command_add("revoke","[charname] [1/0] - Makes charname unable to talk on OOC",200,command_revoke) ||
 		command_add("checklos","- Check for line of sight to your target",50,command_checklos) ||
-		command_add("los",NULL,0,command_checklos) ||
+		command_add("los",nullptr,0,command_checklos) ||
 		command_add("setadventurepoints","- Set your or your player target's available adventure points",150,command_set_adventure_points) ||
 		command_add("npcsay","[message] - Make your NPC target say a message.",150,command_npcsay) ||
 		command_add("npcshout","[message] - Make your NPC target shout a message.",150,command_npcshout) ||
@@ -522,7 +522,7 @@ void command_deinit(void)
  */
 int command_add(const char *command_string, const char *desc, int access, CmdFuncPtr function)
 {
-	if(function == NULL)
+	if(function == nullptr)
 		return(-1);
 	
 	string cstr(command_string);
@@ -540,7 +540,7 @@ int command_add(const char *command_string, const char *desc, int access, CmdFun
 		if(cur->second->function == function) {
 			int r;
 			for(r = 1; r < CMDALIASES; r++) {
-				if(cur->second->command[r] == NULL) {
+				if(cur->second->command[r] == nullptr) {
 					cur->second->command[r] = command_string;
 					break;
 				}
@@ -594,7 +594,7 @@ int command_add_perl(const char *command_string, const char *desc, int access) {
 	CommandRecord *c = new CommandRecord;
 	c->desc = desc;
 	c->access = access;
-	c->function = NULL;
+	c->function = nullptr;
 	
 	commandlist[cstr] = c;
 	
@@ -612,7 +612,7 @@ void command_clear_perl() {
 	for(; cur != end;) {
 		del = cur;
 		cur++;
-		if(del->second->function == NULL) {
+		if(del->second->function == nullptr) {
 			safe_delete(del->second);
 			commandlist.erase(del);
 		}
@@ -661,7 +661,7 @@ int command_realdispatch(Client *c, const char *message)
 	}
 #endif
 	
-	if(cur->function == NULL) {
+	if(cur->function == nullptr) {
 #ifdef EMBPERL_COMMANDS
 		//todo reimplement this stuff
         //dispatch perl command
@@ -930,7 +930,7 @@ void command_help(Client *c, const Seperator *sep)
 		if(c->Admin() < cur->second->access)
 			continue;
   		commands_shown++;
-		c->Message(0, "	%c%s %s", COMMAND_CHAR, cur->first.c_str(), cur->second->desc == NULL?"":cur->second->desc);
+		c->Message(0, "	%c%s %s", COMMAND_CHAR, cur->first.c_str(), cur->second->desc == nullptr?"":cur->second->desc);
 	}
 	c->Message(0, "%d command%s listed.", commands_shown, commands_shown!=1?"s":"");
 	
@@ -1017,7 +1017,7 @@ void command_wc(Client *c, const Seperator *sep)
 	{
 		c->Message(0, "Usage: #wc [wear slot] [material] [ [hero_forge_model] [elite_material] [unknown06] [unknown18] ]");
 	}
-	else if(c->GetTarget() == NULL) {
+	else if(c->GetTarget() == nullptr) {
 		c->Message(13, "You must have a target to do a wear change.");
 	}
 	else
@@ -1154,7 +1154,7 @@ void command_showpetspell(Client *c, const Seperator *sep)
 				strcpy(sName, spells[i].teleport_zone);
 				strupr(sName);
 				char* pdest = strstr(sName, sCriteria);
-				if ((pdest != NULL) && (count <=20))
+				if ((pdest != nullptr) && (count <=20))
 				{
 					c->Message(0, "	%i: %s, %s", i, spells[i].teleport_zone, spells[i].name);
 					count++;
@@ -1818,7 +1818,7 @@ void command_emote(Client *c, const Seperator *sep)
 			if(strstr(sep->arg[3],"^")==0)
 				entity_list.Message(0, atoi(sep->arg[2]), sep->argplus[3]);
 			else{
-				for(newmessage = strtok((char*)sep->arg[3],"^");newmessage!=NULL;newmessage=strtok(NULL, "^"))
+				for(newmessage = strtok((char*)sep->arg[3],"^");newmessage!=nullptr;newmessage=strtok(nullptr, "^"))
 					entity_list.Message(0, atoi(sep->arg[2]), newmessage);
 			}
 		}
@@ -2142,7 +2142,7 @@ void command_itemtest(Client *c, const Seperator *sep)
 {
 	char chBuffer[8192] = {0};
 	//Using this to determine new item layout
-	FILE* f = NULL;
+	FILE* f = nullptr;
 	if (!(f = fopen("c:\\EQEMUcvs\\ItemDump.txt", "rb"))) {
 		c->Message(13, "Error: Could not open c:\\EQEMUcvs\\ItemDump.txt");
 		return;
@@ -2568,7 +2568,7 @@ void command_findspell(Client *c, const Seperator *sep)
 
 				strupr(sName);
 				char* pdest = strstr(sName, sCriteria);
-				if ((pdest != NULL) && (count <=20)) {
+				if ((pdest != nullptr) && (count <=20)) {
 					c->Message(0, "  %i: %s", i, spells[i].name);
 					count++;
 				}
@@ -2677,7 +2677,7 @@ void command_setlanguage(Client *c, const Seperator *sep)
 
 void command_setskill(Client *c, const Seperator *sep)
 {
-	if (c->GetTarget() == NULL) {
+	if (c->GetTarget() == nullptr) {
 		c->Message(0, "Error: #setskill: No target.");
 	}
 	else if (!c->GetTarget()->IsClient()) {
@@ -2991,7 +2991,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 	bool bAll = (strcasecmp(sep->arg[1], "all") == 0);
 	bool bFound = false;
 	Client* client = c->GetTarget()->CastToClient();
-	const Item_Struct* item = NULL;
+	const Item_Struct* item = nullptr;
 	c->Message(0, "Displaying inventory for %s...", client->GetName());
 		
 	if (bAll || (strcasecmp(sep->arg[1], "worn")==0)) {
@@ -2999,7 +2999,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		bFound = true;
 		for (int16 i=0; i<=21; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "WornSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3021,7 +3021,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		bFound = true;
 		for (int16 i=22; i<=29; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "InvSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3040,7 +3040,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 			if (inst && inst->IsType(ItemClassContainer)) {
 				for (uint8 j=0; j<10; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
-					item = (instbag) ? instbag->GetItem() : NULL;
+					item = (instbag) ? instbag->GetItem() : nullptr;
 					if (c->GetClientVersion() >= EQClientSoF)
 					{
 						c->Message((item==0), "   InvBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i",
@@ -3063,7 +3063,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		if(c->GetClientVersion() >= EQClientSoF)
 		{
 			const ItemInst* inst = client->GetInv().GetItem(9999);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			c->Message((item==0), "InvSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", 9999,
 			((item==0)?0:item->ID),0x12, ((item==0)?0:item->ID),
 			((item==0)?"null":item->Name), 0x12,
@@ -3094,7 +3094,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		else {
 			for(it=client->GetInv().cursor_begin();it!=client->GetInv().cursor_end();it++,i++) {
 				const ItemInst* inst = *it;
-				item = (inst) ? inst->GetItem() : NULL;
+				item = (inst) ? inst->GetItem() : nullptr;
 				if (c->GetClientVersion() >= EQClientSoF)
 				{
 					c->Message((item==0), "CursorSlot: %i, Depth: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", SLOT_CURSOR,i,
@@ -3113,7 +3113,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 				if (inst && inst->IsType(ItemClassContainer) && i==0) { // 'CSD 1' - only display contents of slot 30[0] container..higher ones don't exist
 					for (uint8 j=0; j<10; j++) {
 						const ItemInst* instbag = client->GetInv().GetItem(SLOT_CURSOR, j);
-						item = (instbag) ? instbag->GetItem() : NULL;
+						item = (instbag) ? instbag->GetItem() : nullptr;
 						if (c->GetClientVersion() >= EQClientSoF)
 						{
 							c->Message((item==0), "   CursorBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i",
@@ -3141,7 +3141,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		bFound = true;
 		for (int16 i=TRIBUTE_SLOT_START; i<(TRIBUTE_SLOT_START + MAX_PLAYER_TRIBUTES); i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "TributeSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3165,7 +3165,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		int16 i = 0;
 		for (i=2000; i<=2023; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "BankSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3184,7 +3184,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 			if (inst && inst->IsType(ItemClassContainer)) {
 				for (uint8 j=0; j<10; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
-					item = (instbag) ? instbag->GetItem() : NULL;
+					item = (instbag) ? instbag->GetItem() : nullptr;
 					if (c->GetClientVersion() >= EQClientSoF)
 					{
 						c->Message((item==0), "   BankBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i",
@@ -3206,7 +3206,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		}
 		for (i=2500; i<=2501; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "ShBankSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3225,7 +3225,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 			if (inst && inst->IsType(ItemClassContainer)) {
 				for (uint8 j=0; j<10; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
-					item = (instbag) ? instbag->GetItem() : NULL;
+					item = (instbag) ? instbag->GetItem() : nullptr;
 					if (c->GetClientVersion() >= EQClientSoF)
 					{
 						c->Message((item==0), "   ShBankBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i",
@@ -3251,7 +3251,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 		bFound = true;
 		for (int16 i=3000; i<=3007; i++) {
 			const ItemInst* inst = client->GetInv().GetItem(i);
-			item = (inst) ? inst->GetItem() : NULL;
+			item = (inst) ? inst->GetItem() : nullptr;
 			if (c->GetClientVersion() >= EQClientSoF)
 			{
 				c->Message((item==0), "TradeSlot: %i, Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i", i,
@@ -3270,7 +3270,7 @@ void command_peekinv(Client *c, const Seperator *sep)
 			if (inst && inst->IsType(ItemClassContainer)) {
 				for (uint8 j=0; j<10; j++) {
 					const ItemInst* instbag = client->GetInv().GetItem(i, j);
-					item = (instbag) ? instbag->GetItem() : NULL;
+					item = (instbag) ? instbag->GetItem() : nullptr;
 					if (c->GetClientVersion() >= EQClientSoF)
 					{
 						c->Message((item==0), "   TradeBagSlot: %i (Slot #%i, Bag #%i), Item: %i (%c%06X00000000000000000000000000000000000000000000%s%c), Charges: %i",
@@ -3696,7 +3696,7 @@ void command_equipitem(Client *c, const Seperator *sep)
 
 			// also send out a wear change packet?
 		}
-		else if (from_inst == NULL)
+		else if (from_inst == nullptr)
 			c->Message(13, "Error: There is no item on your cursor");
 		else
 			c->Message(13, "Error: Item on your cursor cannot be equipped");
@@ -3918,7 +3918,7 @@ void command_fixmob(Client *c, const Seperator *sep)
 		uint32 DrakkinTattoo = target->GetDrakkinTattoo();
 		uint32 DrakkinDetails = target->GetDrakkinDetails();
 
-		const char* ChangeType = NULL; // If it's still NULL after processing, they didn't send a valid command
+		const char* ChangeType = nullptr; // If it's still nullptr after processing, they didn't send a valid command
 		uint32 ChangeSetting;
 		char* command = sep->arg[1];
 			
@@ -4086,7 +4086,7 @@ void command_fixmob(Client *c, const Seperator *sep)
 		}
 
 
-		if (ChangeType == NULL)
+		if (ChangeType == nullptr)
 		{
 			c->Message(0,Usage);
 		}
@@ -6084,7 +6084,7 @@ void command_wpinfo(Client *c, const Seperator *sep)
 {
 	Mob *t=c->GetTarget();
 
-	if (t == NULL || !t->IsNPC()) {
+	if (t == nullptr || !t->IsNPC()) {
 		c->Message(0,"You must target an NPC to use this.");
 		return;
 	}
@@ -6105,7 +6105,7 @@ void command_wpadd(Client *c, const Seperator *sep)
 	{
 		Spawn2* s2info = t->CastToNPC()->respawn2;
 
-		if(s2info == NULL)	// Can't figure out where this mob's spawn came from... maybe a dynamic mob created by #spawn
+		if(s2info == nullptr)	// Can't figure out where this mob's spawn came from... maybe a dynamic mob created by #spawn
 		{
 			c->Message(0,"#wpadd FAILED -- Can't determine which spawn record in the database this mob came from!");
 			return;
@@ -6196,7 +6196,7 @@ void command_giveitem(Client *c, const Seperator *sep)
 {
 	if (!sep->IsNumber(1)) {
 		c->Message(13, "Usage: #summonitem [item id] [charges], charges are optional");
-	} else if(c->GetTarget() == NULL) {
+	} else if(c->GetTarget() == nullptr) {
 		c->Message(13, "You must target a client to give the item to.");
 	} else if(!c->GetTarget()->IsClient()) {
 		c->Message(13, "You can only give items to players with this command.");
@@ -6234,7 +6234,7 @@ void command_givemoney(Client *c, const Seperator *sep)
 	if (!sep->IsNumber(1)) {	//as long as the first one is a number, we'll just let atoi convert the rest to 0 or a number
 		c->Message(13, "Usage: #Usage: #givemoney [pp] [gp] [sp] [cp]");
     } 
-	else if(c->GetTarget() == NULL) {
+	else if(c->GetTarget() == nullptr) {
 		c->Message(13, "You must target a player to give money to.");
 	} 
 	else if(!c->GetTarget()->IsClient()) {
@@ -6287,7 +6287,7 @@ void command_itemsearch(Client *c, const Seperator *sep)
 			strn0cpy(sName, item->Name, sizeof(sName));
 			strupr(sName);
 			pdest = strstr(sName, sCriteria);
-			if (pdest != NULL) {
+			if (pdest != nullptr) {
 				if (c->GetClientVersion() >= EQClientRoF)
 				{
 					c->Message(0, "  %i: %c%06X0000000000000000000000000000000000000000000000000%s%c",(int) item->ID,0x12, item->ID, item->Name, 0x12);
@@ -6525,7 +6525,7 @@ void command_ban(Client *c, const Seperator *sep)
 			worldserver.SendPacket(pack);
 			safe_delete(pack);
 
-			Client *client = NULL;
+			Client *client = nullptr;
 			client = entity_list.GetClientByName(sep->arg[1]);
 			if(client)
 			{
@@ -6558,7 +6558,7 @@ void command_ban(Client *c, const Seperator *sep)
 void command_suspend(Client *c, const Seperator *sep)
 {
 	char errbuf[MYSQL_ERRMSG_SIZE];
-	char *query = NULL;
+	char *query = nullptr;
 
 	if((sep->arg[1][0] == 0) || (sep->arg[2][0] == 0))
 		c->Message(0, "Usage:  #suspend <charname> <days>  (Specify 0 days to lift the suspension immediately)");
@@ -6670,7 +6670,7 @@ void command_revoke(Client *c, const Seperator *sep)
 		if(query)
 		{
 			safe_delete_array(query);
-			query=NULL;
+			query=nullptr;
 		}
 	}
 }
@@ -7319,7 +7319,7 @@ void command_opcode(Client *c, const Seperator *sep) {
 
 void command_logsql(Client *c, const Seperator *sep) {
 	if(!strcasecmp( sep->arg[1], "off" )) {
-		c->ChangeSQLLog(NULL);
+		c->ChangeSQLLog(nullptr);
 	} else if(sep->arg[1][0] != '\0') {
 		c->ChangeSQLLog(sep->argplus[1]);
 	} else {
@@ -7467,7 +7467,7 @@ void command_fear(Client *c, const Seperator *sep) {
 	}
 	
 	if(!strcasecmp(sep->arg[1], "view")) {
-		if(zone->pathing == NULL) {
+		if(zone->pathing == nullptr) {
 			c->Message(13, "There is no fear grid file loaded for this zone.");
 			return;
 		}
@@ -7478,13 +7478,13 @@ void command_fear(Client *c, const Seperator *sep) {
 		PathNode_Struct *node = zone->pathing->GetNode(0); //assumes nodes are stored in a linear array
 		for(r = 0; r < count; r++, node++) {
 			sprintf(buf, "Fear_Point%d 3", r);
-			NPC* npc = NPC::SpawnNPC(buf, node->x, node->y, node->z, c->GetHeading(), NULL);
-			if(npc == NULL)
+			NPC* npc = NPC::SpawnNPC(buf, node->x, node->y, node->z, c->GetHeading(), nullptr);
+			if(npc == nullptr)
 				c->Message(13, "Unable to spawn new NPC marker.");
 			//do we need to do anything else?
 		}
 	} else if(!strcasecmp(sep->arg[1], "path")) {
-		if(zone->pathing == NULL) {
+		if(zone->pathing == nullptr) {
 			c->Message(13, "There is no fear grid file loaded for this zone.");
 			return;
 		}
@@ -7515,8 +7515,8 @@ void command_fear(Client *c, const Seperator *sep) {
 			it.z = fs.z;
 			pts.push_back(it);
 		} else {
-			NPC* npc = NPC::SpawnNPC(buf, fs.x, fs.y, fs.z, c->GetHeading(), NULL);
-			if(npc == NULL)
+			NPC* npc = NPC::SpawnNPC(buf, fs.x, fs.y, fs.z, c->GetHeading(), nullptr);
+			if(npc == nullptr)
 				c->Message(13, "Unable to spawn new NPC marker.");
 		}
 		
@@ -7533,7 +7533,7 @@ void command_fear(Client *c, const Seperator *sep) {
 				it.z = fs.z;
 				pts.push_back(it);
 			} else {
-				NPC::SpawnNPC(buf, fs.x, fs.y, fs.z, c->GetHeading(), NULL);
+				NPC::SpawnNPC(buf, fs.x, fs.y, fs.z, c->GetHeading(), nullptr);
 			}
 		}
 		
@@ -7542,7 +7542,7 @@ void command_fear(Client *c, const Seperator *sep) {
 		}
 		
 	} else if(!strcasecmp(sep->arg[1], "close")) {
-		if(zone->pathing == NULL) {
+		if(zone->pathing == nullptr) {
 			c->Message(13, "There is no fear grid file loaded for this zone.");
 			return;
 		}
@@ -7553,8 +7553,8 @@ void command_fear(Client *c, const Seperator *sep) {
 			return;
 		}
 		
-		NPC* npc = NPC::SpawnNPC("Close_Fear_Point 2", fs.x, fs.y, fs.z, c->GetHeading(), NULL);
-		if(npc == NULL)
+		NPC* npc = NPC::SpawnNPC("Close_Fear_Point 2", fs.x, fs.y, fs.z, c->GetHeading(), nullptr);
+		if(npc == nullptr)
 			c->Message(13, "Unable to spawn new NPC marker.");
 		
 	} else if(!strcasecmp(sep->arg[1], "see")) {
@@ -7563,7 +7563,7 @@ void command_fear(Client *c, const Seperator *sep) {
 		
 		Mob* target = c->GetTarget();
 		
-		if(target == NULL) {
+		if(target == nullptr) {
 			//empty length packet == not found.
 			EQApplicationPacket outapp(OP_FindPersonReply, 0);
 			c->QueuePacket(&outapp);
@@ -7675,7 +7675,7 @@ void command_path(Client *c, const Seperator *sep)
 			if(zone->zonemap)
 			{
 				VERTEX loc = {px, py, pz};
-				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
+				best_z = zone->zonemap->FindBestZ(loc, nullptr, nullptr);
 			}
 			else
 			{
@@ -7702,7 +7702,7 @@ void command_path(Client *c, const Seperator *sep)
 			if(zone->zonemap)
 			{
 				VERTEX loc = {px, py, pz};
-				best_z = zone->zonemap->FindBestZ(loc, NULL, NULL);
+				best_z = zone->zonemap->FindBestZ(loc, nullptr, nullptr);
 			}
 			else
 			{
@@ -7932,7 +7932,7 @@ void Client::Undye() {
 	for (int cur_slot = 0; cur_slot < 9 ; cur_slot++ ){
 		uint8 slot2=SlotConvert(cur_slot);
 		ItemInst* inst = m_inv.GetItem(slot2);
-		if(inst != NULL) {
+		if(inst != nullptr) {
 			inst->SetColor(inst->GetItem()->Color);
 			database.SaveInventory(CharacterID(), inst, slot2);
 		}
@@ -7981,7 +7981,7 @@ void command_ginfo(Client *c, const Seperator *sep)
 	
 	uint32 r;
 	for(r = 0; r < MAX_GROUP_MEMBERS; r++) {
-		if(g->members[r] == NULL) {
+		if(g->members[r] == nullptr) {
 			if(g->membername[r][0] == '\0')
 				continue;
 			c->Message(0, "...Zoned Member: %s, Roles: %s %s %s", g->membername[r],
@@ -8006,7 +8006,7 @@ void command_hp(Client *c, const Seperator *sep)
 
 void command_aggro(Client *c, const Seperator *sep)
 {
-	if(c->GetTarget() == NULL || !c->GetTarget()->IsNPC()) {
+	if(c->GetTarget() == nullptr || !c->GetTarget()->IsNPC()) {
 		c->Message(0, "Error: you must have an NPC target.");
 		return;
 	}
@@ -8040,7 +8040,7 @@ void command_pf(Client *c, const Seperator *sep)
 }
 
 void command_bestz(Client *c, const Seperator *sep) {
-	if (zone->zonemap == NULL) {
+	if (zone->zonemap == nullptr) {
 		c->Message(0,"Maps deactivated in this zone.");
 		return;
 	}
@@ -8126,7 +8126,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 		}
 	}
 	*/
-	if(zone->watermap == NULL) {
+	if(zone->watermap == nullptr) {
 		c->Message(0,"Water Region Map not loaded for this zone");
 	} else {
 		WaterRegionType RegionType;
@@ -8170,7 +8170,7 @@ void command_flags(Client *c, const Seperator *sep) {
 	
 	if(c->Admin() >= minStatusToSeeOthersZoneFlags) {
 		Mob *tgt = c->GetTarget();
-		if(tgt != NULL && tgt->IsClient())
+		if(tgt != nullptr && tgt->IsClient())
 			t = tgt->CastToClient();
 	}
 	
@@ -8277,7 +8277,7 @@ void command_flagedit(Client *c, const Seperator *sep) {
 		}
 		
 		Mob *t = c->GetTarget();
-		if(t == NULL || !t->IsClient()) {
+		if(t == nullptr || !t->IsClient()) {
 			c->Message(13, "client target required");
 			return;
 		}
@@ -8297,7 +8297,7 @@ void command_flagedit(Client *c, const Seperator *sep) {
 		}
 		
 		Mob *t = c->GetTarget();
-		if(t == NULL || !t->IsClient()) {
+		if(t == nullptr || !t->IsClient()) {
 			c->Message(13, "client target required");
 			return;
 		}
@@ -8336,7 +8336,7 @@ void command_mlog(Client *c, const Seperator *sep) {
 		else { c->Message(13, "Invalid argument. Expected on/off."); return; }
 		
 		Mob *tgt = c->GetTarget();
-		if(tgt == NULL) {
+		if(tgt == nullptr) {
 			c->Message(13, "You must have a target for this command.");
 			return;
 		}
@@ -8516,7 +8516,7 @@ void command_guildlist(Client *c, const Seperator *sep)
 
 void command_hatelist(Client *c, const Seperator *sep) {
 	Mob *target = c->GetTarget();
-	if(target == NULL) {
+	if(target == nullptr) {
 		c->Message(0, "Error: you must have a target.");
 		return;
 	}
@@ -8667,7 +8667,7 @@ void command_rules(Client *c, const Seperator *sep) {
 				c->Message(0, " %s", *cur);
 			}
 		} else if(sep->argnum == 2) {
-			const char *catfilt = NULL;
+			const char *catfilt = nullptr;
 			if(std::string("all") != sep->arg[2])
 				catfilt = sep->arg[2];
 			std::vector<const char *> rule_list;
@@ -8690,7 +8690,7 @@ void command_rules(Client *c, const Seperator *sep) {
 			c->Message(13, "Invalid argument count, see help.");
 			return;
 		} else {
-			const char *catfilt = NULL;
+			const char *catfilt = nullptr;
 			if(std::string("all") != sep->arg[2])
 				catfilt = sep->arg[2];
 			std::vector<const char *> rule_list;
@@ -8823,11 +8823,11 @@ void command_altactivate(Client *c, const Seperator *sep){
 	if(!strcasecmp(sep->arg[1], "list")){
 		c->Message(10, "You have access to the following AA Abilities:");
 		int x, val;
-		SendAA_Struct* saa = NULL;
+		SendAA_Struct* saa = nullptr;
 		for(x = 0; x < aaHighestID; x++){
 			if(AA_Actions[x][0].spell_id || AA_Actions[x][0].action){ //if there's an action or spell associated we assume it's a valid
 				val = 0;					//and assume if they don't have a value for the first rank then it isn't valid for any rank
-				saa = NULL;
+				saa = nullptr;
 				val = c->GetAA(x);
 				if(val){
 					saa = zone->FindAA(x);
@@ -8856,7 +8856,7 @@ void command_altactivate(Client *c, const Seperator *sep){
 }
 
 void command_refundaa(Client *c, const Seperator *sep){
-	Client* refundee = NULL;
+	Client* refundee = nullptr;
 	int curpt = 0;
 	bool refunded = false;
 	if(c){
@@ -9401,7 +9401,7 @@ void command_instance(Client *c, const Seperator *sep)
 			return;
 		}
 
-		const char * zn = NULL;
+		const char * zn = nullptr;
 		uint32 zone_id = 0;
 
 		if(sep->IsNumber(2))
@@ -9524,7 +9524,7 @@ void command_instance(Client *c, const Seperator *sep)
 		uint32 charid = database.GetCharacterID(sep->arg[2]);
 		if(charid <= 0)
 		{
-			if(c->GetTarget() == NULL || (c->GetTarget() && !c->GetTarget()->IsClient()))
+			if(c->GetTarget() == nullptr || (c->GetTarget() && !c->GetTarget()->IsClient()))
 			{
 				c->Message(0, "Character not found.");
 				return;
@@ -9554,7 +9554,7 @@ void command_instance(Client *c, const Seperator *sep)
 void command_setstartzone(Client *c, const Seperator *sep)
 {
 	uint32 startzone = 0;
-	Client* target = NULL;
+	Client* target = nullptr;
 	if(c->GetTarget() && c->GetTarget()->IsClient() && sep->arg[1][0] != 0)
 		target = c->GetTarget()->CastToClient();
 	else {
@@ -9630,7 +9630,7 @@ void command_object(Client *c, const Seperator *sep)
 	int iObjectsFound = 0;
 	int len;
 
-	Object* o = NULL;
+	Object* o = nullptr;
 	Object_Struct od;
 	Door door;
 	Doors* doors;
@@ -9860,7 +9860,7 @@ void command_object(Client *c, const Seperator *sep)
 				// Already in database?
 				if (database.RunQuery(query, len, errbuf, &result))
 				{
-					if ((row = mysql_fetch_row(result)) != NULL)
+					if ((row = mysql_fetch_row(result)) != nullptr)
 					{
 						if (atoi(row[0]) > 0)
 						{
@@ -9909,7 +9909,7 @@ void command_object(Client *c, const Seperator *sep)
 			iObjectsFound = 0;
 			if (database.RunQuery(query, len, errbuf, &result))
 			{
-				if ((row = mysql_fetch_row(result)) != NULL)
+				if ((row = mysql_fetch_row(result)) != nullptr)
 				{
 					iObjectsFound = atoi(row[0]); // Number of nearby objects from database
 				}
@@ -9993,7 +9993,7 @@ void command_object(Client *c, const Seperator *sep)
 			od.zone_id = zone->GetZoneID();
 			od.zone_instance = zone->GetInstanceVersion();
 
-			o = new Object(id, od.object_type, icon, od, NULL);
+			o = new Object(id, od.object_type, icon, od, nullptr);
 
 			// Add to our zone entity list and spawn immediately for all clients
 			entity_list.AddObject(o, true);
@@ -10410,7 +10410,7 @@ void command_object(Client *c, const Seperator *sep)
 				}
 				else
 				{
-					o->GetLocation(NULL, &od.y, NULL);
+					o->GetLocation(nullptr, &od.y, nullptr);
 				}
 
 				if (sep->argnum > 4)
@@ -10419,7 +10419,7 @@ void command_object(Client *c, const Seperator *sep)
 				}
 				else
 				{
-					o->GetLocation(NULL, NULL, &od.z);
+					o->GetLocation(nullptr, nullptr, &od.z);
 				}
 
 				if (sep->argnum > 5)
@@ -10450,7 +10450,7 @@ void command_object(Client *c, const Seperator *sep)
 				return;
 			}
 
-			if ((o = entity_list.FindObject(id)) == NULL)
+			if ((o = entity_list.FindObject(id)) == nullptr)
 			{
 				c->Message(0, "ERROR: Object %u not found in zone, or is a static object not yet unlocked with '#object Edit' for editing.", id);
 
@@ -10866,7 +10866,7 @@ void command_object(Client *c, const Seperator *sep)
 
 				app = new EQApplicationPacket();
 				o->CreateDeSpawnPacket(app);
-				entity_list.QueueClients(NULL, app);
+				entity_list.QueueClients(nullptr, app);
 				
 				entity_list.RemoveObject(o->GetID());
 
@@ -10991,7 +10991,7 @@ void command_object(Client *c, const Seperator *sep)
 				od.object_type = TempStaticType;
 			}
 
-			o = new Object(id, od.object_type, icon, od, NULL);
+			o = new Object(id, od.object_type, icon, od, nullptr);
 			entity_list.AddObject(o, true);
 
 			c->Message(0, "Object %u reloaded from database.", id);
@@ -11143,7 +11143,7 @@ void command_emotesearch(Client *c, const Seperator *sep)
 			strn0cpy(sText, nes->text, sizeof(sText));
 			strupr(sText);
 			pdest = strstr(sText, sCriteria);
-				if (pdest != NULL) 
+				if (pdest != nullptr) 
 				{
 					c->Message(0, "EmoteID: %i Event: %i Type: %i Text: %s", nes->emoteid, nes->event_, nes->type, nes->text);
 					count++;
@@ -11170,14 +11170,14 @@ void command_reloademote(Client *c, const Seperator *sep)
 
 void command_globalview(Client *c, const Seperator *sep)
 {
-	NPC * npcmob = NULL;
+	NPC * npcmob = nullptr;
 	
 	if(c->GetTarget() && c->GetTarget()->IsNPC())
 	{
 		npcmob = c->GetTarget()->CastToNPC();
-		QGlobalCache *npc_c = NULL;
-		QGlobalCache *char_c = NULL;
-		QGlobalCache *zone_c = NULL;
+		QGlobalCache *npc_c = nullptr;
+		QGlobalCache *char_c = nullptr;
+		QGlobalCache *zone_c = nullptr;
 
 		if(npcmob)
 			npc_c = npcmob->GetQGlobals();
@@ -11220,8 +11220,8 @@ void command_globalview(Client *c, const Seperator *sep)
 	}
 	else
 	{
-		QGlobalCache *char_c = NULL;
-		QGlobalCache *zone_c = NULL;
+		QGlobalCache *char_c = nullptr;
+		QGlobalCache *zone_c = nullptr;
 
 		char_c = c->GetQGlobals();
 		zone_c = zone->GetQGlobals();
@@ -11531,7 +11531,7 @@ void command_mysql(Client *c, const Seperator *sep)
 							LineVec.push_back(LineText.str());
 							LineText.str("");
 						}
-						LineText << fields[i].name << ":"  << "[" << (row[i] ? row[i] : "NULL") << "] ";
+						LineText << fields[i].name << ":"  << "[" << (row[i] ? row[i] : "nullptr") << "] ";
 					}
 					LineVec.push_back(LineText.str());
 
@@ -11673,7 +11673,7 @@ void command_augmentitem(Client *c, const Seperator *sep)
 		in_augment->unknown02[0] = 0;
 		in_augment->unknown02[1] = 0;
 		in_augment->augment_slot = -1;
-		if(c->GetTradeskillObject() != NULL)
+		if(c->GetTradeskillObject() != nullptr)
 		Object::HandleAugmentation(c, in_augment, c->GetTradeskillObject());
 		safe_delete_array(in_augment);
 }

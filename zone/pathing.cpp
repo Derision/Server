@@ -66,13 +66,13 @@ float VertexDistanceNoRoot(VERTEX a, VERTEX b)
 PathManager* PathManager::LoadPathFile(const char* ZoneName)
 {
 
-	FILE *PathFile = NULL;
+	FILE *PathFile = nullptr;
 
 	char LowerCaseZoneName[64];
 
 	char ZonePathFileName[256];
 
-	PathManager* Ret = NULL;
+	PathManager* Ret = nullptr;
 
 	strn0cpy(LowerCaseZoneName, ZoneName, 64);
 	
@@ -106,8 +106,8 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 
 PathManager::PathManager()
 {
-	PathNodes = NULL;
-	ClosedListFlag = NULL;
+	PathNodes = nullptr;
+	ClosedListFlag = nullptr;
 	Head.PathNodeCount = 0;
 	Head.version = 2;
 	QuickConnectTarget = -1;
@@ -418,7 +418,7 @@ list<int> PathManager::FindRoute(VERTEX Start, VERTEX End)
 	{
 		_log(PATHING__DEBUG, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
-		if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Iterator).id].v, 1.0f, NULL, NULL))
+		if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Iterator).id].v, 1.0f, nullptr, nullptr))
 		{
 			ClosestPathNodeToStart = (*Iterator).id;
 			break;
@@ -459,7 +459,7 @@ list<int> PathManager::FindRoute(VERTEX Start, VERTEX End)
 			End.x, End.y, End.z,
 			PathNodes[(*Iterator).id].v.x, PathNodes[(*Iterator).id].v.y, PathNodes[(*Iterator).id].v.z);
 
-		if(!zone->zonemap->LineIntersectsZone(End, PathNodes[(*Iterator).id].v, 1.0f, NULL, NULL))
+		if(!zone->zonemap->LineIntersectsZone(End, PathNodes[(*Iterator).id].v, 1.0f, nullptr, nullptr))
 		{
 			ClosestPathNodeToEnd = (*Iterator).id;
 			break;
@@ -499,7 +499,7 @@ list<int> PathManager::FindRoute(VERTEX Start, VERTEX End)
 			if((*Second) < 0)
 				break;
 
-			if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Second)].v, 1.0f, NULL, NULL)
+			if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Second)].v, 1.0f, nullptr, nullptr)
 			   && zone->pathing->NoHazards(Start, PathNodes[(*Second)].v))
 			{
 				noderoute.erase(First);
@@ -532,7 +532,7 @@ list<int> PathManager::FindRoute(VERTEX Start, VERTEX End)
 			if((*Second) < 0)
 				break;
 
-			if(!zone->zonemap->LineIntersectsZone(End, PathNodes[(*Second)].v, 1.0f, NULL, NULL)
+			if(!zone->zonemap->LineIntersectsZone(End, PathNodes[(*Second)].v, 1.0f, nullptr, nullptr)
 			   && zone->pathing->NoHazards(End, PathNodes[(*Second)].v))
 			{
 				noderoute.erase(First);
@@ -793,7 +793,7 @@ VERTEX Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Waypo
 					if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckShort))
 					   && (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
 					{
-						if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, NULL, NULL))
+						if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr, nullptr))
 							PathingLOSState = HaveLOS;
 						else
 							PathingLOSState = NoLOS;
@@ -886,7 +886,7 @@ VERTEX Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Waypo
 				if((Distance <= RuleR(Pathing, MinDistanceForLOSCheckShort))
 				   && (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
 				{
-					if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, NULL, NULL))
+					if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr, nullptr))
 						PathingLOSState = HaveLOS;
 					else
 						PathingLOSState = NoLOS;
@@ -925,7 +925,7 @@ VERTEX Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Waypo
 				   && (ABS(From.z - To.z) <= RuleR(Pathing, ZDiffThreshold)))
 				{
 					mlog(PATHING__DEBUG, "  Checking for short LOS at distance %8.3f.", Distance);
-					if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, NULL, NULL))
+					if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr, nullptr))
 						PathingLOSState = HaveLOS;
 					else
 						PathingLOSState = NoLOS;
@@ -1078,7 +1078,7 @@ VERTEX Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Waypo
 	{	
 		mlog(PATHING__DEBUG, "  Checking for long LOS at distance %8.3f.", Distance);
 	
-		if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, NULL, NULL))
+		if(!zone->zonemap->LineIntersectsZone(HeadPosition, To, 1.0f, nullptr, nullptr))
 			PathingLOSState = HaveLOS;
 		else
 			PathingLOSState = NoLOS;
@@ -1158,7 +1158,7 @@ int PathManager::FindNearestPathNode(VERTEX Position)
 	{
 		_log(PATHING__DEBUG, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
-		if(!zone->zonemap->LineIntersectsZone(Position, PathNodes[(*Iterator).id].v, 1.0f, NULL, NULL))
+		if(!zone->zonemap->LineIntersectsZone(Position, PathNodes[(*Iterator).id].v, 1.0f, nullptr, nullptr))
 		{
 			ClosestPathNodeToStart = (*Iterator).id;
 			break;
@@ -1180,7 +1180,7 @@ bool PathManager::NoHazards(VERTEX From, VERTEX To)
 	//
 	VERTEX MidPoint = {(From.x + To.x) / 2, (From.y + To.y) / 2, From.z};
 
-	float NewZ = zone->zonemap->FindBestZ(MidPoint, NULL, NULL);
+	float NewZ = zone->zonemap->FindBestZ(MidPoint, nullptr, nullptr);
 
 	if(ABS(NewZ - From.z) > RuleR(Pathing, ZDiffThreshold))
 	{
@@ -1220,7 +1220,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 		stepz = (stepz/factor)*step_size;
 			
 		VERTEX TestPoint = {curx, cury, curz};
-		float NewZ = zone->zonemap->FindBestZ(TestPoint, NULL, NULL);
+		float NewZ = zone->zonemap->FindBestZ(TestPoint, nullptr, nullptr);
 		if(ABS(NewZ - last_z) > 5.0f)
 		{
 			_log(PATHING__DEBUG, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
@@ -1243,7 +1243,7 @@ bool PathManager::NoHazardsAccurate(VERTEX From, VERTEX To)
 				VERTEX hit;
 				TestPointWaterDest.z -= 500;
 				float best_z2 = -999990;
-				if(zone->zonemap->LineIntersectsZone(TestPointWater, TestPointWaterDest, 1.0f, &hit, NULL))
+				if(zone->zonemap->LineIntersectsZone(TestPointWater, TestPointWaterDest, 1.0f, &hit, nullptr))
 				{
 					best_z2 = hit.z;
 				}
@@ -1377,7 +1377,7 @@ PathNode* PathManager::FindPathNodeByCoordinates(float x, float y, float z)
 		if((PathNodes[i].v.x == x) && (PathNodes[i].v.y == y) && (PathNodes[i].v.z == z))
 			return &PathNodes[i];
 
-	return NULL;
+	return nullptr;
 }
 
 int PathManager::GetRandomPathNode()
@@ -1760,7 +1760,7 @@ bool PathManager::DeleteNode(int32 id)
 	else
 	{
 		delete[] PathNodes;
-		PathNodes = NULL;
+		PathNodes = nullptr;
 	}
 	return true;
 }
@@ -1794,8 +1794,8 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 
 void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, int32 doorid)
 {
-	PathNode *a = NULL;
-	PathNode *b = NULL;
+	PathNode *a = nullptr;
+	PathNode *b = nullptr;
 	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
 	{
 		if(PathNodes[x].id == Node1)
@@ -1812,7 +1812,7 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 		}
 	}
 
-	if(a == NULL || b == NULL)
+	if(a == nullptr || b == nullptr)
 		return;
 
 	bool connect_a_to_b = true;
@@ -1884,8 +1884,8 @@ void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 door
 
 void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 doorid)
 {
-	PathNode *a = NULL;
-	PathNode *b = NULL;
+	PathNode *a = nullptr;
+	PathNode *b = nullptr;
 	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
 	{
 		if(PathNodes[x].id == Node1)
@@ -1902,7 +1902,7 @@ void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 do
 		}
 	}
 
-	if(a == NULL || b == NULL)
+	if(a == nullptr || b == nullptr)
 		return;
 
 	bool connect_a_to_b = true;
@@ -1949,8 +1949,8 @@ void PathManager::DisconnectNodeToNode(Client *c, int32 Node2)
 
 void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 {
-	PathNode *a = NULL;
-	PathNode *b = NULL;
+	PathNode *a = nullptr;
+	PathNode *b = nullptr;
 	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
 	{
 		if(PathNodes[x].id == Node1)
@@ -1967,7 +1967,7 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 		}
 	}
 
-	if(a == NULL || b == NULL)
+	if(a == nullptr || b == nullptr)
 		return;
 
 	bool disconnect_a_from_b = false;
@@ -2035,7 +2035,7 @@ void PathManager::MoveNode(Client *c)
 	if(zone->zonemap)
 	{
 		VERTEX loc = {c->GetX(), c->GetY(), c->GetZ()};
-		Node->bestz = zone->zonemap->FindBestZ(loc, NULL, NULL);
+		Node->bestz = zone->zonemap->FindBestZ(loc, nullptr, nullptr);
 	}
 	else
 	{
@@ -2123,7 +2123,7 @@ bool PathManager::CheckLoS(VERTEX a, VERTEX b)
 		oloc.z = b.z;
 
 
-		if(zone->zonemap->LineIntersectsZone(myloc, oloc, 1.0f, NULL, NULL))
+		if(zone->zonemap->LineIntersectsZone(myloc, oloc, 1.0f, nullptr, nullptr))
 		{
 			return false;
 		}

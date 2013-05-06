@@ -115,7 +115,7 @@ bool BuildWaterMap(const char *shortname, int32 DefaultRegionType) {
 	archive = new PFSLoader();
   
 	FILE *s3df = fopen(bufs, "rb");
-	if(s3df == NULL) {
+	if(s3df == nullptr) {
 		// One day we may try EQG, but not today.
 		printf("Unable to open s3d file '%s'.\n", bufs);
 		return(false);
@@ -128,7 +128,7 @@ bool BuildWaterMap(const char *shortname, int32 DefaultRegionType) {
 
 	fileloader = new WLDLoader(); 
 	
-	if(fileloader->Open(NULL, (char *) shortname, archive) == 0) {
+	if(fileloader->Open(nullptr, (char *) shortname, archive) == 0) {
         	printf("Error reading WLD from %s\n", bufs);
 	        return(false);
 	}
@@ -168,7 +168,7 @@ bool BuildWaterMap(const char *shortname, int32 DefaultRegionType) {
 	}
 
 	
-	if(tree==NULL) {
+	if(tree==nullptr) {
 		printf("No BSP Tree. Bailing out\n");
 		return(false);
 	}
@@ -195,7 +195,7 @@ bool BuildWaterMap(const char *shortname, int32 DefaultRegionType) {
 	sprintf(bufm, "%s.wtr", shortname);
 
 	FILE *WaterFile = fopen(bufm, "wb");
-        if(WaterFile == NULL) {
+        if(WaterFile == nullptr) {
 		printf("Failed to open %s for writing\n", bufm);
 		return(false);
 	}

@@ -9,8 +9,8 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef NULL
-#define NULL 0
+#ifndef nullptr
+#define nullptr 0
 #endif
 #include "../../common/types.h"
 typedef unsigned char uchar;

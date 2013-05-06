@@ -125,9 +125,9 @@ int32 AddModelName(Content_3D *C3D, string ModelName)
 
 DATLoader::DATLoader()
 {
-	this->buffer = NULL;
+	this->buffer = nullptr;
 	this->buf_len = -1;
-	this->archive = NULL;
+	this->archive = nullptr;
 	this->status = 0;
 	GenerateQuads = false;
 }

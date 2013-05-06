@@ -205,4 +205,3 @@ void Mob::CalculateNewFearpoint()
 		BuffFadeByEffect(SE_Fear);
 	}
 }
-
