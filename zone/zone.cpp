@@ -2668,7 +2668,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
 	
 	strn0cpy(zBuf, in_zonename, 64);
 	
-	if(directory == NULL)
+	if(directory == nullptr)
 		directory = MAP_DIR;
 
 	snprintf(cWork, 250, "%s/%s.map", directory, strlwr(zBuf));
@@ -2680,7 +2680,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
 		{
 			LogFile->write(EQEMuLog::Error, "Map file %s corrupt (error reading header).", cWork);
 			fclose(fp);
-			return NULL;
+			return nullptr;
 		}
 		LogFile->write(EQEMuLog::Status, "MAP Version: %8X", head.version);
 
@@ -2696,7 +2696,7 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
 		{
 			LogFile->write(EQEMuLog::Error, "Map file %s corrupt (unknown version).", cWork);
 		}
-		if(ret != NULL)
+		if(ret != nullptr)
 		{
 			if(ret->loadMap(fp))
 			{

@@ -82,7 +82,7 @@ class Zone
 public:
 	static bool Bootup(uint32 iZoneID, uint32 iInstanceID, bool iStaticZone = false);
 	static void Shutdown(bool quite = false);
-	static BaseMap* LoadMapfile(const char* in_zonename, const char *directory = NULL);
+	static BaseMap* LoadMapfile(const char* in_zonename, const char *directory = nullptr);
 	
 	Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name);
 	~Zone();

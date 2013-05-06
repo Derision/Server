@@ -435,10 +435,10 @@ float Map::FindBestZ( NodeRef node_r, VERTEX p1, VERTEX *result, FACE **on) cons
 	_ZP(Map_FindBestZ);
 
 	if(on)
-		*on = NULL;
+		*on = nullptr;
 
 	VERTEX tmp_result;	//dummy placeholder if they do not ask for a result.
-	if(result == NULL)
+	if(result == nullptr)
 		result = &tmp_result;
 
 	p1.z += RuleI(Map, FindBestZHeightAdjust);

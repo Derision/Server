@@ -34,15 +34,15 @@ public:
 	~Map();
 	
 	 bool LineIntersectsFace( PFACE cface, VERTEX start, VERTEX end, VERTEX *result) const;
-	 float FindBestZ(VERTEX start, VERTEX *result, FACE **on = NULL) const { return FindBestZ(GetRoot(), start, result, on); }
-	 bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = NULL) const;
+	 float FindBestZ(VERTEX start, VERTEX *result, FACE **on = nullptr) const { return FindBestZ(GetRoot(), start, result, on); }
+	 bool LineIntersectsZone(VERTEX start, VERTEX end, float step, VERTEX *result, FACE **on = nullptr) const;
 	 PFACE GetFace( int _idx) {return mFinalFaces + _idx;		}
 	 bool LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on);
 	 bool CheckLoS(VERTEX myloc, VERTEX oloc);
 
 private:
-	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = NULL) const;
-	bool LineIntersectsNode( NodeRef _node, VERTEX start, VERTEX end, VERTEX *result, FACE **on = NULL) const;
+	float FindBestZ( NodeRef _node, VERTEX start, VERTEX *result, FACE **on = nullptr) const;
+	bool LineIntersectsNode( NodeRef _node, VERTEX start, VERTEX end, VERTEX *result, FACE **on = nullptr) const;
 	//the result is always final, except special NODE_NONE
 	NodeRef SeekNode( NodeRef _node, float x, float y ) const;
 	//these are untested since rewrite:

@@ -8066,7 +8066,7 @@ void command_bestz(Client *c, const Seperator *sep) {
 			c->Message(0, "Face Normal (%8.3f, %8.3f, %8.3f), nd = %8.3f", hitFace->nx, hitFace->ny, hitFace->nz, hitFace->nd);	
 		}
 		else
-			c->Message(0, "HitFace is NULL");
+			c->Message(0, "HitFace is nullptr");
 	}
 	else
 	{
@@ -8113,19 +8113,6 @@ void command_bestz(Client *c, const Seperator *sep) {
 			c->Message(0, "No obstacle to target");
 	}
 	
-	/*
-	for(float x = -3960; x < 3960; x = x + 50)
-	{
-		for(float y = -2550; y < 3650; y = y + 50)
-		{
-			me.x = x;
-			me.y = y;
-			me.z = 1000;
-			printf("%8.3f,%8.3f,%8.3f\n",x,y,zone->zonemap->FindBestZ(me, NULL, NULL));
-
-		}
-	}
-	*/
 	if(zone->watermap == nullptr) {
 		c->Message(0,"Water Region Map not loaded for this zone");
 	} else {

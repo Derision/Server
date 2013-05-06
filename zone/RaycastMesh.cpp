@@ -448,8 +448,8 @@ public:
 	public:
 		NodeAABB(void)
 		{
-			mLeft = NULL;
-			mRight = NULL;
+			mLeft = nullptr;
+			mRight = nullptr;
 			mLeafPolyIndex= TRI_EOF;
 		}
 
@@ -461,8 +461,8 @@ public:
 			PolyVector &leafPolys)	// once a particular axis is less than this size, stop sub-dividing.
 
 		{
-			mLeft = NULL;
-			mRight = NULL;
+			mLeft = nullptr;
+			mRight = nullptr;
 			mLeafPolyIndex = TRI_EOF;
 			PolyVector polys;
 			polys.reserve(FaceCount);
@@ -487,8 +487,8 @@ public:
 		NodeAABB(const BoundsAABB &aabb)
 		{
 			mBounds = aabb;
-			mLeft = NULL;
-			mRight = NULL;
+			mLeft = nullptr;
+			mRight = nullptr;
 			mLeafPolyIndex = TRI_EOF;
 		}
 
@@ -864,8 +864,8 @@ public:
 
 		void Load(FILE *fp, NodeInterface *callback)
 		{
-			mLeft = NULL;
-			mRight = NULL;
+			mLeft = nullptr;
+			mRight = nullptr;
 
 			uint8 LeafExists = 1;
 
@@ -930,7 +930,7 @@ public:
 		mRaycastPolys = (uint32 *)::malloc(mFaceCount*sizeof(uint32));
 		memset(mRaycastPolys,0,mFaceCount*sizeof(uint32));
 		mRoot = getNode();
-		mFaceNormals = NULL;
+		mFaceNormals = nullptr;
 		if(CreateTree)
 			new ( mRoot ) NodeAABB(mFaceCount,mFaces, maxDepth,minLeafSize,minAxisSize,this,mLeafPolys);
 	}
@@ -1037,7 +1037,7 @@ public:
 
 	virtual void getFaceNormal(uint32 poly, VERTEX *faceNormal) 
 	{
-		if ( mFaceNormals == NULL )
+		if ( mFaceNormals == nullptr )
 		{
 			mFaceNormals = (VERTEX *)::malloc(sizeof(VERTEX) * mFaceCount);
 			

@@ -55,9 +55,9 @@ Map2::Map2()
 	_maxy = FLT_MIN;
 	
 	m_Faces = 0;
-	mFinalFaces = NULL;
+	mFinalFaces = nullptr;
 
-	rm = NULL;
+	rm = nullptr;
 }
 
 bool Map2::loadMap(FILE *fp)
@@ -113,7 +113,7 @@ bool Map2::loadMap(FILE *fp)
 #ifdef MAPBENCH	
 	printf("Starting Benchmarks on loaded file\n");
 	
-	time_t StartTime = time(NULL);
+	time_t StartTime = time(nullptr);
 
 	float x, y, z, Sum = 0;
 	uint32 Tests = 0, Hits = 0;
@@ -123,7 +123,7 @@ bool Map2::loadMap(FILE *fp)
 		for(y = _miny; y < _maxy; y = y + 1.0f)
 		{
 			VERTEX start = {x, y, 10000};
-			z = FindBestZ(start, NULL, NULL);
+			z = FindBestZ(start, nullptr, nullptr);
 			
 			++Tests;
 			if(z != BEST_Z_INVALID)
@@ -133,7 +133,7 @@ bool Map2::loadMap(FILE *fp)
 			}
 		}
 	}
-	time_t EndTime = time(NULL);
+	time_t EndTime = time(nullptr);
 
 	printf("Elapsed Time: %llu seconds, %u Tests, %u Hits, Sum: %f\n", EndTime - StartTime, Tests, Hits, Sum); fflush(stdout);
 #endif // MAPBENCH
@@ -157,16 +157,16 @@ Map2::~Map2()
 
 bool Map2::LineIntersectsZone(VERTEX start, VERTEX end, float step_mag, VERTEX *result, FACE **on) const
 {
-	return rm->raycast(start, end, result, NULL, on);
+	return rm->raycast(start, end, result, nullptr, on);
 }
 
 float Map2::FindBestZ(VERTEX p1, VERTEX *result, FACE **on) const
 {
 	if(on)
-		*on = NULL;
+		*on = nullptr;
 
 	VERTEX tmp_result;	//dummy placeholder if they do not ask for a result.
-	if(result == NULL)
+	if(result == nullptr)
 		result = &tmp_result;
 
 	p1.z += RuleI(Map, FindBestZHeightAdjust);
@@ -279,5 +279,5 @@ bool Map2::LineIntersectsZoneNoZLeaps(VERTEX start, VERTEX end, float step_mag, 
 
 bool Map2::CheckLoS(VERTEX myloc, VERTEX oloc)
 {
-	return !rm->raycast(myloc, oloc, NULL, NULL, NULL);
+	return !rm->raycast(myloc, oloc, nullptr, nullptr, nullptr);
 }
