@@ -918,7 +918,8 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	autoshutdown_timer((RuleI(Zone, AutoShutdownDelay))),
 	clientauth_timer(AUTHENTICATION_TIMEOUT * 1000),
 	spawn2_timer(1000),
-	qglobal_purge_timer(30000)
+	qglobal_purge_timer(30000),
+	hotzone_timer(120000)
 {
 	zoneid = in_zoneid;
 	instanceid = in_instanceid;
@@ -1165,6 +1166,12 @@ bool Zone::Init(bool iStaticZone) {
 	zone->zone_time.setEQTimeZone(database.GetZoneTZ(zoneid, GetInstanceVersion()));
 	
 	LogFile->write(EQEMuLog::Status, "Init Finished: ZoneID = %d, Time Offset = %d", zoneid, zone->zone_time.getEQTimeZone());
+
+	LoadTickItems();
+
+	//MODDING HOOK FOR ZONE INIT
+	mod_init();
+
 	return true;
 }
 
@@ -1484,6 +1491,8 @@ bool Zone::Process() {
 		}
 	}
 
+	if(hotzone_timer.Check()) { UpdateHotzone(); }
+
 	return true;
 }
 
@@ -1532,6 +1541,9 @@ void Zone::Repop(uint32 delay) {
 	MZoneLock.unlock();
 	
 	initgrids_timer.Start();
+
+	//MODDING HOOK FOR REPOP
+	mod_repop();
 }
 
 void Zone::GetTimeSync()
@@ -2721,3 +2733,74 @@ BaseMap* Zone::LoadMapfile(const char* in_zonename, const char *directory)
 	return ret;
 }
 
+void Zone::LoadTickItems()
+{
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char* query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	tick_items.clear();
+
+	if(database.RunQuery(query, MakeAnyLenString(&query, "SELECT it_itemid, it_chance, it_level, it_qglobal, it_bagslot FROM item_tick"), errbuf, &result))
+	{
+		while((row = mysql_fetch_row(result)))
+		{
+			if(atoi(row[0]) >= 1)
+			{
+				item_tick_struct ti_tmp;
+				ti_tmp.itemid = atoi(row[0]);
+				ti_tmp.chance = atoi(row[1]);
+				ti_tmp.level = atoi(row[2]);
+				ti_tmp.bagslot = (int16)atoi(row[4]);
+				ti_tmp.qglobal = std::string(row[3]);
+				tick_items[atoi(row[0])] = ti_tmp;
+			}
+		}
+		mysql_free_result(result);
+		safe_delete_array(query);
+	}
+	else
+	{
+		LogFile->write(EQEMuLog::Error, "Error in Zone::LoadTickItems: %s (%s)", query, errbuf);
+		safe_delete_array(query);
+	}
+}
+
+uint32 Zone::GetSpawnKillCount(uint32 in_spawnid) {
+	LinkedListIterator<Spawn2*> iterator(spawn2_list);
+
+	iterator.Reset();
+	while(iterator.MoreElements())
+	{
+		if(iterator.GetData()->GetID() == in_spawnid)
+		{
+			return(iterator.GetData()->killcount);
+		}
+		iterator.Advance();
+	}
+	return 0;
+}
+
+void Zone::UpdateHotzone()
+{
+	char errbuf[MYSQL_ERRMSG_SIZE];
+	char* query = 0;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	bool updh;
+
+	if(database.RunQuery(query, MakeAnyLenString(&query,"SELECT  hotzone FROM zone WHERE short_name = '%s'", GetShortName()), errbuf, &result) )
+	{
+		if( (row = mysql_fetch_row(result)) )
+		{
+			updh = atoi(row[0]) == 0 ? false:true;
+			//Hotzone status has changed
+			if(is_hotzone != updh)
+			{
+				is_hotzone = updh;
+			}
+		}
+		mysql_free_result(result);
+	}
+	safe_delete_array(query);
+}

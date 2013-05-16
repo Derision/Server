@@ -1547,10 +1547,12 @@ void command_peqzone(Client *c, const Seperator *sep)
                c->Message(13,"You must wait %i minute(s) before using this ability again.", timeleft);
                return;
        }
+
        if(c->GetHPRatio() < 75) {
                c->Message(0, "You cannot use this command with less than 75 percent health.");
                return;
        }
+
        //this isnt perfect, but its better...
        if(
                   c->IsInvisible(c)
@@ -1563,6 +1565,7 @@ void command_peqzone(Client *c, const Seperator *sep)
                c->Message(0, "You cannot use this command in your current state. Settle down and wait.");
                return;
        }
+
 	   uint16 zoneid = 0;
        uint8 destzone = 0;
        if (sep->IsNumber(1))
@@ -1583,7 +1586,8 @@ void command_peqzone(Client *c, const Seperator *sep)
                c->Message(0, "Usage: #peqzone [zonename]");
                c->Message(0, "Optional Usage: #peqzone [zoneid]");
                return;
-       } else {
+	}
+	else {
 			   zoneid = database.GetZoneID(sep->arg[1]);
 			   destzone = database.GetPEQZone(zoneid, 0);
                if(zoneid == 0) {
@@ -1599,6 +1603,7 @@ void command_peqzone(Client *c, const Seperator *sep)
                        return;
                }
        }       
+
 	   if(RuleB (Zone, UsePEQZoneDebuffs)){
        c->SpellOnTarget(RuleI(Zone, PEQZoneDebuff1), c);
        c->SpellOnTarget(RuleI(Zone, PEQZoneDebuff2), c);
@@ -9085,7 +9090,7 @@ void command_refreshgroup(Client *c, const Seperator *sep)
 }
 
 void command_advnpcspawn(Client *c, const Seperator *sep)
- {
+{
  	Mob *target=c->GetTarget();
  	char errbuf[MYSQL_ERRMSG_SIZE];
  	char *query = 0;
@@ -9314,7 +9319,7 @@ void command_advnpcspawn(Client *c, const Seperator *sep)
  			c->Message(0, "Usage: #advnpcspawn [maketype|makegroup|addgroupentry|addgroupspawn|setversion]");
  			c->Message(0, "Usage: #advnpcspawn [removegroupspawn|movespawn|editrespawn|editgroupbox|cleargroupbox]");
  		}
- }
+}
 
 void command_aggrozone(Client *c, const Seperator *sep) {
 	if(!c)
@@ -9546,7 +9551,7 @@ void command_setstartzone(Client *c, const Seperator *sep)
 		target = c->GetTarget()->CastToClient();
 	else {
 		c->Message(0, "Usage: (needs PC target) #setstartzone zonename");
-		c->Message(0, "Optional Usage: Use '#setstartzone reset' or '#setstartzone 0' to clear a starting zone.  A player can select a starting zone using /setstartcity");
+		c->Message(0, "Optional Usage: Use '#setstartzone reset' or '#setstartzone 0' to clear a starting zone. Player can select a starting zone using /setstartcity");
 		return;
 	}
 	
@@ -11664,3 +11669,4 @@ void command_augmentitem(Client *c, const Seperator *sep)
 		Object::HandleAugmentation(c, in_augment, c->GetTradeskillObject());
 		safe_delete_array(in_augment);
 }
+

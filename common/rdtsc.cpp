@@ -177,7 +177,3 @@ void RDTSC_Collector::reset() {
 	_count = 0;
 }
 
-
-
-
-

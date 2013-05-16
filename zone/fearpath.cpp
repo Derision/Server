@@ -92,9 +92,9 @@ void Mob::CheckFlee() {
 	}
 	if(ratio < run_ratio)
 	{
-		if( RuleB(Combat, FleeIfNotAlone) 
-		  || ( !RuleB(Combat, FleeIfNotAlone) 
-		    && (entity_list.GetHatedCount(hate_top, this) == 0)))
+		if (RuleB(Combat, FleeIfNotAlone) ||
+			(!RuleB(Combat, FleeIfNotAlone) &&
+			(entity_list.GetHatedCount(hate_top, this) == 0)))
 			StartFleeing();
 
 	}

@@ -1,5 +1,5 @@
 /*  EQEMu:  Everquest Server Emulator
-Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
+	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -828,8 +828,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.drakkin_details = drakkin_details;
 	ns->spawn.equip_chest2  = texture;
 
-//	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn
-								   //mob invis
+//	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
 
 	if(helmtexture && helmtexture != 0xFF)
 	{
@@ -1974,7 +1973,7 @@ void Mob::SetAttackTimer() {
 							continue;
 						if(pi->IsType(ItemClassContainer) && pi->GetItem()->BagType == bagTypeQuiver)
 						{
-							float temp_wr = (pi->GetItem()->BagWR / 3);
+							float temp_wr = ( pi->GetItem()->BagWR / RuleI(Combat, QuiverWRHasteDiv) );
 							if(temp_wr > max_quiver)
 							{
 								max_quiver = temp_wr;
@@ -2148,8 +2147,7 @@ float Mob::DistNoRootNoZ(float x, float y) const {
 	float xDiff = x - x_pos;
 	float yDiff = y - y_pos;
 
-	return ( (xDiff * xDiff)  
-	       + (yDiff * yDiff) );
+	return ( (xDiff * xDiff) + (yDiff * yDiff) );
 }
 
 float Mob::DistNoRootNoZ(const Mob &other) const {
@@ -2623,12 +2621,11 @@ void Mob::Warp( float x, float y, float z )
    z_pos = z; 
 
    Mob* target = GetTarget(); 
-   if ( target ) { 
+	if (target) {
       FaceTarget( target ); 
    } 
 
    SendPosition(); 
-
 }
 
 bool Mob::DivineAura() const
@@ -3775,12 +3772,12 @@ void Mob::InsertQuestGlobal(int charid, int npcid, int zoneid, const char *varna
 	char *query = 0;
 	char errbuf[MYSQL_ERRMSG_SIZE];
 
-	// Make duration string either "unix_timestamp(now()) + xxx" or "nullptr"
+	// Make duration string either "unix_timestamp(now()) + xxx" or "NULL"
 	stringstream duration_ss;
 
 	if (duration == INT_MAX)
 	{
-		duration_ss << "nullptr";
+		duration_ss << "NULL";
 	}
 	else
 	{
@@ -4664,5 +4661,22 @@ FACTION_VALUE Mob::GetSpecialFactionCon(Mob* iOther) {
 		default:
 			return FACTION_INDIFFERENT;
 	}
+}
+
+bool Mob::HasSpellEffect(int effectid)
+{
+    int i;
+
+    uint32 buff_count = GetMaxTotalSlots();
+    for(i = 0; i < buff_count; i++)
+    {
+        if(buffs[i].spellid == SPELL_UNKNOWN) { continue; }
+
+        if(IsEffectInSpell(buffs[i].spellid, effectid))
+        {
+            return(1);
+        }
+    }
+    return(0);
 }
 

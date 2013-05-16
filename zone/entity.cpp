@@ -1678,7 +1678,7 @@ void EntityList::QueueCloseClients(Mob* sender, const EQApplicationPacket* app, 
 		if ((!ignore_sender || ent != sender) && (ent != SkipThisMob)) {
 			eqFilterMode filter2 = ent->GetFilter(filter);
 			if(ent->Connected() && 
-				(  filter==FilterNone 
+				(filter==FilterNone
 				||  filter2 == FilterShow 
 				|| (filter2 == FilterShowGroupOnly && (sender == ent || 
 					(ent->GetGroup() && ent->GetGroup()->IsGroupMember(sender))))
@@ -1887,6 +1887,12 @@ void EntityList::QueueClientsStatus(Mob* sender, const EQApplicationPacket* app,
 
 void EntityList::DuelMessage(Mob* winner, Mob* loser, bool flee) {
 	LinkedListIterator<Client*> iterator(client_list);
+
+	if(winner->GetLevelCon(winner->GetLevel(), loser->GetLevel()) > 2)
+	{
+		parse->EventPlayer(EVENT_DUEL_WIN, winner->CastToClient(), loser->GetName(), loser->CastToClient()->CharacterID());
+		parse->EventPlayer(EVENT_DUEL_LOSE, loser->CastToClient(), winner->GetName(), winner->CastToClient()->CharacterID());
+	}
 
 	iterator.Reset();
 	while(iterator.MoreElements()) {
@@ -3746,12 +3752,12 @@ void EntityList::ProcessMove(Client *c, float x, float y, float z) {
 		//cross a boundary, send the event.
 		bool old_in = true;
 		bool new_in = true;
-		if(   last_x < l->min_x || last_x > l->max_x
+		if(last_x < l->min_x || last_x > l->max_x
 		   || last_y < l->min_y || last_y > l->max_y
 		   || last_z < l->min_z || last_z > l->max_z ) {
 			old_in = false;
 		}
-		if(   x < l->min_x || x > l->max_x
+		if(x < l->min_x || x > l->max_x
 		   || y < l->min_y || y > l->max_y
 		   || z < l->min_z || z > l->max_z ) {
 			new_in = false;
@@ -3789,7 +3795,7 @@ void EntityList::ProcessProximitySay(const char *Message, Client *c, uint8 langu
 		if(l == nullptr || !l->say)
 			continue;
 
-		if(   c->GetX() < l->min_x || c->GetX() > l->max_x
+		if(c->GetX() < l->min_x || c->GetX() > l->max_x
 		   || c->GetY() < l->min_y || c->GetY() > l->max_y
 		   || c->GetZ() < l->min_z || c->GetZ() > l->max_z )
 			continue;
@@ -4066,7 +4072,6 @@ void EntityList::QuestJournalledSayClose(Mob *sender, Client *QuestInitiator, fl
 
        // Send the message to the quest initiator such that the client will enter it into the NPC Quest Journal
        if(QuestInitiator) {
-
                char *buf = new char[strlen(mobname) + strlen(message) + 10];
                sprintf(buf, "%s says, '%s'", mobname, message);
                QuestInitiator->QuestJournalledMessage(mobname, buf);
@@ -5300,3 +5305,4 @@ Mob* EntityList::GetTargetForVirus(Mob* spreader)
 
 	return TargetsInRange[MakeRandomInt(0, TargetsInRange.size() - 1)];
 }
+

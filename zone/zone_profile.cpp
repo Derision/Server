@@ -300,5 +300,3 @@ void ResetZoneProfile() {
 
 #endif //EQPROFILE
 
-
-

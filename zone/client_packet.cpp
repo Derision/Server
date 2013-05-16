@@ -1428,7 +1428,7 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		if(nt)
 		{
 			SetTarget(nt);
-			if((nt->IsClient() && !nt->CastToClient()->GetPVP()) ||
+			if ((nt->IsClient() && !nt->CastToClient()->GetPVP()) ||
 			   (nt->IsPet() && nt->GetOwner() && nt->GetOwner()->IsClient() && !nt->GetOwner()->CastToClient()->GetPVP()) ||
 			   (nt->IsMerc() && nt->GetOwner() && nt->GetOwner()->IsClient() && !nt->GetOwner()->CastToClient()->GetPVP()))
 				nt->SendBuffsToClient(this);
@@ -2076,6 +2076,29 @@ void Client::Handle_OP_ItemVerifyRequest(const EQApplicationPacket *app)
 			}
 		}
 
+        int r;
+        bool tryaug = false;
+        ItemInst* clickaug = 0;
+        Item_Struct* augitem = 0;
+
+        for(r = 0; r < MAX_AUGMENT_SLOTS; r++) {
+            const ItemInst* aug_i = inst->GetAugment(r);
+            if(!aug_i)
+                continue;
+            const Item_Struct* aug = aug_i->GetItem();
+            if(!aug)
+                continue;
+
+            if ( (aug->Click.Type == ET_ClickEffect) || (aug->Click.Type == ET_Expendable) || (aug->Click.Type == ET_EquipClick) || (aug->Click.Type == ET_ClickEffect2) )
+            {
+                tryaug = true;
+                clickaug = (ItemInst*)aug_i;
+                augitem = (Item_Struct*)aug;
+                spell_id = aug->Click.Effect;
+                break;
+            }
+        }
+
 		if((spell_id <= 0) && (item->ItemType != ItemTypeFood && item->ItemType != ItemTypeDrink && item->ItemType != ItemTypeAlcohol && item->ItemType != ItemTypeSpell))
 		{
 			LogFile->write(EQEMuLog::Debug, "Item with no effect right clicked by %s",GetName());
@@ -2123,6 +2146,39 @@ void Client::Handle_OP_ItemVerifyRequest(const EQApplicationPacket *app)
 					return;
 				}
 			}
+            else if (tryaug)
+            {
+                if (clickaug->GetCharges() == 0)
+                {
+                    //Message(0, "This item is out of charges.");
+                    Message_StringID(13, ITEM_OUT_OF_CHARGES);
+                    return;
+                }
+                if(GetLevel() >= augitem->Click.Level2)
+                {
+                    if(parse->ItemHasQuestSub(clickaug, "EVENT_ITEM_CLICK_CAST"))
+                    {
+                        //TODO: need to enforce and set recast timers here because the spell may not be cast.
+                        parse->EventItem(EVENT_ITEM_CLICK_CAST, this, clickaug, clickaug->GetID(), slot_id);
+                        inst = m_inv[slot_id];
+                        if (!inst)
+                        {
+                            // Item was deleted by the perl event
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        //We assume augs aren't consumable
+                        CastSpell(augitem->Click.Effect, target_id, 10, augitem->CastTime, 0, 0, slot_id);
+                    }
+                }
+                else
+                {
+                    Message_StringID(13, ITEMS_INSUFFICIENT_LEVEL);
+                    return;
+                }
+            }
 			else
 			{
 				if(GetClientVersion() >= EQClientSoD && !inst->IsEquipable(GetBaseRace(),GetClass()))
@@ -2604,6 +2660,8 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
     } else if(con->faction == FACTION_THREATENLY) {
         con->faction = FACTION_DUBIOUS;
     }
+
+	mod_consider(tmob, con);
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
@@ -3200,6 +3258,8 @@ void Client::Handle_OP_ItemLinkClick(const EQApplicationPacket *app)
 
 			if((response).size() > 0)
 			{
+				if( !mod_saylink(response, silentsaylink) ) { return; }
+
 				if(this->GetTarget() && this->GetTarget()->IsNPC())
 				{
 					if(silentsaylink)
@@ -6069,7 +6129,7 @@ void Client::Handle_OP_RecipesFavorite(const EQApplicationPacket *app)
 		" LEFT JOIN tradeskill_recipe_entries AS tre ON tr.id=tre.recipe_id "
 		" LEFT JOIN (SELECT recipe_id, madecount FROM char_recipe_list WHERE char_id = %u) AS crl ON tr.id=crl.recipe_id "
 		" WHERE tr.id IN (%s) "
-		"  AND tr.must_learn & 0x20 <> 0x20 AND ((tr.must_learn & 0x3 <> 0 AND crl.madecount IS NOT nullptr) OR (tr.must_learn & 0x3 = 0)) "
+		" AND tr.must_learn & 0x20 <> 0x20 AND ((tr.must_learn & 0x3 <> 0 AND crl.madecount IS NOT NULL) OR (tr.must_learn & 0x3 = 0)) "
 		" GROUP BY tr.id "
 		" HAVING sum(if(tre.item_id %s AND tre.iscontainer > 0,1,0)) > 0 "
 		" LIMIT 100 ", CharacterID(), buf, containers);
@@ -6124,7 +6184,7 @@ void Client::Handle_OP_RecipesSearch(const EQApplicationPacket *app)
 		" LEFT JOIN tradeskill_recipe_entries AS tre ON tr.id=tre.recipe_id "
 		" LEFT JOIN (SELECT recipe_id, madecount FROM char_recipe_list WHERE char_id = %u) AS crl ON tr.id=crl.recipe_id "
 		" WHERE %s tr.trivial >= %u AND tr.trivial <= %u "
-		"  AND tr.must_learn & 0x20 <> 0x20 AND((tr.must_learn & 0x3 <> 0 AND crl.madecount IS NOT nullptr) OR (tr.must_learn & 0x3 = 0)) "
+		" AND tr.must_learn & 0x20 <> 0x20 AND((tr.must_learn & 0x3 <> 0 AND crl.madecount IS NOT NULL) OR (tr.must_learn & 0x3 = 0)) "
 		" GROUP BY tr.id "
 		" HAVING sum(if(tre.item_id %s AND tre.iscontainer > 0,1,0)) > 0 "
 		" LIMIT 200 "
@@ -7714,7 +7774,11 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 		SetHP(GetHP() - damage);
 
 	if(GetHP() <= 0)
+	{
+		mod_client_death_env();
+
 		Death(0, 32000, SPELL_UNKNOWN, HAND_TO_HAND);
+	}
 	SendHPUpdate();
 	return;
 }
@@ -10459,8 +10523,9 @@ void Client::Handle_OP_Translocate(const EQApplicationPacket *app) {
 			// is bound in, use the GoToBind method. If we send OP_Translocate in this case, the client moves itself
 			// to the bind coords it has from the PlayerProfile, but with the X and Y reversed. I suspect they are
 			// reversed in the pp, and since spells like Gate are handled serverside, this has not mattered before.
-			if(((SpellID == 1422) || (SpellID == 1334) || (SpellID == 3243)) &&
-			   zone->GetZoneID() == PendingTranslocateData.ZoneID)  {
+			if (((SpellID == 1422) || (SpellID == 1334) || (SpellID == 3243)) &&
+				zone->GetZoneID() == PendingTranslocateData.ZoneID)
+			{
 				PendingTranslocate = false;
 				GoToBind();
 				return;
@@ -11064,9 +11129,8 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app) {
 	}
 	else if(GetClass() == ROGUE)
 	{
-		if((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemTypePierce) ||
-		   (SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemTypePierce))
-		   {
+		if ((PrimaryWeapon && PrimaryWeapon->GetItem()->ItemType == ItemTypePierce) ||
+			(SecondaryWeapon && SecondaryWeapon->GetItem()->ItemType == ItemTypePierce)) {
 			float SuccessChance = (GetSkill(APPLY_POISON) + GetLevel()) / 400.0f;
 			double ChanceRoll = MakeRandomFloat(0, 1);
 
@@ -12471,7 +12535,7 @@ void Client::Handle_OP_GuildCreate(const EQApplicationPacket *app)
 		return;
 	}
 
-	if((Admin() < RuleI(Guild, PlayerCreationRequiredStatus)) ||
+	if ((Admin() < RuleI(Guild, PlayerCreationRequiredStatus)) ||
 	   (GetLevel() < RuleI(Guild, PlayerCreationRequiredLevel)) ||
 	   (database.GetTotalTimeEntitledOnAccount(AccountID()) < (unsigned int)RuleI(Guild, PlayerCreationRequiredTime)))
 	{
@@ -12484,11 +12548,7 @@ void Client::Handle_OP_GuildCreate(const EQApplicationPacket *app)
 	//
 
 	char *GuildName = (char *)app->pBuffer;
-#ifdef FREEBSD
-	if(strlen(GuildName) > 60)
-#else
 	if(strnlen(GuildName, 64) > 60)
-#endif
 	{
 		Message(clientMessageError, "Guild name too long.");
 		return;

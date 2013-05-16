@@ -1,5 +1,5 @@
 /*  EQEMu:  Everquest Server Emulator
-Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
+	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -488,3 +488,4 @@ void Client::ForageItem(bool guarantee) {
 	CheckIncreaseSkill(FORAGE, nullptr, 5);
 	
 }
+

@@ -2312,3 +2312,4 @@ void PathManager::SortNodes()
 	safe_delete_array(PathNodes);
 	PathNodes = t_PathNodes;
 }
+

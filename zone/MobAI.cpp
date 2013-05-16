@@ -1,5 +1,5 @@
 /*  EQEMu:  Everquest Server Emulator
-Copyright (C) 2001-2004  EQEMu Development Team (http://eqemu.org)
+	Copyright (C) 2001-2004 EQEMu Development Team (http://eqemu.org)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -69,7 +69,8 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 
 	if (iSpellTypes & SpellType_Escape) {
 	    dist2 = 0; //DistNoRoot(*this);	//WTF was up with this...
-    } else 
+	}
+	else
 	    dist2 = DistNoRoot(*tar);
 
 	bool checked_los = false;	//we do not check LOS until we are absolutely sure we need to, and we only do it once.
@@ -257,7 +258,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint16 iSpellTypes) {
 						break;
 					}
 					case SpellType_Lifetap: {
-						if (   GetHPRatio() <= 95
+						if (GetHPRatio() <= 95
 							&& MakeRandomInt(0, 99) < 50
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -393,7 +394,7 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 			t2 = 0 - t2;
 		if(t3 < 0)
 			t3 = 0 - t3;
-		if (   t1 > iRange
+		if (t1 > iRange
 			|| t2 > iRange
 			|| t3 > iRange
 			|| mob->DistNoRoot(*caster) > iRange2

@@ -1,5 +1,5 @@
 /*  EQEMu:  Everquest Server Emulator
-Copyright (C) 2001-2002  EQEMu Development Team (http://eqemu.org)
+	Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		t2 = 0 - t2;
 	if(t3 < 0)
 		t3 = 0 - t3;
-	if(   ( t1 > iAggroRange)
+	if(( t1 > iAggroRange)
 	   || ( t2 > iAggroRange)
 	   || ( t3 > iAggroRange) ) {
 	   towho->Message(0, "...%s is out of range (fast). distances (%.3f,%.3f,%.3f), range %.3f", mob->GetName(),
@@ -278,7 +278,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 		t2 = 0 - t2;
 	if(t3 < 0)
 		t3 = 0 - t3;
-	if(   ( t1 > iAggroRange)
+	if(( t1 > iAggroRange)
 	   || ( t2 > iAggroRange)
 	   || ( t3 > iAggroRange)
 	   ||(mob->IsInvisible(this))
@@ -1294,6 +1294,4 @@ bool Mob::PassCharismaCheck(Mob* caster, Mob* spellTarget, uint16 spell_id) {
 
 	return false;
 }
-
-
 

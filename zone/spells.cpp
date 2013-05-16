@@ -440,6 +440,8 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, uint16 slot,
 		return(true);
 	}
 
+	cast_time = mod_cast_time(cast_time);
+
 	// ok we know it has a cast time so we can start the timer now
 	spellend_timer.Start(cast_time);
 	
@@ -1099,11 +1101,53 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, uint16 slot,
 	if(IsClient() && ((slot == USE_ITEM_SPELL_SLOT) || (slot == POTION_BELT_SPELL_SLOT))
 		&& inventory_slot != 0xFFFFFFFF)	// 10 is an item
 	{
+        bool fromaug = false;
 		const ItemInst* inst = CastToClient()->GetInv()[inventory_slot];
-		if (inst && inst->IsType(ItemClassCommon) && (inst->GetItem()->Click.Effect == spell_id) && inst->GetCharges())
+        Item_Struct* augitem = 0;
+        uint32 recastdelay = 0;
+        uint32 recasttype = 0;
+
+        for(int r = 0; r < MAX_AUGMENT_SLOTS; r++) {
+            const ItemInst* aug_i = inst->GetAugment(r);
+
+            if(!aug_i)
+                continue;
+            const Item_Struct* aug = aug_i->GetItem();
+            if(!aug)
+                continue;
+
+            if ( aug->Click.Effect == spell_id )
+            {
+                recastdelay = aug_i->GetItem()->RecastDelay;
+                recasttype = aug_i->GetItem()->RecastType;
+                fromaug = true;
+                break;
+            }
+        }
+
+        //Test the aug recast delay
+        if(IsClient() && fromaug && recastdelay > 0)
+        {
+            if(!CastToClient()->GetPTimers().Expired(&database, (pTimerItemStart + recasttype), false)) {
+                Message_StringID(13, SPELL_RECAST);
+                mlog(SPELLS__CASTING_ERR, "Casting of %d canceled: item spell reuse timer not expired", spell_id);
+                InterruptSpell();  
+                return;
+            }
+            else
+            {
+                //Can we start the timer here?  I don't see why not.
+                CastToClient()->GetPTimers().Start((pTimerItemStart + recasttype), recastdelay);
+            }
+        }
+
+		if (inst && inst->IsType(ItemClassCommon) && (inst->GetItem()->Click.Effect == spell_id) && inst->GetCharges() || fromaug)
 		{
 			//const Item_Struct* item = inst->GetItem();
 			int16 charges = inst->GetItem()->MaxCharges;
+
+            if(fromaug) { charges = -1; } //Don't destroy the parent item
+
 			if(charges > -1) {	// charged item, expend a charge
 				mlog(SPELLS__CASTING, "Spell %d: Consuming a charge from item %s (%d) which had %d/%d charges.", spell_id, inst->GetItem()->Name, inst->GetItem()->ID, inst->GetCharges(), inst->GetItem()->MaxCharges);
 				DeleteChargeFromSlot = inventory_slot;
@@ -2328,6 +2372,8 @@ int Mob::CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caste
 		IsBlindSpell(spell_id))
 		res += 1;
 	
+	res = mod_buff_duration(res, caster, target, spell_id);
+
 	mlog(SPELLS__CASTING, "Spell %d: Casting level %d, formula %d, base_duration %d: result %d",
 		spell_id, castlevel, formula, duration, res);
 		
@@ -2430,6 +2476,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 			mlog(SPELLS__STACKING, "Blocking spell because manaburn/lifeburn does not stack with itself");
 			return -1;
 		}
+
+	int modval = mod_spell_stack(spellid1, caster_level1, caster1, spellid2, caster_level2, caster2);
+	if(modval < 2) { return(modval); }
 
 	//resurrection effects wont count for overwrite/block stacking
 	switch(spellid1)
@@ -3022,7 +3071,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect, bool use_r
 
        /* Send the EVENT_CAST_ON event */
        if(spelltar->IsNPC())
-       {       char temp1[100];
+	{
+		char temp1[100];
                sprintf(temp1, "%d", spell_id);
                parse->EventNPC(EVENT_CAST_ON, spelltar->CastToNPC(), this, temp1, 0);
        }
@@ -4021,9 +4071,9 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 	//Adjust our resist chance based on level modifiers
 	int temp_level_diff = GetLevel() - caster->GetLevel();
-	if(IsNPC() && GetLevel() >= RuleI(Casting, ResistFalloff))
+    if(IsNPC() && GetLevel() >= RuleI(Casting,ResistFalloff))
 	{
-		int a = (RuleI(Casting, ResistFalloff) - 1) - caster->GetLevel();
+        int a = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
 		if(a > 0)
 		{
 			temp_level_diff = a;
@@ -4055,26 +4105,13 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		level_mod = 1000;
 	}
 
-	//Add our level, resist and -spell resist modifier to our roll chance
-	resist_chance += level_mod;
-	resist_chance += resist_modifier;
-	resist_chance += target_resist;
-
-	if (CharismaCheck)
-	{
-		//For charm chance to break checks, Default 10 CHA = -1 resist mod. 
-		int16 cha_resist_modifier = 0;
-		cha_resist_modifier	= caster->GetCHA()/RuleI(Spells, CharismaEffectiveness); 
-		resist_chance -= cha_resist_modifier;
-	}
-
 	//Even more level stuff this time dealing with damage spells
 	if(IsNPC() && IsDamageSpell(spell_id) && GetLevel() >= 17)
 	{
 		int level_diff;
-		if(GetLevel() >= RuleI(Casting, ResistFalloff))
+        if(GetLevel() >= RuleI(Casting,ResistFalloff))
 		{
-			level_diff = (RuleI(Casting, ResistFalloff) - 1) - caster->GetLevel();
+            level_diff = (RuleI(Casting,ResistFalloff)-1) - caster->GetLevel();
 			if(level_diff < 0)
 			{
 				level_diff = 0;
@@ -4084,8 +4121,23 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		{
 			level_diff = GetLevel() - caster->GetLevel();
 		}
-		resist_chance += (2 * level_diff);
+        level_mod += (2 * level_diff);
 	}
+
+	if (CharismaCheck)
+	{
+		//For charm chance to break checks, Default 10 CHA = -1 resist mod.
+		int16 cha_resist_modifier = 0;
+		cha_resist_modifier	= caster->GetCHA()/RuleI(Spells, CharismaEffectiveness);
+		resist_modifier -= cha_resist_modifier;
+	}
+
+	//Add our level, resist and -spell resist modifier to our roll chance
+	resist_chance += level_mod;
+	resist_chance += resist_modifier;
+	resist_chance += target_resist;
+
+	resist_chance = mod_spell_resist(resist_chance, level_mod, resist_modifier, target_resist, resist_type, spell_id, caster);
 
 	//Do our min and max resist checks.
 	if(resist_chance > spells[spell_id].MaxResist && spells[spell_id].MaxResist != 0)
@@ -4698,7 +4750,7 @@ uint16 Mob::FindSpell(uint16 classp, uint16 level, int type,
                 if ( spells[i].effectid[j] == SE_Illusion &&
                      type != SE_Illusion)  // only let illusions thru if explicitly requested
                     continue;
-                if ( spells[i].effectid[j] == type &&
+				if (spells[i].effectid[j] == type &&
                      spells[i].goodEffect != 0 &&
                      spells[i].classes[classp] <= level &&
                      spells[i].classes[classp] <= 65 &&
@@ -5416,3 +5468,4 @@ void NPC::UninitializeBuffSlots()
 {
 	safe_delete_array(buffs);
 }
+

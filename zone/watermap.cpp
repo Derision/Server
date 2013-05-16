@@ -49,7 +49,7 @@ WaterRegionType WaterMap::BSPReturnRegionType(int32 node_number, float y, float 
 	
 	// Are we at a leaf
 	
-	if((current_node->left==0)&&
+	if ((current_node->left==0) &&
 	   (current_node->right==0))  {
 		return (WaterRegionType) current_node->special;
 	}
@@ -73,16 +73,14 @@ WaterRegionType WaterMap::BSPReturnRegionType(int32 node_number, float y, float 
 					// This shouldn't happen
 					return(RegionTypeNormal);
 			}
-			return BSPReturnRegionType( current_node->left,
-							   y, x, z);
+		return BSPReturnRegionType(current_node->left, y, x, z);
 	}
 	if(current_node->right==0) {
 			// This should't happen
 			return(RegionTypeNormal);
 	}
 	
-	return BSPReturnRegionType(current_node->right,
-					   y, x, z);
+	return BSPReturnRegionType(current_node->right, y, x, z);
 }
 
 bool WaterMap::InWater(float y, float x, float z) const {

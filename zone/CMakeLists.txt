@@ -86,6 +86,7 @@ SET(zone_sources
     zonedb.cpp
     zonedbasync.cpp
     zoning.cpp
+	mod_functions.cpp
 )
 
 SET(zone_headers
@@ -170,7 +171,9 @@ IF(MINGW)
 ENDIF(MINGW)
 
 IF(UNIX)
+	IF(NOT FREEBSD)
     TARGET_LINK_LIBRARIES(zone "dl")
+	ENDIF(NOT FREEBSD)
     TARGET_LINK_LIBRARIES(zone "z")
     TARGET_LINK_LIBRARIES(zone "m")
     TARGET_LINK_LIBRARIES(zone "rt")
